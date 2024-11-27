@@ -3,9 +3,10 @@ from __future__ import annotations
 import random
 import string
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import TYPE_CHECKING, Generic, Hashable, Mapping, Optional, TypeVar
+from typing import TYPE_CHECKING, Generator, Generic, Hashable, Mapping, Optional, TypeVar
 
 import pandas as pd
 
@@ -106,6 +107,33 @@ class BatchTestSetup(ABC, Generic[_ConfigT, _AssetT]):
 
     @abstractmethod
     def teardown(self) -> None: ...
+
+    @contextmanager
+    def test_context(self) -> Generator[None, None, None]:
+        """Ensure proper setup and teardown regardless of errors."""
+        self.setup()
+        try:
+            yield
+        finally:
+            self.teardown()
+
+    @contextmanager
+    def asset_test_context(self) -> Generator[_AssetT, None, None]:
+        """Receive an Asset and ensure proper setup and teardown regardless of errors."""
+        self.setup()
+        try:
+            yield self.asset
+        finally:
+            self.teardown()
+
+    @contextmanager
+    def batch_test_context(self) -> Generator[Batch, None, None]:
+        """Receive a Batch and ensure proper setup and teardown regardless of errors."""
+        self.setup()
+        try:
+            yield self.make_batch()
+        finally:
+            self.teardown()
 
     @staticmethod
     def _random_resource_name() -> str:
