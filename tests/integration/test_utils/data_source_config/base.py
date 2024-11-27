@@ -111,8 +111,8 @@ class BatchTestSetup(ABC, Generic[_ConfigT, _AssetT]):
     @contextmanager
     def test_context(self) -> Generator[None, None, None]:
         """Ensure proper setup and teardown regardless of errors."""
-        self.setup()
         try:
+            self.setup()
             yield
         finally:
             self.teardown()
@@ -120,8 +120,8 @@ class BatchTestSetup(ABC, Generic[_ConfigT, _AssetT]):
     @contextmanager
     def asset_test_context(self) -> Generator[_AssetT, None, None]:
         """Receive an Asset and ensure proper setup and teardown regardless of errors."""
-        self.setup()
         try:
+            self.setup()
             yield self.asset
         finally:
             self.teardown()
@@ -129,8 +129,8 @@ class BatchTestSetup(ABC, Generic[_ConfigT, _AssetT]):
     @contextmanager
     def batch_test_context(self) -> Generator[Batch, None, None]:
         """Receive a Batch and ensure proper setup and teardown regardless of errors."""
-        self.setup()
         try:
+            self.setup()
             yield self.make_batch()
         finally:
             self.teardown()
