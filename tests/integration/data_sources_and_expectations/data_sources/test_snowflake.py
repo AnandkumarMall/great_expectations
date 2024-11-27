@@ -78,9 +78,7 @@ class TestDataTypes:
         column_type = sqltypes.BINARY  # equivalent to VARBINARY
         batch_setup = SnowflakeBatchTestSetup(
             config=SnowflakeDatasourceTestConfig(column_types={self.COLUMN: column_type}),
-            data=pd.DataFrame(
-                {self.COLUMN: [b"a", b"b", b"c", b"d"]}
-            ),
+            data=pd.DataFrame({self.COLUMN: [b"a", b"b", b"c", b"d"]}),
             extra_data={},
         )
         with batch_setup.batch_test_context() as batch:
