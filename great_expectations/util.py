@@ -4,7 +4,6 @@ import copy
 import datetime
 import decimal
 import importlib
-import inspect
 import json
 import logging
 import os
@@ -977,6 +976,7 @@ def import_make_url():
         make_url = sqlalchemy.engine.make_url
 
     return make_url
+
 
 def pandas_series_between_inclusive(series: pd.Series, min_value: int, max_value: int) -> pd.Series:
     """

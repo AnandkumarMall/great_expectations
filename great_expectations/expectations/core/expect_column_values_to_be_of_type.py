@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional, Tuple, Type, Un
 
 import numpy as np
 import pandas as pd
+
 from great_expectations.compatibility import pydantic, pyspark
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.expectations.expectation import (
@@ -573,6 +574,7 @@ class ExpectColumnValuesToBeOfType(ColumnMapExpectation):
             return self._validate_spark(
                 actual_column_type=actual_column_type, expected_type=expected_type
             )
+
 
 def _native_type_type_map(type_):  # noqa: C901, PLR0911
     # We allow native python types in cases where the underlying type is "object":

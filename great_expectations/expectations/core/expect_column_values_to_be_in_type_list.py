@@ -15,6 +15,8 @@ from typing import (
 
 import numpy as np
 import pandas as pd
+from packaging import version
+
 from great_expectations.compatibility import pydantic, pyspark
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.core.suite_parameters import (  # noqa: TCH001
@@ -29,6 +31,9 @@ from great_expectations.expectations.expectation import (
 )
 from great_expectations.expectations.model_field_descriptions import COLUMN_DESCRIPTION
 from great_expectations.expectations.registry import get_metric_kwargs
+from great_expectations.expectations.util import (
+    get_potential_sqlalchemy_types,
+)
 from great_expectations.render import LegacyRendererType, RenderedStringTemplateContent
 from great_expectations.render.renderer.renderer import renderer
 from great_expectations.render.renderer_configuration import (
@@ -40,11 +45,7 @@ from great_expectations.render.util import (
     parse_row_condition_string_pandas_engine,
     substitute_none_for_missing,
 )
-from great_expectations.expectations.util import (
-    get_potential_sqlalchemy_types,
-)
 from great_expectations.validator.metric_configuration import MetricConfiguration
-from packaging import version
 
 if TYPE_CHECKING:
     from great_expectations.core import (
@@ -461,9 +462,7 @@ class ExpectColumnValuesToBeInTypeList(ColumnMapExpectation):
             "result": {"observed_value": actual_column_type.type.__name__},
         }
 
-    def _validate_sqlalchemy(
-        self, actual_column_type, expected_types_list, execution_engine
-    ):
+    def _validate_sqlalchemy(self, actual_column_type, expected_types_list, execution_engine):
         success = False
         if expected_types_list is None:
             success = True

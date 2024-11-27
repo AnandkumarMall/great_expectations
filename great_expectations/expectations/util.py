@@ -5,9 +5,10 @@ import logging
 from types import ModuleType
 from typing import Any
 
+from packaging import version
+
 from great_expectations.compatibility.bigquery import BIGQUERY_GEO_SUPPORT
 from great_expectations.execution_engine.sqlalchemy_dialect import GXSqlDialect
-from packaging import version
 
 logger = logging.getLogger(__name__)
 
@@ -92,9 +93,7 @@ def get_potential_sqlalchemy_types(execution_engine, expected_type):
             potential_type = get_trino_potential_type(type_module, expected_type)
             types.append(type(potential_type))
         elif type_module.__name__ == "clickhouse_sqlalchemy.drivers.base":
-            potential_type = get_clickhouse_sqlalchemy_potential_type(
-                type_module, expected_type
-            )
+            potential_type = get_clickhouse_sqlalchemy_potential_type(type_module, expected_type)
             types.append(potential_type)
         else:
             potential_type = getattr(type_module, expected_type)
@@ -102,7 +101,5 @@ def get_potential_sqlalchemy_types(execution_engine, expected_type):
     except AttributeError:
         logger.debug(f"Unrecognized type: {expected_type}")
     if len(types) == 0:
-        logger.warning(
-            "No recognized sqlalchemy types in type_list for current dialect."
-        )
+        logger.warning("No recognized sqlalchemy types in type_list for current dialect.")
     return types
