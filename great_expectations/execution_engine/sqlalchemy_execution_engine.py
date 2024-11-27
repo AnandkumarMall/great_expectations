@@ -144,6 +144,13 @@ except ImportError:
     teradatasqlalchemy = None
     teradatatypes = None
 
+try:
+    import clickhouse_sqlalchemy
+    import clickhouse_sqlalchemy.types as ch_types
+except (ImportError, KeyError):
+    clickhouse_sqlalchemy = None
+    ch_types = None
+
 if TYPE_CHECKING:
     from sqlalchemy.engine import Engine as SaEngine  # noqa: TID251
 
@@ -186,6 +193,19 @@ def _get_dialect_type_module(dialect):  # noqa: C901
             and teradatatypes is not None
         ):
             return teradatatypes
+    except (TypeError, AttributeError):
+        pass
+
+    # Clickhouse types module
+    try:
+        if (
+            issubclass(
+                dialect,
+                clickhouse_sqlalchemy.drivers.base.ClickHouseDialect,
+            )
+            and ch_types is not None
+        ):
+            return ch_types
     except (TypeError, AttributeError):
         pass
 

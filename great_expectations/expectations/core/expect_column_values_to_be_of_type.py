@@ -1,22 +1,21 @@
 from __future__ import annotations
 
-import inspect
 import logging
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
-
-from great_expectations.compatibility import aws, pydantic, pyspark, trino
-from great_expectations.compatibility.sqlalchemy import sqlalchemy as sa
+from great_expectations.compatibility import pydantic, pyspark
 from great_expectations.compatibility.typing_extensions import override
-from great_expectations.execution_engine.sqlalchemy_dialect import GXSqlDialect
 from great_expectations.expectations.expectation import (
     ColumnMapExpectation,
     render_suite_parameter_string,
 )
 from great_expectations.expectations.model_field_descriptions import COLUMN_DESCRIPTION
 from great_expectations.expectations.registry import get_metric_kwargs
+from great_expectations.expectations.util import (
+    get_potential_sqlalchemy_types,
+)
 from great_expectations.render import LegacyRendererType, RenderedStringTemplateContent
 from great_expectations.render.renderer.renderer import renderer
 from great_expectations.render.renderer_configuration import (
@@ -27,10 +26,6 @@ from great_expectations.render.util import (
     num_to_str,
     parse_row_condition_string_pandas_engine,
     substitute_none_for_missing,
-)
-from great_expectations.util import (
-    get_clickhouse_sqlalchemy_potential_type,
-    get_pyathena_potential_type,
 )
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
@@ -48,32 +43,6 @@ if TYPE_CHECKING:
     from great_expectations.validator.validator import ValidationDependencies
 
 logger = logging.getLogger(__name__)
-
-
-_BIGQUERY_MODULE_NAME = "sqlalchemy_bigquery"
-BIGQUERY_GEO_SUPPORT = False
-from great_expectations.compatibility.bigquery import GEOGRAPHY, bigquery_types_tuple
-from great_expectations.compatibility.bigquery import (
-    sqlalchemy_bigquery as BigQueryDialect,
-)
-
-if GEOGRAPHY:
-    BIGQUERY_GEO_SUPPORT = True
-else:
-    BIGQUERY_GEO_SUPPORT = False
-
-try:
-    import teradatasqlalchemy.dialect
-    import teradatasqlalchemy.types as teradatatypes
-except ImportError:
-    teradatasqlalchemy = None
-
-try:
-    import clickhouse_sqlalchemy
-    import clickhouse_sqlalchemy.types as ch_types
-except (ImportError, KeyError):
-    clickhouse_sqlalchemy = None
-    ch_types = None
 
 EXPECTATION_SHORT_DESCRIPTION = "Expect a column to contain values of a specified data type."
 TYPE__DESCRIPTION = """
@@ -410,10 +379,9 @@ class ExpectColumnValuesToBeOfType(ColumnMapExpectation):
         success = False
         if expected_type is None:
             success = True
-
-        if (
+        elif (
             isinstance(actual_column_type, str)
-            and isinstance(expected_type, str)
+            # Note: expected_type is a string in the configuration of the expectation
             and actual_column_type.lower() == expected_type.lower()
         ):
             # In newer versions of GX, metric.column_type returns a string
@@ -421,7 +389,7 @@ class ExpectColumnValuesToBeOfType(ColumnMapExpectation):
             success = True
 
         if not success:
-            # This is the old method of validating types.
+            # Fallback to the old method of validating types.
             success = self._deprecated_validate_sqlalchemy(
                 actual_column_type=actual_column_type,
                 expected_type=expected_type,
@@ -445,54 +413,8 @@ class ExpectColumnValuesToBeOfType(ColumnMapExpectation):
         expected_type,
         execution_engine,
     ) -> bool:
-        # Our goal is to be as explicit as possible. We will match the dialect
-        # if that is possible. If there is no dialect available, we *will*
-        # match against a top-level SqlAlchemy type.
-        #
-        # This is intended to be a conservative approach.
-        #
-        # In particular, we *exclude* types that would be valid under an ORM
-        # such as "float" for postgresql with this approach
-        types = []
-        type_module = _get_dialect_type_module(execution_engine=execution_engine)
-        try:
-            # bigquery geography requires installing an extra package
-            if (
-                expected_type.lower() == "geography"
-                and execution_engine.engine.dialect.name.lower() == GXSqlDialect.BIGQUERY
-                and not BIGQUERY_GEO_SUPPORT
-            ):
-                logger.warning(
-                    "BigQuery GEOGRAPHY type is not supported by default. "
-                    + "To install support, please run:"
-                    + "  $ pip install 'sqlalchemy-bigquery[geography]'"
-                )
-            elif type_module.__name__ == "pyathena.sqlalchemy_athena":
-                potential_type = get_pyathena_potential_type(type_module, expected_type)
-                # In the case of the PyAthena dialect we need to verify that
-                # the type returned is indeed a type and not an instance.
-                if not inspect.isclass(potential_type):
-                    real_type = type(potential_type)
-                else:
-                    real_type = potential_type
-                types.append(real_type)
-            elif type_module.__name__ == "clickhouse_sqlalchemy.drivers.base":
-                actual_column_type = get_clickhouse_sqlalchemy_potential_type(
-                    type_module, actual_column_type
-                )()
-                potential_type = get_clickhouse_sqlalchemy_potential_type(
-                    type_module, expected_type
-                )
-                types.append(potential_type)
-            else:
-                potential_type = getattr(type_module, expected_type)
-                types.append(potential_type)
-        except AttributeError:
-            logger.debug(f"Unrecognized type: {expected_type}")
-        if len(types) == 0:
-            logger.warning("No recognized sqlalchemy types in type_list for current dialect.")
-        types = tuple(types)
-        return isinstance(actual_column_type, types)
+        types = get_potential_sqlalchemy_types(execution_engine, expected_type)
+        return isinstance(actual_column_type, tuple(types))
 
     def _validate_spark(
         self,
@@ -651,78 +573,6 @@ class ExpectColumnValuesToBeOfType(ColumnMapExpectation):
             return self._validate_spark(
                 actual_column_type=actual_column_type, expected_type=expected_type
             )
-
-
-def _get_dialect_type_module(  # noqa: C901, PLR0911
-    execution_engine,
-):
-    if execution_engine.dialect_module is None:
-        logger.warning("No sqlalchemy dialect found; relying in top-level sqlalchemy types.")
-        return sa
-
-    # Redshift does not (yet) export types to top level; only recognize base SA types
-    if aws.redshiftdialect and isinstance(
-        execution_engine.dialect_module,
-        aws.redshiftdialect.RedshiftDialect,
-    ):
-        return execution_engine.dialect_module.sa
-    else:
-        pass
-
-    # Bigquery works with newer versions, but use a patch if we had to define bigquery_types_tuple
-    try:
-        if BigQueryDialect and (
-            isinstance(
-                execution_engine.dialect_module,
-                BigQueryDialect,
-            )
-            and bigquery_types_tuple is not None
-        ):
-            return bigquery_types_tuple
-    except (TypeError, AttributeError):
-        pass
-
-    # Teradata types module
-    try:
-        if (
-            issubclass(
-                execution_engine.dialect_module,
-                teradatasqlalchemy.dialect.TeradataDialect,
-            )
-            and teradatatypes is not None
-        ):
-            return teradatatypes
-    except (TypeError, AttributeError):
-        pass
-
-    try:
-        if (
-            issubclass(
-                execution_engine.dialect_module,
-                clickhouse_sqlalchemy.drivers.base.ClickHouseDialect,
-            )
-            and ch_types is not None
-        ):
-            return ch_types
-    except (TypeError, AttributeError):
-        pass
-
-    # Trino types module
-    try:
-        if (
-            trino.trinodialect
-            and trino.trinotypes
-            and isinstance(
-                execution_engine.dialect,
-                trino.trinodialect.TrinoDialect,
-            )
-        ):
-            return trino.trinotypes
-    except (TypeError, AttributeError):
-        pass
-
-    return execution_engine.dialect_module
-
 
 def _native_type_type_map(type_):  # noqa: C901, PLR0911
     # We allow native python types in cases where the underlying type is "object":

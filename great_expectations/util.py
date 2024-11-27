@@ -978,46 +978,6 @@ def import_make_url():
 
     return make_url
 
-
-def get_clickhouse_sqlalchemy_potential_type(type_module, type_) -> Any:
-    ch_type = type_
-    if type(ch_type) is str:
-        if type_.lower() in ("decimal", "decimaltype()"):
-            ch_type = type_module.types.Decimal
-        elif type_.lower() in ("fixedstring"):
-            ch_type = type_module.types.String
-        else:
-            ch_type = type_module.ClickHouseDialect()._get_column_type("", ch_type)
-
-    if hasattr(ch_type, "nested_type"):
-        ch_type = type(ch_type.nested_type)
-    if not inspect.isclass(ch_type):
-        ch_type = type(ch_type)
-    return ch_type
-
-
-def get_pyathena_potential_type(type_module, type_) -> str:
-    if version.parse(type_module.pyathena.__version__) >= version.parse("2.5.0"):
-        # introduction of new column type mapping in 2.5
-        potential_type = type_module.AthenaDialect()._get_column_type(type_)
-    else:
-        if type_ == "string":
-            type_ = "varchar"
-        # < 2.5 column type mapping
-        potential_type = type_module._TYPE_MAPPINGS.get(type_)
-
-    return potential_type
-
-
-def get_trino_potential_type(type_module: ModuleType, type_: str) -> object:
-    """
-    Leverage on Trino Package to return sqlalchemy sql type
-    """
-    # noinspection PyUnresolvedReferences
-    potential_type = type_module.parse_sqltype(type_)
-    return potential_type
-
-
 def pandas_series_between_inclusive(series: pd.Series, min_value: int, max_value: int) -> pd.Series:
     """
     As of Pandas 1.3.0, the 'inclusive' arg in between() is an enum: {"left", "right", "neither", "both"}

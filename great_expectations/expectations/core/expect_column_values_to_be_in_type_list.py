@@ -1,20 +1,26 @@
 from __future__ import annotations
 
-import inspect
 import logging
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Tuple, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 import numpy as np
 import pandas as pd
-from packaging import version
-
 from great_expectations.compatibility import pydantic, pyspark
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.core.suite_parameters import (  # noqa: TCH001
     SuiteParameterDict,
 )
 from great_expectations.expectations.core.expect_column_values_to_be_of_type import (
-    _get_dialect_type_module,
     _native_type_type_map,
 )
 from great_expectations.expectations.expectation import (
@@ -34,12 +40,11 @@ from great_expectations.render.util import (
     parse_row_condition_string_pandas_engine,
     substitute_none_for_missing,
 )
-from great_expectations.util import (
-    get_clickhouse_sqlalchemy_potential_type,
-    get_pyathena_potential_type,
-    get_trino_potential_type,
+from great_expectations.expectations.util import (
+    get_potential_sqlalchemy_types,
 )
 from great_expectations.validator.metric_configuration import MetricConfiguration
+from packaging import version
 
 if TYPE_CHECKING:
     from great_expectations.core import (
@@ -456,60 +461,52 @@ class ExpectColumnValuesToBeInTypeList(ColumnMapExpectation):
             "result": {"observed_value": actual_column_type.type.__name__},
         }
 
-    def _validate_sqlalchemy(  # noqa: C901 - too complex
+    def _validate_sqlalchemy(
         self, actual_column_type, expected_types_list, execution_engine
     ):
-        # Our goal is to be as explicit as possible. We will match the dialect
-        # if that is possible. If there is no dialect available, we *will*
-        # match against a top-level SqlAlchemy type.
-        #
-        # This is intended to be a conservative approach.
-        #
-        # In particular, we *exclude* types that would be valid under an ORM
-        # such as "float" for postgresql with this approach
-
+        success = False
         if expected_types_list is None:
             success = True
-        else:
-            types = []
-            type_module = _get_dialect_type_module(execution_engine=execution_engine)
-            for type_ in expected_types_list:
-                try:
-                    if type_module.__name__ == "pyathena.sqlalchemy_athena":
-                        potential_type = get_pyathena_potential_type(type_module, type_)
-                        # In the case of the PyAthena dialect we need to verify that
-                        # the type returned is indeed a type and not an instance.
-                        if not inspect.isclass(potential_type):
-                            real_type = type(potential_type)
-                        else:
-                            real_type = potential_type
-                        types.append(real_type)
-                    elif type_module.__name__ == "trino.sqlalchemy.datatype":
-                        potential_type = get_trino_potential_type(type_module, type_)
-                        types.append(type(potential_type))
-                    elif type_module.__name__ == "clickhouse_sqlalchemy.drivers.base":
-                        actual_column_type = get_clickhouse_sqlalchemy_potential_type(
-                            type_module, actual_column_type
-                        )()
-                        potential_type = get_clickhouse_sqlalchemy_potential_type(
-                            type_module, type_
-                        )
-                        types.append(potential_type)
-                    else:
-                        potential_type = getattr(type_module, type_)
-                        types.append(potential_type)
-                except AttributeError:
-                    logger.debug(f"Unrecognized type: {type_}")
+        elif (
+            isinstance(actual_column_type, str)
+            # Note: expected_types_list is a list of strings in the configuration of the expectation
+            and actual_column_type.lower()
+            in [expected_type.lower() for expected_type in expected_types_list]
+        ):
+            # In newer versions of GX, metric.column_type returns a string
+            # of the DB type, so we can compare directly.
+            success = True
 
-            if len(types) == 0:
-                logger.warning("No recognized sqlalchemy types in type_list for current dialect.")
-            types = tuple(types)
-            success = isinstance(actual_column_type, types)
+        if not success:
+            # Fallback to the old method of validating types.
+            success = self._deprecated_validate_sqlalchemy(
+                actual_column_type,
+                expected_types_list,
+                execution_engine,
+            )
 
         return {
             "success": success,
-            "result": {"observed_value": type(actual_column_type).__name__},
+            "result": {
+                "observed_value": (
+                    actual_column_type
+                    if isinstance(actual_column_type, str)
+                    else type(actual_column_type).__name__
+                )
+            },
         }
+
+    def _deprecated_validate_sqlalchemy(
+        self,
+        actual_column_type,
+        expected_types_list,
+        execution_engine,
+    ) -> bool:
+        all_potential_types = []
+        for type_ in expected_types_list:
+            types = get_potential_sqlalchemy_types(execution_engine, type_)
+            all_potential_types.extend(types)
+        return isinstance(actual_column_type, tuple(all_potential_types))
 
     def _validate_spark(
         self,
