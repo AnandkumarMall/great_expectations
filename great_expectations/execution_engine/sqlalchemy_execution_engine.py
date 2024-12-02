@@ -155,7 +155,7 @@ if TYPE_CHECKING:
     from sqlalchemy.engine import Engine as SaEngine  # noqa: TID251
 
 
-def _get_dialect_type_module(dialect):  # noqa: C901
+def _get_dialect_type_module(dialect):  # noqa: C901, PLR0911
     """Given a dialect, returns the dialect type, which is defines the engine/system that is used to communicates
     with the database/database implementation. Currently checks for RedShift/BigQuery dialects
     """  # noqa: E501
