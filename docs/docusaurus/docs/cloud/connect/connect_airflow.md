@@ -15,22 +15,22 @@ Apache Airflow is an orchestration tool that allows you to schedule and monitor 
 
 - You have installed Apache Airflow and initialized the database (__airflow db init__).
 
-- You have [connected GX Cloud to a Data Asset on a Data Source](/cloud/data_assets/manage_data_assets.md#create-a-data-asset).
+- You have [connected GX Cloud to a Data Asset on a Data Source](/cloud/data_assets/manage_data_assets.md).
 
-- You have [created an Expectation Suite](/cloud/expectation_suites/manage_expectation_suites.md) and [added Expectations](/cloud/expectations/manage_expectations.md#create-an-expectation).
+- You have [created an Expectation Suite](/cloud/expectation_suites/manage_expectation_suites.md) and [added Expectations](/cloud/expectations/manage_expectations.md#add-an-expectation).
 
 
 ## Run Airflow Standalone to create a fresh local Airflow environment
 
 1. The `airflow standalone` command initializes the database, creates a user, and starts all components.
 
-    ``` title="Terminal input"
+    ```bash title="Terminal input"
     airflow standalone
     ```
 
-    This command will eventually output a username a password for the Airflow UI like this:
+    This command will eventually output a username and password for the Airflow UI like this:
 
-    ``` title="Terminal input"
+    ```bash title="Terminal input"
     standalone | Airflow is ready
     standalone | Login with username: admin  password: Bpu6RgmPMMaDeeq5
     standalone | Airflow Standalone is for development purposes only. Do not use this in production!
@@ -54,7 +54,7 @@ Apache Airflow is an orchestration tool that allows you to schedule and monitor 
 
 2. Open the `gx_dag.py` DAG file and add the following code:
 
-    ```python
+    ```python title="gx_dag.py"
     import os
     import pendulum
     import great_expectations as gx
