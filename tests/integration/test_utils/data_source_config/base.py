@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     import pytest
     from pytest import FixtureRequest
 
+    from great_expectations.data_context import EphemeralDataContext
+
 _ColumnTypes = TypeVar("_ColumnTypes")
 
 
@@ -109,11 +111,11 @@ class BatchTestSetup(ABC, Generic[_ConfigT, _AssetT]):
     def teardown(self) -> None: ...
 
     @contextmanager
-    def test_context(self) -> Generator[None, None, None]:
-        """Ensure proper setup and teardown regardless of errors."""
+    def data_context_test_context(self) -> Generator[EphemeralDataContext, None, None]:
+        """Receive a DataContext and ensure proper setup and teardown regardless of errors."""
         try:
             self.setup()
-            yield
+            yield self.context
         finally:
             self.teardown()
 
