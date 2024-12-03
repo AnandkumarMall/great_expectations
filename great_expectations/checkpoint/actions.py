@@ -23,7 +23,6 @@ from typing import (
 )
 
 import requests
-from typing_extensions import Annotated
 
 from great_expectations._docs_decorators import public_api
 from great_expectations.analytics.client import submit as submit_event
@@ -1009,12 +1008,19 @@ class APINotificationAction(ValidationAction):
         }
 
 
-CheckpointAction = Annotated[
-    Union[
-        EmailAction,
-        MicrosoftTeamsNotificationAction,
-        SlackNotificationAction,
-        UpdateDataDocsAction,
-    ],
-    Field(discriminator="type"),
-]
+# CheckpointAction = Annotated[
+#     Union[
+#         EmailAction,
+#         MicrosoftTeamsNotificationAction,
+#         SlackNotificationAction,
+#         UpdateDataDocsAction,
+#     ],
+#     Field(discriminator="type"),
+# ]
+
+action_registry = {
+    "slack": SlackNotificationAction,
+    "email": EmailAction,
+    "update_data_docs": UpdateDataDocsAction,
+    "microsoft": MicrosoftTeamsNotificationAction,
+}
