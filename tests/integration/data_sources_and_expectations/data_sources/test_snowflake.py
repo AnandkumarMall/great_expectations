@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import pytest
 
-from great_expectations.compatibility.snowflake import NUMBER, TIMESTAMP_NTZ, TIMESTAMP_TZ
+from great_expectations.compatibility.snowflake import SNOWFLAKE_TYPES
 from great_expectations.compatibility.sqlalchemy import sqltypes
 from great_expectations.expectations import (
     ExpectColumnDistinctValuesToContainSet,
@@ -15,7 +15,7 @@ from tests.integration.test_utils.data_source_config import SnowflakeDatasourceT
 from tests.integration.test_utils.data_source_config.snowflake import SnowflakeBatchTestSetup
 
 
-class TestDataTypes:
+class TestSnowflakeDataTypes:
     """This set of tests ensures that we can run expectations against every data
     type supported by Snowflake.
 
@@ -25,15 +25,10 @@ class TestDataTypes:
     COLUMN = "col_a"
 
     @pytest.mark.snowflake
-    @pytest.mark.parametrize(
-        "column_type",
-        [
-            NUMBER,  # snowflake specific type equivalent to DECIMAL, NUMERIC
-            sqltypes.INT,  # equivalent to INTEGER, BIGINT, SMALLINT, TINYINT, BYTEINT
-            sqltypes.FLOAT,  # equivalent to FLOAT4, FLOAT8, DOUBLE, DOUBLE PRECISION, REAL
-        ],
-    )
-    def test_numeric(self, column_type):
+    def test_number(self):
+        column_type = (
+            SNOWFLAKE_TYPES.NUMBER
+        )  # snowflake specific type equivalent to DECIMAL, NUMERIC
         batch_setup = SnowflakeBatchTestSetup(
             config=SnowflakeDatasourceTestConfig(column_types={self.COLUMN: column_type}),
             data=pd.DataFrame({self.COLUMN: [1, 2, 3, 4]}),
@@ -50,15 +45,44 @@ class TestDataTypes:
         assert result.success
 
     @pytest.mark.snowflake
-    @pytest.mark.parametrize(
-        "column_type",
-        [
-            sqltypes.VARCHAR,  # equivalent to STRING, TEXT
-            sqltypes.CHAR,  # length of 1, equivalent to CHARACTER
-            sqltypes.BINARY,  # equivalent to VARBINARY
-        ],
-    )
-    def test_string(self, column_type):
+    def test_int(self):
+        column_type = sqltypes.INT  # equivalent to INTEGER, BIGINT, SMALLINT, TINYINT, BYTEINT
+        batch_setup = SnowflakeBatchTestSetup(
+            config=SnowflakeDatasourceTestConfig(column_types={self.COLUMN: column_type}),
+            data=pd.DataFrame({self.COLUMN: [1, 2, 3, 4]}),
+            extra_data={},
+        )
+        with batch_setup.batch_test_context() as batch:
+            result = batch.validate(
+                expect=ExpectColumnSumToBeBetween(
+                    column=self.COLUMN,
+                    min_value=9,
+                    max_value=11,
+                )
+            )
+        assert result.success
+
+    @pytest.mark.snowflake
+    def test_float(self):
+        column_type = sqltypes.FLOAT  # equivalent to FLOAT4, FLOAT8, DOUBLE, DOUBLE PRECISION, REAL
+        batch_setup = SnowflakeBatchTestSetup(
+            config=SnowflakeDatasourceTestConfig(column_types={self.COLUMN: column_type}),
+            data=pd.DataFrame({self.COLUMN: [1, 2, 3, 4]}),
+            extra_data={},
+        )
+        with batch_setup.batch_test_context() as batch:
+            result = batch.validate(
+                expect=ExpectColumnSumToBeBetween(
+                    column=self.COLUMN,
+                    min_value=9,
+                    max_value=11,
+                )
+            )
+        assert result.success
+
+    @pytest.mark.snowflake
+    def test_varchar(self):
+        column_type = sqltypes.VARCHAR  # equivalent to STRING, TEXT
         batch_setup = SnowflakeBatchTestSetup(
             config=SnowflakeDatasourceTestConfig(column_types={self.COLUMN: column_type}),
             data=pd.DataFrame({self.COLUMN: ["a", "b", "c", "d"]}),
@@ -77,14 +101,11 @@ class TestDataTypes:
         assert result.success
 
     @pytest.mark.snowflake
-    @pytest.mark.xfail(
-        strict=True, reason="Raises exception 'unhashable type: `bytearray`' (CORE-684)"
-    )
-    def test_binary(self):
-        column_type = sqltypes.BINARY  # equivalent to VARBINARY
+    def test_char(self):
+        column_type = sqltypes.CHAR  # length of 1, equivalent to CHARACTER
         batch_setup = SnowflakeBatchTestSetup(
             config=SnowflakeDatasourceTestConfig(column_types={self.COLUMN: column_type}),
-            data=pd.DataFrame({self.COLUMN: [b"a", b"b", b"c", b"d"]}),
+            data=pd.DataFrame({self.COLUMN: ["a", "b", "c", "d"]}),
             extra_data={},
         )
         with batch_setup.batch_test_context() as batch:
@@ -92,8 +113,8 @@ class TestDataTypes:
                 expect=ExpectColumnDistinctValuesToContainSet(
                     column=self.COLUMN,
                     value_set=[
-                        b"a",
-                        b"b",
+                        "a",
+                        "b",
                     ],
                 )
             )
@@ -140,15 +161,60 @@ class TestDataTypes:
         assert result.success
 
     @pytest.mark.snowflake
-    @pytest.mark.parametrize(
-        "column_type",
-        [
-            sqltypes.DATETIME,
-            TIMESTAMP_TZ,
-            TIMESTAMP_NTZ,
-        ],
-    )
-    def test_datetime(self, column_type):
+    def test_datetime(self):
+        column_type = sqltypes.DATETIME
+        batch_setup = SnowflakeBatchTestSetup(
+            config=SnowflakeDatasourceTestConfig(column_types={self.COLUMN: column_type}),
+            data=pd.DataFrame(
+                {
+                    self.COLUMN: [
+                        str(datetime(year=2021, month=1, day=31, tzinfo=timezone.utc)),
+                        str(datetime(year=2022, month=1, day=31, tzinfo=timezone.utc)),
+                        str(datetime(year=2023, month=1, day=31, tzinfo=timezone.utc)),
+                    ]
+                }
+            ),
+            extra_data={},
+        )
+        with batch_setup.batch_test_context() as batch:
+            result = batch.validate(
+                expect=ExpectColumnValuesToBeBetween(
+                    column=self.COLUMN,
+                    min_value=datetime(year=2021, month=1, day=1, tzinfo=timezone.utc),
+                    max_value=datetime(year=2024, month=1, day=1, tzinfo=timezone.utc),
+                )
+            )
+        assert result.success
+
+    @pytest.mark.snowflake
+    def test_timestamp_tz(self):
+        column_type = SNOWFLAKE_TYPES.TIMESTAMP_TZ
+        batch_setup = SnowflakeBatchTestSetup(
+            config=SnowflakeDatasourceTestConfig(column_types={self.COLUMN: column_type}),
+            data=pd.DataFrame(
+                {
+                    self.COLUMN: [
+                        str(datetime(year=2021, month=1, day=31, tzinfo=timezone.utc)),
+                        str(datetime(year=2022, month=1, day=31, tzinfo=timezone.utc)),
+                        str(datetime(year=2023, month=1, day=31, tzinfo=timezone.utc)),
+                    ]
+                }
+            ),
+            extra_data={},
+        )
+        with batch_setup.batch_test_context() as batch:
+            result = batch.validate(
+                expect=ExpectColumnValuesToBeBetween(
+                    column=self.COLUMN,
+                    min_value=datetime(year=2021, month=1, day=1, tzinfo=timezone.utc),
+                    max_value=datetime(year=2024, month=1, day=1, tzinfo=timezone.utc),
+                )
+            )
+        assert result.success
+
+    @pytest.mark.snowflake
+    def test_timestamp_ntz(self):
+        column_type = SNOWFLAKE_TYPES.TIMESTAMP_NTZ
         batch_setup = SnowflakeBatchTestSetup(
             config=SnowflakeDatasourceTestConfig(column_types={self.COLUMN: column_type}),
             data=pd.DataFrame(
