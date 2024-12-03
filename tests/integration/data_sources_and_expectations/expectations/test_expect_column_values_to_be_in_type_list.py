@@ -49,7 +49,16 @@ PASSING_DATA_SOURCES_EXCEPT_DATA_FRAMES = [
     data_source_configs=PASSING_DATA_SOURCES_EXCEPT_DATA_FRAMES, data=DATA
 )
 def test_success_complete(batch_for_datasource: Batch) -> None:
-    type_list = ["INTEGER", "Integer", "int", "int64", "int32", "IntegerType", "_CUSTOM_DECIMAL", "INT64"]
+    type_list = [
+        "INTEGER",
+        "Integer",
+        "int",
+        "int64",
+        "int32",
+        "IntegerType",
+        "_CUSTOM_DECIMAL",
+        "INT64",
+    ]
     expectation = gxe.ExpectColumnValuesToBeInTypeList(column=INTEGER_COLUMN, type_list=type_list)
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
     result_dict = result.to_json_dict()["result"]
