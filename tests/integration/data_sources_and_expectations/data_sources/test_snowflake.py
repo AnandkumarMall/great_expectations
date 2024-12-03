@@ -202,7 +202,3 @@ class TestDataTypes:
                 )
             )
         assert result.success
-
-    def test_geospatial(self): ...
-
-    def test_vector(self): ...
