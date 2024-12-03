@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import pytest
 
-from great_expectations.compatibility import snowflake
+from great_expectations.compatibility.snowflake import SNOWFLAKE_TYPES
 from great_expectations.compatibility.sqlalchemy import sqltypes
 from great_expectations.expectations import (
     ExpectColumnDistinctValuesToContainSet,
@@ -28,7 +28,7 @@ class TestDataTypes:
     @pytest.mark.parametrize(
         "column_type",
         [
-            snowflake.NUMBER,  # equivalent to DECIMAL, NUMERIC
+            SNOWFLAKE_TYPES.NUMBER,  # equivalent to DECIMAL, NUMERIC
             sqltypes.INT,  # equivalent to INTEGER, BIGINT, SMALLINT, TINYINT, BYTEINT
             sqltypes.FLOAT,  # equivalent to FLOAT4, FLOAT8, DOUBLE, DOUBLE PRECISION, REAL
         ],
@@ -144,8 +144,8 @@ class TestDataTypes:
         "column_type",
         [
             sqltypes.DATETIME,
-            snowflake.TIMESTAMP_TZ,
-            snowflake.TIMESTAMP_NTZ,
+            SNOWFLAKE_TYPES.TIMESTAMP_TZ,
+            SNOWFLAKE_TYPES.TIMESTAMP_NTZ,
         ],
     )
     def test_datetime(self, column_type):
