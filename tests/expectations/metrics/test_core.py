@@ -1824,7 +1824,7 @@ def test_map_value_set_sa(sa):
 
 
 @pytest.mark.sqlite
-def test_map_of_type_sa(sa):
+def test_map_of_type_sa_is_compiled_type(sa):
     eng = sa.create_engine("sqlite://")
     df = pd.DataFrame({"a": [1, 2, 3, 3, None]})
     add_dataframe_to_db(df=df, name="test", con=eng, index=False)
@@ -1841,8 +1841,10 @@ def test_map_of_type_sa(sa):
     results = engine.resolve_metrics(metrics_to_resolve=(desired_metric,))
     # noinspection PyTypeChecker
     assert results[desired_metric.id][0]["name"] == "a"
+
+    expected_type = sa.Float.compile(dialect=eng.dialect)
     # noinspection PyTypeChecker
-    assert isinstance(results[desired_metric.id][0]["type"], sa.FLOAT)
+    assert isinstance(results[desired_metric.id][0]["type"], expected_type)
 
 
 @pytest.mark.spark

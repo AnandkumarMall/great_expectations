@@ -466,16 +466,20 @@ def get_sqlalchemy_column_metadata(  # noqa: C901
                 CaseInsensitiveNameDict(column)
                 for column in columns
             ]
+            # Note: Column reflection fallback does not always return types
             for col in case_insensitive_columns:
-                col["type"] = col["type"].compile(dialect=engine.dialect)
+                if "type" in col:
+                    col["type"] = col["type"].compile(dialect=engine.dialect)
 
             return case_insensitive_columns
         else:
             # WARNING: Do not edit columns in place. It will affect the underlying inspector object.
             columns_copy = [column.copy() for column in columns]
 
+            # Note: Column reflection fallback does not always return types
             for column in columns_copy:
-                column["type"] = column["type"].compile(dialect=engine.dialect)
+                if "type" in column:
+                    column["type"] = column["type"].compile(dialect=engine.dialect)
 
             return columns_copy
     except AttributeError as e:

@@ -13,7 +13,18 @@
         "s1": ["hello", 2.0, 1]
       },
       "schemas": {
+        "databricks": {
+          "bi": "BIGINT",
+          "x": "INT",
+          "y": "FLOAT",
+          "z": "STRING",
+          "n": "STRING",
+          "b": "BOOLEAN",
+          "s": "STRING",
+          "s1": "STRING"
+        },
         "pandas": {
+          "bi": "int",
           "x": "int",
           "y": "float",
           "z": "str",
@@ -23,6 +34,7 @@
           "s1": "str"
         },
         "postgresql": {
+          "bi": "BIGINT",
           "x": "INTEGER",
           "y": "DOUBLE_PRECISION",
           "z": "TEXT",
@@ -32,6 +44,7 @@
           "s1": "TEXT"
         },
         "spark": {
+          "bi": "LongType",
           "x": "IntegerType",
           "y": "FloatType",
           "z": "StringType",
@@ -41,6 +54,7 @@
           "s1": "StringType"
         },
         "sqlite": {
+          "bi": "INTEGER",
           "x": "INTEGER",
           "y": "FLOAT",
           "z": "VARCHAR",
@@ -50,6 +64,7 @@
           "s1": "VARCHAR"
         },
         "mysql": {
+          "bi": "BIGINT",
           "x": "INTEGER",
           "y": "FLOAT",
           "z": "TEXT",
@@ -59,6 +74,7 @@
           "s1": "TEXT"
         },
         "mssql": {
+          "bi": "BIGINT",
           "x": "INTEGER",
           "y": "FLOAT",
           "z": "TEXT",
@@ -68,6 +84,7 @@
           "s1": "VARCHAR"
         },
         "bigquery": {
+          "bi": "INT64",
           "x": "INTEGER",
           "y": "NUMERIC",
           "z": "STRING",
@@ -77,6 +94,7 @@
           "s1": "STRING"
         },
         "trino": {
+          "bi": "BIGINT",
           "x": "INTEGER",
           "y": "DOUBLE",
           "z": "VARCHAR",
@@ -86,6 +104,7 @@
           "s1": "VARCHAR"
         },
         "snowflake": {
+          "bi": "NUMBER",
           "x": "NUMBER",
           "y": "DOUBLE",
           "z": "STRING",
@@ -94,6 +113,7 @@
           "s1": "STRING"
         },
         "redshift": {
+          "bi": "INTEGER",
           "x": "INTEGER",
           "y": "DOUBLE_PRECISION",
           "z": "VARCHAR",

@@ -180,7 +180,7 @@ def _get_dialect_type_module(dialect):  # noqa: C901, PLR0911
             and bigquery_types_tuple is not None
         ):
             return bigquery_types_tuple
-    except (TypeError, AttributeError):
+    except (TypeError, AttributeError, ModuleNotFoundError):
         pass
 
     # Teradata types module
@@ -193,7 +193,7 @@ def _get_dialect_type_module(dialect):  # noqa: C901, PLR0911
             and teradatatypes is not None
         ):
             return teradatatypes
-    except (TypeError, AttributeError):
+    except (TypeError, AttributeError, ModuleNotFoundError):
         pass
 
     # Clickhouse types module
@@ -206,7 +206,7 @@ def _get_dialect_type_module(dialect):  # noqa: C901, PLR0911
             and ch_types is not None
         ):
             return ch_types
-    except (TypeError, AttributeError):
+    except (TypeError, AttributeError, ModuleNotFoundError):
         pass
 
     # Trino types module
@@ -219,7 +219,7 @@ def _get_dialect_type_module(dialect):  # noqa: C901, PLR0911
             and trino.trinotypes is not None
         ):
             return trino.trinotypes
-    except (TypeError, AttributeError):
+    except (TypeError, AttributeError, ModuleNotFoundError):
         pass
 
     return dialect
