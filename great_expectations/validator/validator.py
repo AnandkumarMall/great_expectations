@@ -1278,7 +1278,7 @@ class Validator:
             columns[column].append(expectation)
 
         expectations_to_evaluate = []
-        for col in columns:
+        for col, _ in columns.items():
             expectations_to_evaluate.extend(columns[col])
 
         return expectations_to_evaluate

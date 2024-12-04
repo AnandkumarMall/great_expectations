@@ -103,7 +103,7 @@ def test_render_profiling_results_column_section_renderer(titanic_profiled_evrs_
         except KeyError:
             pass
 
-    for column in evrs:
+    for column, _ in evrs.items():
         with open(
             file_relative_path(
                 __file__,
@@ -147,7 +147,7 @@ def test_render_validation_results_column_section_renderer(titanic_profiler_evrs
         except KeyError:
             pass
 
-    for column in evrs:
+    for column, _ in evrs.items():
         with open(
             file_relative_path(
                 __file__,
@@ -179,7 +179,7 @@ def test_render_expectation_suite_column_section_renderer(
         except KeyError:
             pass
 
-    for column in exp_groups:
+    for column, _ in exp_groups.items():
         with open(
             file_relative_path(
                 __file__,
