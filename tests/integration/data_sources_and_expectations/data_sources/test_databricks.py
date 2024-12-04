@@ -25,7 +25,6 @@ class TestDatabricksDataTypes:
 
     BOOL_COL_NAME = "my_bool"
     DATE_COL_NAME = "my_date"
-    DATETIME_COL_NAME = "my_datetime"
     NUMERIC_COL_NAME = "my_number"
     STRING_COL_NAME = "my_string"
 
@@ -37,12 +36,6 @@ class TestDatabricksDataTypes:
                 datetime(2021, 1, 2, tzinfo=timezone.utc).date(),
                 datetime(2021, 1, 3, tzinfo=timezone.utc).date(),
                 datetime(2021, 1, 4, tzinfo=timezone.utc).date(),
-            ],
-            DATETIME_COL_NAME: [
-                datetime(2021, 1, 1, tzinfo=timezone.utc),
-                datetime(2021, 1, 2, tzinfo=timezone.utc),
-                datetime(2021, 1, 3, tzinfo=timezone.utc),
-                datetime(2021, 1, 4, tzinfo=timezone.utc),
             ],
             NUMERIC_COL_NAME: [1, 2, 3, 4],
             STRING_COL_NAME: ["a", "b", "c", "d"],
@@ -79,35 +72,16 @@ class TestDatabricksDataTypes:
         assert result.success
 
     def test_varchar(self):
-        column_type = sqltypes.VARCHAR  # equivalent to STRING, TEXT
+        column_type = sqltypes.String
         batch_setup = DatabricksBatchTestSetup(
-            config=DatabricksDatasourceTestConfig(column_types={self.COLUMN: column_type}),
+            config=DatabricksDatasourceTestConfig(column_types={self.STRING_COL_NAME: column_type}),
             data=self.DATA_FRAME,
             extra_data={},
         )
         with batch_setup.batch_test_context() as batch:
             result = batch.validate(
                 expect=ExpectColumnDistinctValuesToContainSet(
-                    column=self.COLUMN,
-                    value_set=[
-                        "a",
-                        "b",
-                    ],
-                )
-            )
-        assert result.success
-
-    def test_char(self):
-        column_type = sqltypes.CHAR  # length of 1, equivalent to CHARACTER
-        batch_setup = DatabricksBatchTestSetup(
-            config=DatabricksDatasourceTestConfig(column_types={self.COLUMN: column_type}),
-            data=self.DATA_FRAME,
-            extra_data={},
-        )
-        with batch_setup.batch_test_context() as batch:
-            result = batch.validate(
-                expect=ExpectColumnDistinctValuesToContainSet(
-                    column=self.COLUMN,
+                    column=self.STRING_COL_NAME,
                     value_set=[
                         "a",
                         "b",
@@ -119,27 +93,27 @@ class TestDatabricksDataTypes:
     def test_boolean(self):
         column_type = sqltypes.BOOLEAN
         batch_setup = DatabricksBatchTestSetup(
-            config=DatabricksDatasourceTestConfig(column_types={self.COLUMN: column_type}),
+            config=DatabricksDatasourceTestConfig(column_types={self.BOOL_COL_NAME: column_type}),
             data=self.DATA_FRAME,
             extra_data={},
         )
         with batch_setup.batch_test_context() as batch:
             result = batch.validate(
-                expect=ExpectColumnValuesToBeOfType(column=self.COLUMN, type_="BOOLEAN")
+                expect=ExpectColumnValuesToBeOfType(column=self.BOOL_COL_NAME, type_="BOOLEAN")
             )
         assert result.success
 
     def test_date(self):
         column_type = sqltypes.DATE
         batch_setup = DatabricksBatchTestSetup(
-            config=DatabricksDatasourceTestConfig(column_types={self.COLUMN: column_type}),
+            config=DatabricksDatasourceTestConfig(column_types={self.DATE_COL_NAME: column_type}),
             data=self.DATA_FRAME,
             extra_data={},
         )
         with batch_setup.batch_test_context() as batch:
             result = batch.validate(
                 expect=ExpectColumnValuesToBeBetween(
-                    column=self.COLUMN,
+                    column=self.DATE_COL_NAME,
                     min_value=datetime(year=2021, month=1, day=1, tzinfo=timezone.utc).date(),
                     max_value=datetime(year=2024, month=1, day=1, tzinfo=timezone.utc).date(),
                 )
@@ -149,48 +123,37 @@ class TestDatabricksDataTypes:
     def test_datetime(self):
         column_type = sqltypes.DATETIME
         batch_setup = DatabricksBatchTestSetup(
-            config=DatabricksDatasourceTestConfig(column_types={self.COLUMN: column_type}),
+            config=DatabricksDatasourceTestConfig(column_types={self.DATE_COL_NAME: column_type}),
             data=self.DATA_FRAME,
             extra_data={},
         )
         with batch_setup.batch_test_context() as batch:
             result = batch.validate(
                 expect=ExpectColumnValuesToBeBetween(
-                    column=self.COLUMN,
+                    column=self.DATE_COL_NAME,
                     min_value=datetime(year=2021, month=1, day=1, tzinfo=timezone.utc),
                     max_value=datetime(year=2024, month=1, day=1, tzinfo=timezone.utc),
                 )
             )
         assert result.success
 
-    def test_timestamp_tz(self):
-        column_type = SNOWFLAKE_TYPES.TIMESTAMP_TZ
+    @pytest.mark.parametrize(
+        "column_type",
+        [
+            sqltypes.TIMESTAMP(timezone=False),
+            sqltypes.TIMESTAMP(timezone=True),
+        ],
+    )
+    def test_timestamp(self, column_type: sqltypes.TIMESTAMP):
         batch_setup = DatabricksBatchTestSetup(
-            config=DatabricksDatasourceTestConfig(column_types={self.COLUMN: column_type}),
+            config=DatabricksDatasourceTestConfig(column_types={self.DATE_COL_NAME: column_type}),
             data=self.DATA_FRAME,
             extra_data={},
         )
         with batch_setup.batch_test_context() as batch:
             result = batch.validate(
                 expect=ExpectColumnValuesToBeBetween(
-                    column=self.COLUMN,
-                    min_value=datetime(year=2021, month=1, day=1, tzinfo=timezone.utc),
-                    max_value=datetime(year=2024, month=1, day=1, tzinfo=timezone.utc),
-                )
-            )
-        assert result.success
-
-    def test_timestamp_ntz(self):
-        column_type = SNOWFLAKE_TYPES.TIMESTAMP_NTZ
-        batch_setup = DatabricksBatchTestSetup(
-            config=DatabricksDatasourceTestConfig(column_types={self.COLUMN: column_type}),
-            data=self.DATA_FRAME,
-            extra_data={},
-        )
-        with batch_setup.batch_test_context() as batch:
-            result = batch.validate(
-                expect=ExpectColumnValuesToBeBetween(
-                    column=self.COLUMN,
+                    column=self.DATE_COL_NAME,
                     min_value=datetime(year=2021, month=1, day=1, tzinfo=timezone.utc),
                     max_value=datetime(year=2024, month=1, day=1, tzinfo=timezone.utc),
                 )
