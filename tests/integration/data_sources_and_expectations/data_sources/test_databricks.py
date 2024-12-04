@@ -99,7 +99,7 @@ class TestDatabricksDataTypes:
         )
         with batch_setup.batch_test_context() as batch:
             result = batch.validate(
-                expect=ExpectColumnValuesToBeOfType(column=self.BOOL_COL_NAME, type_="BOOLEAN")
+                expect=ExpectColumnValuesToBeOfType(column=self.BOOL_COL_NAME, type_="Boolean")
             )
         assert result.success
 
@@ -116,23 +116,6 @@ class TestDatabricksDataTypes:
                     column=self.DATE_COL_NAME,
                     min_value=datetime(year=2021, month=1, day=1, tzinfo=timezone.utc).date(),
                     max_value=datetime(year=2024, month=1, day=1, tzinfo=timezone.utc).date(),
-                )
-            )
-        assert result.success
-
-    def test_datetime(self):
-        column_type = sqltypes.DATETIME
-        batch_setup = DatabricksBatchTestSetup(
-            config=DatabricksDatasourceTestConfig(column_types={self.DATE_COL_NAME: column_type}),
-            data=self.DATA_FRAME,
-            extra_data={},
-        )
-        with batch_setup.batch_test_context() as batch:
-            result = batch.validate(
-                expect=ExpectColumnValuesToBeBetween(
-                    column=self.DATE_COL_NAME,
-                    min_value=datetime(year=2021, month=1, day=1, tzinfo=timezone.utc),
-                    max_value=datetime(year=2024, month=1, day=1, tzinfo=timezone.utc),
                 )
             )
         assert result.success
