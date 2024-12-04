@@ -27,7 +27,7 @@ class SparkDBFSDatasource(SparkFilesystemDatasource):
     type: Literal["spark_dbfs"]  # type: ignore[assignment]
 
     @override
-    def add_csv_asset(  # noqa: PLR0913
+    def add_csv_asset(
         self,
         name: str,
         *,

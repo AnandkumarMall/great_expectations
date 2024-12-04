@@ -156,10 +156,8 @@ class ValidationAction(BaseModel):
 def _should_notify(success: bool, notify_on: Literal["all", "failure", "success"]) -> bool:
     return (
         notify_on == "all"
-        or notify_on == "success"
-        and success
-        or notify_on == "failure"
-        and not success
+        or (notify_on == "success" and success)
+        or (notify_on == "failure" and not success)
     )
 
 
