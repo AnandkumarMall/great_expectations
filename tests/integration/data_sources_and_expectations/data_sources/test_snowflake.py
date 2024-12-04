@@ -14,6 +14,8 @@ from great_expectations.expectations import (
 from tests.integration.test_utils.data_source_config import SnowflakeDatasourceTestConfig
 from tests.integration.test_utils.data_source_config.snowflake import SnowflakeBatchTestSetup
 
+pytestmark = pytest.mark.snowflake
+
 
 class TestSnowflakeDataTypes:
     """This set of tests ensures that we can run expectations against every data
@@ -24,7 +26,6 @@ class TestSnowflakeDataTypes:
 
     COLUMN = "col_a"
 
-    @pytest.mark.snowflake
     def test_number(self):
         column_type = (
             SNOWFLAKE_TYPES.NUMBER
@@ -44,7 +45,6 @@ class TestSnowflakeDataTypes:
             )
         assert result.success
 
-    @pytest.mark.snowflake
     def test_int(self):
         column_type = sqltypes.INT  # equivalent to INTEGER, BIGINT, SMALLINT, TINYINT, BYTEINT
         batch_setup = SnowflakeBatchTestSetup(
@@ -62,7 +62,6 @@ class TestSnowflakeDataTypes:
             )
         assert result.success
 
-    @pytest.mark.snowflake
     def test_float(self):
         column_type = sqltypes.FLOAT  # equivalent to FLOAT4, FLOAT8, DOUBLE, DOUBLE PRECISION, REAL
         batch_setup = SnowflakeBatchTestSetup(
@@ -80,7 +79,6 @@ class TestSnowflakeDataTypes:
             )
         assert result.success
 
-    @pytest.mark.snowflake
     def test_varchar(self):
         column_type = sqltypes.VARCHAR  # equivalent to STRING, TEXT
         batch_setup = SnowflakeBatchTestSetup(
@@ -100,7 +98,6 @@ class TestSnowflakeDataTypes:
             )
         assert result.success
 
-    @pytest.mark.snowflake
     def test_char(self):
         column_type = sqltypes.CHAR  # length of 1, equivalent to CHARACTER
         batch_setup = SnowflakeBatchTestSetup(
@@ -120,7 +117,6 @@ class TestSnowflakeDataTypes:
             )
         assert result.success
 
-    @pytest.mark.snowflake
     def test_boolean(self):
         column_type = sqltypes.BOOLEAN
         batch_setup = SnowflakeBatchTestSetup(
@@ -134,7 +130,6 @@ class TestSnowflakeDataTypes:
             )
         assert result.success
 
-    @pytest.mark.snowflake
     def test_date(self):
         column_type = sqltypes.DATE
         batch_setup = SnowflakeBatchTestSetup(
@@ -160,7 +155,6 @@ class TestSnowflakeDataTypes:
             )
         assert result.success
 
-    @pytest.mark.snowflake
     def test_datetime(self):
         column_type = sqltypes.DATETIME
         batch_setup = SnowflakeBatchTestSetup(
@@ -186,7 +180,6 @@ class TestSnowflakeDataTypes:
             )
         assert result.success
 
-    @pytest.mark.snowflake
     def test_timestamp_tz(self):
         column_type = SNOWFLAKE_TYPES.TIMESTAMP_TZ
         batch_setup = SnowflakeBatchTestSetup(
@@ -212,7 +205,6 @@ class TestSnowflakeDataTypes:
             )
         assert result.success
 
-    @pytest.mark.snowflake
     def test_timestamp_ntz(self):
         column_type = SNOWFLAKE_TYPES.TIMESTAMP_NTZ
         batch_setup = SnowflakeBatchTestSetup(
@@ -238,7 +230,6 @@ class TestSnowflakeDataTypes:
             )
         assert result.success
 
-    @pytest.mark.snowflake
     @pytest.mark.xfail(
         strict=True,
         reason="time is not an accepted min/max value parameter, and other date types "
