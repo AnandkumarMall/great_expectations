@@ -8,6 +8,7 @@ from great_expectations.expectations import (
     ExpectColumnDistinctValuesToContainSet,
     ExpectColumnSumToBeBetween,
     ExpectColumnValuesToBeBetween,
+    ExpectColumnValuesToBeInSet,
     ExpectColumnValuesToBeOfType,
 )
 from tests.integration.test_utils.data_source_config import DatabricksDatasourceTestConfig
@@ -91,6 +92,25 @@ class TestDatabricksDataTypes:
         assert result.success
 
     def test_boolean(self):
+        column_type = sqltypes.BOOLEAN
+        batch_setup = DatabricksBatchTestSetup(
+            config=DatabricksDatasourceTestConfig(column_types={self.BOOL_COL_NAME: column_type}),
+            data=self.DATA_FRAME,
+            extra_data={},
+        )
+        with batch_setup.batch_test_context() as batch:
+            result = batch.validate(
+                expect=ExpectColumnValuesToBeInSet(
+                    column=self.BOOL_COL_NAME, value_set=[True, False]
+                )
+            )
+        assert result.success
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason="Expectation fails despite the type_ param being the same as the observed value.",
+    )
+    def test_boolean__expect_column_values_to_be_of_type(self):
         column_type = sqltypes.BOOLEAN
         batch_setup = DatabricksBatchTestSetup(
             config=DatabricksDatasourceTestConfig(column_types={self.BOOL_COL_NAME: column_type}),
