@@ -23,15 +23,15 @@ from typing import (
 import numpy as np
 import pandas as pd
 
-from great_expectations.core.batch import Batch, BatchRequestBase  # noqa: TCH001
-from great_expectations.core.domain import Domain  # noqa: TCH001
+from great_expectations.core.batch import Batch, BatchRequestBase  # noqa: TC001
+from great_expectations.core.domain import Domain  # noqa: TC001
 from great_expectations.data_context.util import instantiate_class_from_config
 from great_expectations.experimental.rule_based_profiler.attributed_resolved_metrics import (
     AttributedResolvedMetrics,
 )
 from great_expectations.experimental.rule_based_profiler.builder import Builder
 from great_expectations.experimental.rule_based_profiler.config import (
-    ParameterBuilderConfig,  # noqa: TCH001
+    ParameterBuilderConfig,  # noqa: TC001
 )
 from great_expectations.experimental.rule_based_profiler.exceptions import ProfilerExecutionError
 from great_expectations.experimental.rule_based_profiler.helpers.util import (
@@ -57,11 +57,11 @@ from great_expectations.experimental.rule_based_profiler.parameter_container imp
 )
 from great_expectations.types.attributes import Attributes
 from great_expectations.util import convert_to_json_serializable, is_parseable_date  # noqa: TID251
-from great_expectations.validator.computed_metric import MetricValue  # noqa: TCH001
-from great_expectations.validator.exception_info import ExceptionInfo  # noqa: TCH001
+from great_expectations.validator.computed_metric import MetricValue  # noqa: TC001
+from great_expectations.validator.exception_info import ExceptionInfo  # noqa: TC001
 from great_expectations.validator.metric_configuration import MetricConfiguration
 from great_expectations.validator.validation_graph import (
-    ValidationGraph,  # noqa: TCH001
+    ValidationGraph,  # noqa: TC001
 )
 
 if TYPE_CHECKING:
@@ -647,8 +647,10 @@ specified (empty "metric_name" value detected)."""  # noqa: E501
 
                         batch_metric_values.append(0.0)
                     elif not (
-                        isinstance(metric_value, (str, np.str_))
-                        and is_parseable_date(value=metric_value)
+                        (
+                            isinstance(metric_value, (str, np.str_))
+                            and is_parseable_date(value=metric_value)
+                        )
                         or isinstance(
                             metric_value, (datetime.datetime, numbers.Number, decimal.Decimal)
                         )

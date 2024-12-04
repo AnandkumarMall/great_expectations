@@ -1584,11 +1584,8 @@ def generate_expectation_tests(  # noqa: C901, PLR0912, PLR0913, PLR0915
                 if _engine == "sqlalchemy" and "sqlalchemy" in engines_implemented:
                     engines_to_include[_engine] = True
                     dialects_to_include[backend] = True
-                elif (
-                    _engine == "pandas"
-                    and "pandas" in engines_implemented
-                    or _engine == "spark"
-                    and "spark" in engines_implemented
+                elif (_engine == "pandas" and "pandas" in engines_implemented) or (
+                    _engine == "spark" and "spark" in engines_implemented
                 ):
                     engines_to_include[_engine] = True
     else:

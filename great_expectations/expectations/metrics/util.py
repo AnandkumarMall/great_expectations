@@ -30,8 +30,8 @@ from great_expectations.compatibility.sqlalchemy import (
 )
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.execution_engine import (
-    PandasExecutionEngine,  # noqa: TCH001
-    SqlAlchemyExecutionEngine,  # noqa: TCH001
+    PandasExecutionEngine,  # noqa: TC001
+    SqlAlchemyExecutionEngine,  # noqa: TC001
 )
 from great_expectations.execution_engine.sqlalchemy_batch_data import (
     SqlAlchemyBatchData,

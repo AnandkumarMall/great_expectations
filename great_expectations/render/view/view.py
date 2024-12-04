@@ -154,10 +154,8 @@ class DefaultJinjaView:
             # If the content_block item here is actually a list of content blocks then we want to recursively render  # noqa: E501
             rendered_block = ""
             for idx, content_block_el in enumerate(content_block):
-                if (
-                    isinstance(content_block_el, RenderedComponentContent)
-                    or isinstance(content_block_el, dict)
-                    and "content_block_type" in content_block_el
+                if isinstance(content_block_el, RenderedComponentContent) or (
+                    isinstance(content_block_el, dict) and "content_block_type" in content_block_el
                 ):
                     new_content_block_id = None
                     if content_block_id:
