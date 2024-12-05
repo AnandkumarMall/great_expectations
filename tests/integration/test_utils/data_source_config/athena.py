@@ -78,5 +78,4 @@ class AthenaConnectionConfig(BaseSettings):
 
     @property
     def connection_string(self) -> str:
-        return  f"awsathena+rest://@athena.us-east-1.amazonaws.com/{self.ATHENA_DB_NAME}?s3_staging_dir={self.ATHENA_STAGING_S3}"
-
+        return f"awsathena+rest://@athena.us-east-1.amazonaws.com/{self.ATHENA_DB_NAME}?s3_staging_dir={self.ATHENA_STAGING_S3}"
