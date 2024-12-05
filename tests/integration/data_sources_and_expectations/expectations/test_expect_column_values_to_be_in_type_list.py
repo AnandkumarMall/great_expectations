@@ -39,7 +39,6 @@ PASSING_DATA_SOURCES_EXCEPT_DATA_FRAMES = [
         (
             PandasDataFrameDatasourceTestConfig,
             SnowflakeDatasourceTestConfig,
-            # DatabricksDatasourceTestConfig,
         ),
     )
 ]
@@ -58,6 +57,7 @@ def test_success_complete(batch_for_datasource: Batch) -> None:
         "IntegerType",
         "_CUSTOM_DECIMAL",
         "INT64",
+        "INT",
     ]
     expectation = gxe.ExpectColumnValuesToBeInTypeList(column=INTEGER_COLUMN, type_list=type_list)
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)

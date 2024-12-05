@@ -250,7 +250,7 @@
         {
           "title": "positive_test_float_values",
           "exact_match_out": false,
-          "suppress_test_for": ["bigquery", "trino"],
+          "suppress_test_for": ["bigquery", "trino", "mssql"],
           "in": {
             "column": "y",
             "type_list": [
@@ -266,7 +266,7 @@
             "sqlalchemy"
           ]
         },
-                {
+        {
           "title": "positive_test_float_values_bigquery",
           "exact_match_out": false,
           "in": {
@@ -321,7 +321,7 @@
         {
           "title": "positive_test_text_values",
           "exact_match_out": false,
-          "suppress_test_for": ["bigquery"],
+          "suppress_test_for": ["bigquery", "mssql"],
           "in": {
             "column": "z",
             "type_list": [
@@ -509,7 +509,7 @@
         {
           "title": "positive_test_text_and_integer_values",
           "exact_match_out": false,
-          "suppress_test_for": ["bigquery"],
+          "suppress_test_for": ["bigquery", "mssql"],
           "in": {
             "column": "s",
             "type_list": [

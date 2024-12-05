@@ -31,7 +31,7 @@ def test_expect_column_values_to_be_of_type_string_dialect_pyathena(sa):
     # Monkey-patch dialect for testing purposes.
     validator.execution_engine.dialect_module = aws.sqlalchemy_athena
 
-    result = validator.expect_column_values_to_be_of_type("col", type_="string")
+    result = validator.expect_column_values_to_be_of_type("col", type_="TEXT")
 
     assert result == ExpectationValidationResult(
         success=True,
@@ -39,7 +39,7 @@ def test_expect_column_values_to_be_of_type_string_dialect_pyathena(sa):
             "expectation_type": "expect_column_values_to_be_of_type",
             "kwargs": {
                 "column": "col",
-                "type_": "string",
+                "type_": "TEXT",
             },
             "meta": {},
         },
