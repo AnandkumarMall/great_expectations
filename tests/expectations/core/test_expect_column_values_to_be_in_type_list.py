@@ -30,7 +30,7 @@ def test_expect_column_values_to_be_in_type_list_dialect_pyathena_string(sa):
     validator.execution_engine.dialect_module = aws.sqlalchemy_athena
 
     result = validator.expect_column_values_to_be_in_type_list(
-        "col", type_list=["string", "boolean"]
+        "col", type_list=["string", "boolean", "TEXT"]
     )
 
     assert result == ExpectationValidationResult(
@@ -39,7 +39,7 @@ def test_expect_column_values_to_be_in_type_list_dialect_pyathena_string(sa):
             "expectation_type": "expect_column_values_to_be_in_type_list",
             "kwargs": {
                 "column": "col",
-                "type_list": ["string", "boolean"],
+                "type_list": ["string", "boolean", "TEXT"],
             },
             "meta": {},
         },
