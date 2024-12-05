@@ -39,7 +39,7 @@ PASSING_DATA_SOURCES_EXCEPT_DATA_FRAMES = [
         (
             PandasDataFrameDatasourceTestConfig,
             SnowflakeDatasourceTestConfig,
-            #DatabricksDatasourceTestConfig,
+            # DatabricksDatasourceTestConfig,
         ),
     )
 ]

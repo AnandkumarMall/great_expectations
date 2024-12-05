@@ -64,6 +64,7 @@ def test_success_for_type__INTEGER(batch_for_datasource: Batch) -> None:
     result = batch_for_datasource.validate(expectation)
     assert result.success
 
+
 @parameterize_batch_for_data_sources(
     data_source_configs=[
         BigQueryDatasourceTestConfig(),
