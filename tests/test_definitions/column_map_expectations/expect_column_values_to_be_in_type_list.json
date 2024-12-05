@@ -255,7 +255,8 @@
             "column": "y",
             "type_list": [
               "DOUBLE_PRECISION",
-              "FLOAT"
+              "FLOAT",
+              "DOUBLE PRECISION"
             ]
           },
           "out": {

@@ -33,6 +33,12 @@
         },
         "redshift": {
           "x": "INTEGER"
+        },
+        "bigquery": {
+          "x": "INT64"
+        },
+        "databricks": {
+          "x": "INT"
         }
       },
       "tests": [

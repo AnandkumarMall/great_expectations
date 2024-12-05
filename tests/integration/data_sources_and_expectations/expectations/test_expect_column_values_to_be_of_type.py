@@ -52,7 +52,6 @@ def test_success_for_type__int(batch_for_datasource: Batch) -> None:
 
 @parameterize_batch_for_data_sources(
     data_source_configs=[
-        BigQueryDatasourceTestConfig(),
         MSSQLDatasourceTestConfig(),
         MySQLDatasourceTestConfig(),
         PostgreSQLDatasourceTestConfig(),
@@ -62,6 +61,17 @@ def test_success_for_type__int(batch_for_datasource: Batch) -> None:
 )
 def test_success_for_type__INTEGER(batch_for_datasource: Batch) -> None:
     expectation = gxe.ExpectColumnValuesToBeOfType(column=INTEGER_COLUMN, type_="INTEGER")
+    result = batch_for_datasource.validate(expectation)
+    assert result.success
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=[
+        BigQueryDatasourceTestConfig(),
+    ],
+    data=DATA,
+)
+def test_success_for_type__INT64(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectColumnValuesToBeOfType(column=INTEGER_COLUMN, type_="INT64")
     result = batch_for_datasource.validate(expectation)
     assert result.success
 

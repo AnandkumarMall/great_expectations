@@ -1842,9 +1842,10 @@ def test_map_of_type_sa_is_compiled_type(sa):
     # noinspection PyTypeChecker
     assert results[desired_metric.id][0]["name"] == "a"
 
-    expected_type = sa.Float.compile(dialect=eng.dialect)
+    expected_type = sa.Float().compile(dialect=eng.dialect)
     # noinspection PyTypeChecker
-    assert isinstance(results[desired_metric.id][0]["type"], expected_type)
+    assert results[desired_metric.id][0]["type"] == expected_type
+    assert expected_type == "FLOAT"
 
 
 @pytest.mark.spark
