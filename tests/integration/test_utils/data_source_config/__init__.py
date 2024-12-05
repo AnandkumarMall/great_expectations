@@ -1,3 +1,4 @@
+from .athena import AthenaDatasourceTestConfig
 from .base import DataSourceTestConfig
 from .big_query import BigQueryDatasourceTestConfig
 from .databricks import DatabricksDatasourceTestConfig
