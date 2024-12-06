@@ -32,10 +32,14 @@ DATA = pd.DataFrame(
 @parameterize_batch_for_data_sources(data_source_configs=ALL_DATA_SOURCES, data=DATA)
 @pytest.mark.parametrize(
     ("column", "type_list"),
-    [INTEGER_COLUMN, ["INTEGER", "int", "int64", "int32", "IntegerType"]],
+    [
+        (INTEGER_COLUMN, ["INTEGER", "int", "int64", "int32", "IntegerType"]),
+        (STRING_COLUMN, ["str", "string", "StringType"]),
+        (FLOAT_COLUMN, ["float", "float64", "FloatType"])
+    ],
 )
 def test_success_complete(batch_for_datasource: Batch, column: str, type_list: list) -> None:
-    expectation = gxe.ExpectColumnValuesToBeInTypeList(column=INTEGER_COLUMN, type_list=type_list)
+    expectation = gxe.ExpectColumnValuesToBeInTypeList(column=column, type_list=type_list)
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
     result_dict = result.to_json_dict()["result"]
 
