@@ -9,15 +9,11 @@ from tests.integration.data_sources_and_expectations.test_canonical_expectations
     ALL_DATA_SOURCES,
     JUST_PANDAS_DATA_SOURCES,
 )
-from tests.integration.test_utils.data_source_config import (
-    DatabricksDatasourceTestConfig,
-    PandasDataFrameDatasourceTestConfig,
-    SnowflakeDatasourceTestConfig,
-)
 
 INTEGER_COLUMN = "integers"
 INTEGER_AND_NULL_COLUMN = "integers_and_nulls"
 STRING_COLUMN = "strings"
+FLOAT_COLUMN = "floats"
 NULL_COLUMN = "nulls"
 
 
@@ -27,73 +23,32 @@ DATA = pd.DataFrame(
         INTEGER_AND_NULL_COLUMN: [1, 2, 3, 4, None],
         STRING_COLUMN: ["a", "b", "c", "d", "e"],
         NULL_COLUMN: pd.Series([None, None, None, None, None]),
+        FLOAT_COLUMN: [1.0, 2.0, 3.0, 4.0, 5.0],
     },
     dtype="object",
 )
 
-PASSING_DATA_SOURCES_EXCEPT_DATA_FRAMES = [
-    ds
-    for ds in ALL_DATA_SOURCES
-    if not isinstance(
-        ds,
-        (
-            PandasDataFrameDatasourceTestConfig,
-            SnowflakeDatasourceTestConfig,
-        ),
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=ALL_DATA_SOURCES, data=DATA
+)
+@pytest.mark.parametrize(
+    ("column", "type_list"),
+    [INTEGER_COLUMN, ["INTEGER", "int", "int64", "int32", "IntegerType"]],
+)
+def test_success_complete(batch_for_datasource: Batch, column: str, type_list: list) -> None:
+
+    expectation = gxe.ExpectColumnValuesToBeInTypeList(
+        column=INTEGER_COLUMN, type_list=type_list
     )
-]
-
-
-@parameterize_batch_for_data_sources(
-    data_source_configs=PASSING_DATA_SOURCES_EXCEPT_DATA_FRAMES, data=DATA
-)
-def test_success_complete(batch_for_datasource: Batch) -> None:
-    type_list = [
-        "INTEGER",
-        "Integer",
-        "int",
-        "int64",
-        "int32",
-        "IntegerType",
-        "_CUSTOM_DECIMAL",
-        "INT64",
-        "INT",
-    ]
-    expectation = gxe.ExpectColumnValuesToBeInTypeList(column=INTEGER_COLUMN, type_list=type_list)
-    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
+    result = batch_for_datasource.validate(
+        expectation, result_format=ResultFormat.COMPLETE
+    )
     result_dict = result.to_json_dict()["result"]
 
     assert result.success
     assert isinstance(result_dict, dict)
     assert result_dict["observed_value"] in type_list
-
-
-@pytest.mark.xfail
-@parameterize_batch_for_data_sources(
-    data_source_configs=[SnowflakeDatasourceTestConfig(), DatabricksDatasourceTestConfig()],
-    data=DATA,
-)
-def test_success_complete_errors(batch_for_datasource: Batch) -> None:
-    # TODO: get this fixed
-    type_list = ["INTEGER", "Integer", "int", "int64", "int32", "IntegerType", "_CUSTOM_DECIMAL"]
-    expectation = gxe.ExpectColumnValuesToBeInTypeList(column=INTEGER_COLUMN, type_list=type_list)
-    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
-    result_dict = result.to_json_dict()["result"]
-
-    assert result.success
-    assert isinstance(result_dict, dict)
-    assert result_dict["observed_value"] in type_list
-
-
-@parameterize_batch_for_data_sources(
-    data_source_configs=[PandasDataFrameDatasourceTestConfig()], data=DATA
-)
-def test_success_complete_pandas(batch_for_datasource: Batch) -> None:
-    type_list = ["INTEGER", "int", "int64", "int32", "IntegerType"]
-    expectation = gxe.ExpectColumnValuesToBeInTypeList(column=INTEGER_COLUMN, type_list=type_list)
-    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
-
-    assert result.success
 
 
 @pytest.mark.parametrize(
