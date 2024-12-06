@@ -35,7 +35,7 @@ DATA = pd.DataFrame(
     [
         (INTEGER_COLUMN, ["INTEGER", "int", "int64", "int32", "IntegerType"]),
         (STRING_COLUMN, ["str", "string", "StringType"]),
-        (FLOAT_COLUMN, ["float", "float64", "FloatType"])
+        (FLOAT_COLUMN, ["float", "float64", "FloatType"]),
     ],
 )
 def test_success_complete(batch_for_datasource: Batch, column: str, type_list: list) -> None:
