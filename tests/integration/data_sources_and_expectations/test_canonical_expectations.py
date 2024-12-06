@@ -6,7 +6,6 @@ import pandas as pd
 import great_expectations.expectations as gxe
 from tests.integration.conftest import parameterize_batch_for_data_sources
 from tests.integration.test_utils.data_source_config import (
-    AthenaDatasourceTestConfig,
     BigQueryDatasourceTestConfig,
     DatabricksDatasourceTestConfig,
     DataSourceTestConfig,
@@ -21,7 +20,6 @@ from tests.integration.test_utils.data_source_config import (
 )
 
 ALL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
-    AthenaDatasourceTestConfig(),
     BigQueryDatasourceTestConfig(),
     DatabricksDatasourceTestConfig(),
     MSSQLDatasourceTestConfig(),
@@ -41,7 +39,6 @@ NON_SQL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
 ]
 
 SQL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
-    AthenaDatasourceTestConfig(),
     BigQueryDatasourceTestConfig(),
     DatabricksDatasourceTestConfig(),
     MSSQLDatasourceTestConfig(),
@@ -52,7 +49,6 @@ SQL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
 ]
 
 DATA_SOURCES_THAT_SUPPORT_DATE_COMPARISONS: Sequence[DataSourceTestConfig] = [
-    AthenaDatasourceTestConfig(),
     BigQueryDatasourceTestConfig(),
     DatabricksDatasourceTestConfig(),
     MSSQLDatasourceTestConfig(),
