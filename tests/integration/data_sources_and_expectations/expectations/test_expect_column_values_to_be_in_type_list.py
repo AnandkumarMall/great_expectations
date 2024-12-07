@@ -52,15 +52,9 @@ PASSING_DATA_SOURCES_EXCEPT_DATA_FRAMES = [
         (FLOAT_COLUMN, ["float", "float64", "FloatType"]),
     ],
 )
-def test_success_complete(
-    batch_for_datasource: Batch, column: str, type_list: list
-) -> None:
-    expectation = gxe.ExpectColumnValuesToBeInTypeList(
-        column=column, type_list=type_list
-    )
-    result = batch_for_datasource.validate(
-        expectation, result_format=ResultFormat.COMPLETE
-    )
+def test_success_complete(batch_for_datasource: Batch, column: str, type_list: list) -> None:
+    expectation = gxe.ExpectColumnValuesToBeInTypeList(column=column, type_list=type_list)
+    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
     result_dict = result.to_json_dict()["result"]
 
     assert result.success
@@ -72,9 +66,7 @@ def test_success_complete(
     "expectation",
     [
         pytest.param(
-            gxe.ExpectColumnValuesToBeInTypeList(
-                column=INTEGER_COLUMN, type_list=["int"]
-            ),
+            gxe.ExpectColumnValuesToBeInTypeList(column=INTEGER_COLUMN, type_list=["int"]),
             id="integer_types",
         ),
         pytest.param(
@@ -84,22 +76,16 @@ def test_success_complete(
             id="mostly",
         ),
         pytest.param(
-            gxe.ExpectColumnValuesToBeInTypeList(
-                column=STRING_COLUMN, type_list=["str"]
-            ),
+            gxe.ExpectColumnValuesToBeInTypeList(column=STRING_COLUMN, type_list=["str"]),
             id="string_types",
         ),
         pytest.param(
-            gxe.ExpectColumnValuesToBeInTypeList(
-                column=NULL_COLUMN, type_list=["float"]
-            ),
+            gxe.ExpectColumnValuesToBeInTypeList(column=NULL_COLUMN, type_list=["float"]),
             id="null_float_types",
         ),
     ],
 )
-@parameterize_batch_for_data_sources(
-    data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA
-)
+@parameterize_batch_for_data_sources(data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA)
 def test_success(
     batch_for_datasource: Batch,
     expectation: gxe.ExpectColumnValuesToBeInTypeList,
@@ -112,16 +98,12 @@ def test_success(
     "expectation",
     [
         pytest.param(
-            gxe.ExpectColumnValuesToBeInTypeList(
-                column=INTEGER_COLUMN, type_list=["str"]
-            ),
+            gxe.ExpectColumnValuesToBeInTypeList(column=INTEGER_COLUMN, type_list=["str"]),
             id="wrong_type",
         ),
     ],
 )
-@parameterize_batch_for_data_sources(
-    data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA
-)
+@parameterize_batch_for_data_sources(data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA)
 def test_failure(
     batch_for_datasource: Batch,
     expectation: gxe.ExpectColumnValuesToBeInTypeList,
