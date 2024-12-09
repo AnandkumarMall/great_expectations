@@ -19,17 +19,19 @@ from typing import (
     overload,
 )
 
-import great_expectations.exceptions as gx_exceptions
 import numpy as np
 from dateutil.parser import parse
+from packaging import version
+
+import great_expectations.exceptions as gx_exceptions
 from great_expectations.compatibility import aws, sqlalchemy, trino
 from great_expectations.compatibility.sqlalchemy import (
     sqlalchemy as sa,
 )
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.execution_engine import (
-    PandasExecutionEngine,  # noqa: TC001
-    SqlAlchemyExecutionEngine,  # noqa: TC001
+    PandasExecutionEngine,
+    SqlAlchemyExecutionEngine,
 )
 from great_expectations.execution_engine.sqlalchemy_batch_data import (
     SqlAlchemyBatchData,
@@ -38,7 +40,6 @@ from great_expectations.execution_engine.sqlalchemy_dialect import (
     GXSqlDialect,
 )
 from great_expectations.execution_engine.util import check_sql_engine_dialect
-from packaging import version
 
 try:
     import psycopg2  # noqa: F401
@@ -77,9 +78,8 @@ from great_expectations.compatibility import bigquery as sqla_bigquery
 from great_expectations.compatibility.bigquery import bigquery_types_tuple
 
 if TYPE_CHECKING:
-    from typing_extensions import TypeAlias
-
     import pandas as pd
+    from typing_extensions import TypeAlias
 
 try:
     import teradatasqlalchemy.dialect

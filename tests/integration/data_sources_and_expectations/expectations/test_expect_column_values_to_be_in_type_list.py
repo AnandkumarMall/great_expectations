@@ -83,7 +83,7 @@ PASSING_DATA_SOURCES_EXCEPT_DATA_FRAMES = [
                 "NUMERIC",
                 "DECIMAL(10, 0)",
                 "DECIMAL(38, 0)",  # Snowflake
-                "DoubleType", # Spark
+                "DoubleType",  # Spark
                 "DECIMAL(18, 0)",  # SQL Server
             ],
         ),
