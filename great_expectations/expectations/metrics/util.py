@@ -19,19 +19,17 @@ from typing import (
     overload,
 )
 
+import great_expectations.exceptions as gx_exceptions
 import numpy as np
 from dateutil.parser import parse
-from packaging import version
-
-import great_expectations.exceptions as gx_exceptions
 from great_expectations.compatibility import aws, sqlalchemy, trino
 from great_expectations.compatibility.sqlalchemy import (
     sqlalchemy as sa,
 )
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.execution_engine import (
-    PandasExecutionEngine,  # noqa: TCH001
-    SqlAlchemyExecutionEngine,  # noqa: TCH001
+    PandasExecutionEngine,  # noqa: TC001
+    SqlAlchemyExecutionEngine,  # noqa: TC001
 )
 from great_expectations.execution_engine.sqlalchemy_batch_data import (
     SqlAlchemyBatchData,
@@ -40,6 +38,7 @@ from great_expectations.execution_engine.sqlalchemy_dialect import (
     GXSqlDialect,
 )
 from great_expectations.execution_engine.util import check_sql_engine_dialect
+from packaging import version
 
 try:
     import psycopg2  # noqa: F401
@@ -78,8 +77,9 @@ from great_expectations.compatibility import bigquery as sqla_bigquery
 from great_expectations.compatibility.bigquery import bigquery_types_tuple
 
 if TYPE_CHECKING:
-    import pandas as pd
     from typing_extensions import TypeAlias
+
+    import pandas as pd
 
 try:
     import teradatasqlalchemy.dialect
@@ -463,7 +463,8 @@ def get_sqlalchemy_column_metadata(  # noqa: C901, PLR0912
         if dialect_name == GXSqlDialect.SNOWFLAKE:
             case_insensitive_columns = [
                 # TODO: SmartColumn should know the dialect and do lookups based on that
-                CaseInsensitiveNameDict(column)
+                # WARNING: Do not edit columns in place. It will affect the underlying inspector object.
+                CaseInsensitiveNameDict(column.copy())
                 for column in columns
             ]
             # Note: Column reflection fallback does not always return types

@@ -47,9 +47,46 @@ PASSING_DATA_SOURCES_EXCEPT_DATA_FRAMES = [
 @pytest.mark.parametrize(
     ("column", "type_list"),
     [
-        (INTEGER_COLUMN, ["INTEGER", "int", "int64", "int32", "IntegerType"]),
-        (STRING_COLUMN, ["str", "string", "StringType"]),
-        (FLOAT_COLUMN, ["float", "float64", "FloatType"]),
+        (
+            INTEGER_COLUMN,
+            [
+                "INTEGER",
+                "int",
+                "int64",
+                "int32",
+                "IntegerType",
+                "INT64",
+                "INT",
+                "DECIMAL(38, 0)",  # Snowflake
+            ],
+        ),
+        (
+            STRING_COLUMN,
+            [
+                "str",
+                "string",
+                "StringType",
+                "VARCHAR",
+                "STRING",
+                "VARCHAR(255)"  # PostgreSQL,
+                "VARCHAR(16777216)",  # Snowflake
+                "VARCHAR(max) COLLATE SQL_Latin1_General_CP1_CI_AS",  # SQL Server
+            ],
+        ),
+        (
+            FLOAT_COLUMN,
+            [
+                "float",
+                "float64",
+                "FloatType",
+                "DECIMAL",
+                "NUMERIC",
+                "DECIMAL(10, 0)",
+                "DECIMAL(38, 0)",  # Snowflake
+                "DoubleType", # Spark
+                "DECIMAL(18, 0)",  # SQL Server
+            ],
+        ),
     ],
 )
 def test_success_complete(batch_for_datasource: Batch, column: str, type_list: list) -> None:
