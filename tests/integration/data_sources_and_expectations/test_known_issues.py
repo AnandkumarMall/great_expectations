@@ -24,6 +24,15 @@ from tests.integration.test_utils.data_source_config.postgres import PostgreSQLD
     ),
 )
 def test_missing_condition_parser_causes_entire_suite_to_fail(batch_for_datasource):
+    """
+    This test demonstrates the bug where a missing condition_parser causes the entire suite to fail.
+
+    The bug is that the error message from the third expectation is propagated to all subsequent
+    expectations.
+
+    All expectations share a dependency on the 'table.row_count' metric, causing the issue to
+    propagate.
+    """
     suite = ExpectationSuite(
         name="faulty",
         expectations=[
@@ -41,10 +50,6 @@ def test_missing_condition_parser_causes_entire_suite_to_fail(batch_for_datasour
 
     result = batch_for_datasource.validate(suite)
 
-    # Resolution of the 'table.row_count' metric (which is used by all expectations above) fails
-    # because the condition_parser is inaccurate.
-    # BUG - The error message should not permeate across the suite due to the shared metric
-    # dependency.
     assert result.success is False
     assert all(
         res.success is False
@@ -63,6 +68,12 @@ def test_missing_condition_parser_causes_entire_suite_to_fail(batch_for_datasour
     ),
 )
 def test_catch_exceptions_is_not_respected(batch_for_datasource):
+    """
+    This test demonstrates the bug where catch_exceptions is not respected.
+
+    We do not currently have any logic that respects user configuration
+    and disables the default value of True.
+    """
     expectation = gxe.ExpectColumnValuesToMatchStrftimeFormat(
         column="col1", strftime_format="%Y-%m-%d", catch_exceptions=False
     )
