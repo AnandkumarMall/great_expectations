@@ -161,21 +161,28 @@ def test_expect_column_mean_to_be_between(batch_for_datasource):
     data_source_configs=[SparkFilesystemCsvDatasourceTestConfig()],
     data=pd.DataFrame(
         {
-            "names": ["Bob", "Alice", "Charlie"],
-            "emails": ["bob@gmail.com", "alice@gmail.com", "charlie@gmail.com"],
-            "dates": ["0", "1", "2"],
+            "col1": [1, 2, 3, 4, 5],
+            "col2": ["A", "B", "C", "D", None],
+            "col3": [1.1, None, 3.3, 4.4, 5.5],
         }
     ),
 )
-def test_faulty_strtime_causes_entire_suite_to_fail(batch_for_datasource):
+def test_missing_condition_parser_causes_entire_suite_to_fail(batch_for_datasource):
     suite = ExpectationSuite(
         name="faulty",
         expectations=[
-            gxe.ExpectColumnValuesToMatchStrftimeFormat(column="dates", strftime_format="%Y-%m-%d"),
-            gxe.ExpectColumnValuesToNotBeNull(column="names"),
-            gxe.ExpectColumnValuesToMatchRegex(column="emails", regex="@gmail.com"),
+            gxe.ExpectColumnValuesToNotBeNull(column="col1", result_format="COMPLETE"),
+            gxe.ExpectColumnValuesToBeInSet(
+                column="col2",
+                value_set=["A", "B", "C"],
+                row_condition="col3 IS NOT NULL",
+                mostly=0.665,
+                # condition_parser='spark',
+                result_format="COMPLETE",
+            ),
         ],
     )
+
     result = batch_for_datasource.validate(suite)
     assert not result.success
     assert all(res.success is False and res.exception_info for res in result.results)
