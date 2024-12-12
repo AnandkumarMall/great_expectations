@@ -23,15 +23,17 @@ from tests.integration.test_utils.data_source_config.postgres import PostgreSQLD
         }
     ),
 )
-def test_missing_condition_parser_causes_entire_suite_to_fail(batch_for_datasource):
+def test_shared_metric_dependencies_cause_entire_suite_to_fail(batch_for_datasource):
     """
     This test demonstrates the bug where a missing condition_parser causes the entire suite to fail.
 
     The bug is that the error message from the third expectation is propagated to all subsequent
     expectations.
 
-    All expectations share a dependency on the 'table.row_count' metric, causing the issue to
-    propagate.
+    This highlights a larger issue where shared metric dependencies can cause issues to propagate
+    across expectations. A missing condition parser is simply one example of this issue.
+
+    All expectations here share a dependency on the 'table.row_count' metric.
     """
     suite = ExpectationSuite(
         name="faulty",
