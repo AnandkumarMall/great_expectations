@@ -4,6 +4,7 @@ from typing import Sequence
 import pandas as pd
 
 import great_expectations.expectations as gxe
+from great_expectations.core.expectation_suite import ExpectationSuite
 from tests.integration.conftest import parameterize_batch_for_data_sources
 from tests.integration.test_utils.data_source_config import (
     BigQueryDatasourceTestConfig,
@@ -154,3 +155,27 @@ def test_expect_column_mean_to_be_between(batch_for_datasource):
     expectation = gxe.ExpectColumnMeanToBeBetween(column="a", min_value=2, max_value=3)
     result = batch_for_datasource.validate(expectation)
     assert result.success
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=[SparkFilesystemCsvDatasourceTestConfig()],
+    data=pd.DataFrame(
+        {
+            "names": ["Bob", "Alice", "Charlie"],
+            "emails": ["bob@gmail.com", "alice@gmail.com", "charlie@gmail.com"],
+            "dates": ["0", "1", "2"],
+        }
+    ),
+)
+def test_faulty_strtime_causes_entire_suite_to_fail(batch_for_datasource):
+    suite = ExpectationSuite(
+        name="faulty",
+        expectations=[
+            gxe.ExpectColumnValuesToMatchStrftimeFormat(column="dates", strftime_format="%Y-%m-%d"),
+            gxe.ExpectColumnValuesToNotBeNull(column="names"),
+            gxe.ExpectColumnValuesToMatchRegex(column="emails", regex="@gmail.com"),
+        ],
+    )
+    result = batch_for_datasource.validate(suite)
+    assert not result.success
+    assert all(res.success is False and res.exception_info for res in result.results)
