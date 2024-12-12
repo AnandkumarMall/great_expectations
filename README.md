@@ -14,7 +14,7 @@
 
 <img align="right" src="./docs/docusaurus/static/img/gx-mark-160.png">
 
-## About GX Core 
+## About GX Core
 
 GX Core is the engine of the GX platform. It combines the collective wisdom of thousands of community members with a proven track record in data quality deployments worldwide, wrapped into a super-simple package for data teams.
 
