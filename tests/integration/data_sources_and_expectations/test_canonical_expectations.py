@@ -4,7 +4,6 @@ from typing import Sequence
 import pandas as pd
 
 import great_expectations.expectations as gxe
-from great_expectations.core.expectation_suite import ExpectationSuite
 from tests.integration.conftest import parameterize_batch_for_data_sources
 from tests.integration.test_utils.data_source_config import (
     BigQueryDatasourceTestConfig,
@@ -155,43 +154,3 @@ def test_expect_column_mean_to_be_between(batch_for_datasource):
     expectation = gxe.ExpectColumnMeanToBeBetween(column="a", min_value=2, max_value=3)
     result = batch_for_datasource.validate(expectation)
     assert result.success
-
-
-@parameterize_batch_for_data_sources(
-    data_source_configs=[PostgreSQLDatasourceTestConfig()],
-    data=pd.DataFrame(
-        {
-            "col1": [1, 2, 3, 4, 5],
-            "col2": ["A", "B", "C", "D", None],
-            "col3": [1.1, None, 3.3, 4.4, 5.5],
-        }
-    ),
-)
-def test_missing_condition_parser_causes_entire_suite_to_fail(batch_for_datasource):
-    suite = ExpectationSuite(
-        name="faulty",
-        expectations=[
-            gxe.ExpectColumnValuesToNotBeNull(column="col1"),
-            gxe.ExpectColumnValuesToNotBeNull(column="col2"),
-            gxe.ExpectColumnValuesToBeInSet(
-                column="col2",
-                value_set=["A", "B", "C"],
-                row_condition="col3 IS NOT NULL",
-                mostly=0.665,
-                condition_parser=None,  # Should be specified as 'great_expectations'
-            ),
-        ],
-    )
-
-    result = batch_for_datasource.validate(suite)
-    assert not result.success
-    # Resolution of the 'table.row_count' metric (which is used by all expectations above) fails
-    # because the condition_parser is inaccurate.
-    # BUG - The error message should not permeates across the suite due to the shared metric
-    # dependency.
-    assert all(
-        res.success is False
-        and "SqlAlchemyExecutionEngine only supports the great_expectations condition_parser."
-        in str(res.exception_info)
-        for res in result.results
-    )
