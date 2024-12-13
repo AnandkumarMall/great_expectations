@@ -183,12 +183,10 @@ class ExpectColumnUniqueValueCountToBeBetween(ColumnAggregateExpectation):
         default=None, description=MAX_VALUE_DESCRIPTION
     )
     strict_min: bool = pydantic.Field(
-        default=False,
-        description=STRICT_MIN_DESCRIPTION,
+        default=False, description=STRICT_MIN_DESCRIPTION, alias="exclusive_min"
     )
     strict_max: bool = pydantic.Field(
-        default=False,
-        description=STRICT_MAX_DESCRIPTION,
+        default=False, description=STRICT_MAX_DESCRIPTION, alias="exclusive_max"
     )
 
     # This dictionary contains metadata for display in the public gallery
