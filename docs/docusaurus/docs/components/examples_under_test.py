@@ -50,8 +50,7 @@ create_a_data_context = [
     IntegrationTestFixture(
         name="connect_python",
         user_flow_script="docs/docusaurus/docs/cloud/connect/connect_python.py",
-        backend_dependencies=[],
-        cloud=True,
+        backend_dependencies=[BackendDependencies.CLOUD],
     ),
     # TODO: Re-enable this once a --docs-tests-cloud environment is available.
     # IntegrationTestFixture(

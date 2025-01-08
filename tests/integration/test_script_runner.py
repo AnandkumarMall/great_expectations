@@ -374,16 +374,13 @@ def test_integration_tests(
 ):
     _check_for_skipped_tests(pytest_parsed_arguments, test_configuration)
 
-    if not test_configuration.cloud:
-        monkeypatch.delenv(GXCloudEnvironmentVariable.BASE_URL, raising=False)
-        monkeypatch.delenv(GXCloudEnvironmentVariable.ACCESS_TOKEN, raising=False)
-        monkeypatch.delenv(GXCloudEnvironmentVariable.ORGANIZATION_ID, raising=False)
-
-    _execute_integration_test(integration_test_fixture=test_configuration, tmp_path=tmp_path)
+    _execute_integration_test(
+        integration_test_fixture=test_configuration, tmp_path=tmp_path, monkeypatch=monkeypatch
+    )
 
 
-def _execute_integration_test(  # noqa: C901, PLR0915 # FIXME CoP
-    integration_test_fixture: IntegrationTestFixture, tmp_path: pathlib.Path
+def _execute_integration_test(  # noqa: C901, PLR0915, PLR0912 # FIXME CoP
+    integration_test_fixture: IntegrationTestFixture, tmp_path: pathlib.Path, monkeypatch
 ):
     """
     Prepare and environment and run integration tests from a list of tests.
@@ -457,6 +454,12 @@ def _execute_integration_test(  # noqa: C901, PLR0915 # FIXME CoP
             util_script_path = tmp_path / "tests/test_utils.py"
             shutil.copyfile(script_source, util_script_path)
 
+        # Ensure non-cloud tests don't have cloud environment variables set
+        if BackendDependencies.CLOUD not in integration_test_fixture.backend_dependencies:
+            monkeypatch.delenv(GXCloudEnvironmentVariable.BASE_URL, raising=False)
+            monkeypatch.delenv(GXCloudEnvironmentVariable.ACCESS_TOKEN, raising=False)
+            monkeypatch.delenv(GXCloudEnvironmentVariable.ORGANIZATION_ID, raising=False)
+
         # Run script as module, using python's importlib machinery (https://docs.python.org/3/library/importlib.htm)
         loader = importlib.machinery.SourceFileLoader("test_script_module", str(script_path))
         spec = importlib.util.spec_from_loader("test_script_module", loader)
@@ -521,3 +524,5 @@ def _check_for_skipped_tests(  # noqa: C901, PLR0912 # FIXME CoP
         pytest.skip("Skipping Trino tests")
     elif BackendDependencies.ATHENA in dependencies and not pytest_args.athena:
         pytest.skip("Skipping Athena tests")
+    elif BackendDependencies.CLOUD in dependencies and not pytest_args.cloud:
+        pytest.skip("Skipping GX Cloud tests")

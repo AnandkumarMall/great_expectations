@@ -17,3 +17,6 @@ class BackendDependencies(enum.Enum):
     SQLALCHEMY = "SQLALCHEMY"
     SNOWFLAKE = "SNOWFLAKE"
     TRINO = "TRINO"
+
+    # Not a true backend, but used to indicate that a test requires a cloud environment
+    CLOUD = "CLOUD"
