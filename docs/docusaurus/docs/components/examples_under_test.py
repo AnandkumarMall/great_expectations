@@ -20,6 +20,14 @@ install_gx = [
     ),
 ]
 
+cloud = [
+    IntegrationTestFixture(
+        name="connect_python",
+        user_flow_script="docs/docusaurus/docs/cloud/connect/connect_python.py",
+        backend_dependencies=[],
+    )
+]
+
 try_gx = [
     IntegrationTestFixture(
         # To test, run:
@@ -647,6 +655,8 @@ learn_data_quality_use_cases = [
 # Extend the docs_tests list with the above sublists (only the docs_tests list is imported
 # into `test_script_runner.py` and actually used in CI checks).
 docs_tests.extend(install_gx)
+
+docs_tests.extend(cloud)
 
 docs_tests.extend(try_gx)
 
