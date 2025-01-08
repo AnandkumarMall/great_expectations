@@ -17,4 +17,3 @@ class BackendDependencies(enum.Enum):
     SQLALCHEMY = "SQLALCHEMY"
     SNOWFLAKE = "SNOWFLAKE"
     TRINO = "TRINO"
-    CLOUD = "CLOUD"

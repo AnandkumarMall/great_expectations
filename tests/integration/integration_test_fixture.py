@@ -30,3 +30,4 @@ class IntegrationTestFixture:
     data_dir: Optional[str] = None
     other_files: Optional[Tuple[Tuple[str, str]]] = None
     util_script: Optional[str] = None
+    cloud: bool = False

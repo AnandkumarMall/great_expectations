@@ -20,6 +20,7 @@ from flaky import flaky
 from docs.docusaurus.docs.components.examples_under_test import (
     docs_tests,
 )
+from great_expectations.data_context.cloud_constants import GXCloudEnvironmentVariable
 from great_expectations.data_context.data_context.file_data_context import (
     FileDataContext,
 )
@@ -365,9 +366,20 @@ def test_docs(integration_test_fixture, tmp_path, pytest_parsed_arguments):
 
 @pytest.mark.parametrize("test_configuration", integration_test_matrix, ids=idfn)
 @pytest.mark.slow  # 79.77s
-def test_integration_tests(test_configuration, tmp_path, pytest_parsed_arguments):
+def test_integration_tests(
+    test_configuration: IntegrationTestFixture,
+    tmp_path: pathlib.Path,
+    pytest_parsed_arguments,
+    monkeypatch,
+):
     _check_for_skipped_tests(pytest_parsed_arguments, test_configuration)
-    _execute_integration_test(test_configuration, tmp_path)
+
+    if not test_configuration.cloud:
+        monkeypatch.delenv(GXCloudEnvironmentVariable.BASE_URL, raising=False)
+        monkeypatch.delenv(GXCloudEnvironmentVariable.ACCESS_TOKEN, raising=False)
+        monkeypatch.delenv(GXCloudEnvironmentVariable.ORGANIZATION_ID, raising=False)
+
+    _execute_integration_test(integration_test_fixture=test_configuration, tmp_path=tmp_path)
 
 
 def _execute_integration_test(  # noqa: C901, PLR0915 # FIXME CoP
@@ -389,9 +401,7 @@ def _execute_integration_test(  # noqa: C901, PLR0915 # FIXME CoP
             execute_shell_command("pip install .")
         os.chdir(tmp_path)
 
-        #
         # Build test state
-        # DataContext
         data_context_dir = integration_test_fixture.data_context_dir
         if data_context_dir:
             context_source_dir = base_dir / data_context_dir
