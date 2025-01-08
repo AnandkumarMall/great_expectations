@@ -359,9 +359,18 @@ def pytest_parsed_arguments(request):
 
 @flaky(rerun_filter=delay_rerun, max_runs=3, min_passes=1)
 @pytest.mark.parametrize("integration_test_fixture", docs_test_matrix, ids=idfn)
-def test_docs(integration_test_fixture, tmp_path, pytest_parsed_arguments):
+def test_docs(
+    integration_test_fixture: IntegrationTestFixture,
+    tmp_path: pathlib.Path,
+    pytest_parsed_arguments,
+    monkeypatch,
+):
     _check_for_skipped_tests(pytest_parsed_arguments, integration_test_fixture)
-    _execute_integration_test(integration_test_fixture, tmp_path)
+    _execute_integration_test(
+        integration_test_fixture=integration_test_fixture,
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
+    )
 
 
 @pytest.mark.parametrize("test_configuration", integration_test_matrix, ids=idfn)
@@ -373,7 +382,6 @@ def test_integration_tests(
     monkeypatch,
 ):
     _check_for_skipped_tests(pytest_parsed_arguments, test_configuration)
-
     _execute_integration_test(
         integration_test_fixture=test_configuration, tmp_path=tmp_path, monkeypatch=monkeypatch
     )
