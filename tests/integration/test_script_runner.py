@@ -387,7 +387,7 @@ def test_integration_tests(
     )
 
 
-def _execute_integration_test(  # noqa: C901, PLR0915, PLR0912 # FIXME CoP
+def _execute_integration_test(  # noqa: C901, PLR0915 # FIXME CoP
     integration_test_fixture: IntegrationTestFixture, tmp_path: pathlib.Path, monkeypatch
 ):
     """
@@ -462,11 +462,10 @@ def _execute_integration_test(  # noqa: C901, PLR0915, PLR0912 # FIXME CoP
             util_script_path = tmp_path / "tests/test_utils.py"
             shutil.copyfile(script_source, util_script_path)
 
-        # Ensure non-cloud tests don't have cloud environment variables set
-        if BackendDependencies.CLOUD not in integration_test_fixture.backend_dependencies:
-            monkeypatch.delenv(GXCloudEnvironmentVariable.BASE_URL, raising=False)
-            monkeypatch.delenv(GXCloudEnvironmentVariable.ACCESS_TOKEN, raising=False)
-            monkeypatch.delenv(GXCloudEnvironmentVariable.ORGANIZATION_ID, raising=False)
+        _prepare_cloud_env_vars(
+            backend_dependencies=integration_test_fixture.backend_dependencies,
+            monkeypatch=monkeypatch,
+        )
 
         # Run script as module, using python's importlib machinery (https://docs.python.org/3/library/importlib.htm)
         loader = importlib.machinery.SourceFileLoader("test_script_module", str(script_path))
@@ -484,6 +483,16 @@ def _execute_integration_test(  # noqa: C901, PLR0915, PLR0912 # FIXME CoP
             raise
     finally:
         os.chdir(workdir)
+
+
+def _prepare_cloud_env_vars(backend_dependencies: list[BackendDependencies], monkeypatch):
+    # This is necessary because Cloud environment variables are always set in the pipeline (ci.yml).
+    # Non-Cloud tests will try to instantiate CloudDataContexts if these env vars are set,
+    # resulting in test failures .
+    if BackendDependencies.CLOUD not in backend_dependencies:
+        monkeypatch.delenv(GXCloudEnvironmentVariable.BASE_URL, raising=False)
+        monkeypatch.delenv(GXCloudEnvironmentVariable.ACCESS_TOKEN, raising=False)
+        monkeypatch.delenv(GXCloudEnvironmentVariable.ORGANIZATION_ID, raising=False)
 
 
 def _check_for_skipped_tests(  # noqa: C901, PLR0912 # FIXME CoP
