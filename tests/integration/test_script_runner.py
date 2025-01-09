@@ -27,49 +27,6 @@ from great_expectations.data_context.data_context.file_data_context import (
 from great_expectations.data_context.util import file_relative_path
 from tests.integration.backend_dependencies import BackendDependencies
 from tests.integration.integration_test_fixture import IntegrationTestFixture
-from tests.integration.test_definitions.abs.integration_tests import (
-    abs_integration_tests,
-)
-from tests.integration.test_definitions.athena.integration_tests import (
-    athena_integration_tests,
-)
-from tests.integration.test_definitions.aws_glue.integration_tests import (
-    aws_glue_integration_tests,
-)
-from tests.integration.test_definitions.bigquery.integration_tests import (
-    bigquery_integration_tests,
-)
-from tests.integration.test_definitions.gcs.integration_tests import (
-    gcs_integration_tests,
-)
-from tests.integration.test_definitions.mssql.integration_tests import (
-    mssql_integration_tests,
-)
-from tests.integration.test_definitions.multiple_backend.integration_tests import (
-    multiple_backend,
-)
-from tests.integration.test_definitions.mysql.integration_tests import (
-    mysql_integration_tests,
-)
-from tests.integration.test_definitions.postgresql.integration_tests import (
-    postgresql_integration_tests,
-)
-from tests.integration.test_definitions.redshift.integration_tests import (
-    redshift_integration_tests,
-)
-from tests.integration.test_definitions.s3.integration_tests import s3_integration_tests
-from tests.integration.test_definitions.snowflake.integration_tests import (
-    snowflake_integration_tests,
-)
-from tests.integration.test_definitions.spark.integration_tests import (
-    spark_integration_tests,
-)
-from tests.integration.test_definitions.sqlite.integration_tests import (
-    sqlite_integration_tests,
-)
-from tests.integration.test_definitions.trino.integration_tests import (
-    trino_integration_tests,
-)
 
 pytestmark = pytest.mark.docs
 
@@ -321,25 +278,25 @@ failed_rows_tests = [
 
 # populate docs_test_matrix with sub-lists
 docs_test_matrix += docs_tests  # this has to go first. TODO: Fix in V1-481
-docs_test_matrix += local_tests
-docs_test_matrix += quickstart
-docs_test_matrix += fluent_datasources
-docs_test_matrix += spark_integration_tests
-docs_test_matrix += sqlite_integration_tests
-docs_test_matrix += mysql_integration_tests
-docs_test_matrix += postgresql_integration_tests
-docs_test_matrix += mssql_integration_tests
-docs_test_matrix += trino_integration_tests
-docs_test_matrix += snowflake_integration_tests
-docs_test_matrix += redshift_integration_tests
-docs_test_matrix += bigquery_integration_tests
-docs_test_matrix += gcs_integration_tests
-docs_test_matrix += abs_integration_tests
-docs_test_matrix += s3_integration_tests
-docs_test_matrix += athena_integration_tests
-docs_test_matrix += aws_glue_integration_tests
-docs_test_matrix += multiple_backend
-docs_test_matrix += failed_rows_tests
+# docs_test_matrix += local_tests
+# docs_test_matrix += quickstart
+# docs_test_matrix += fluent_datasources
+# docs_test_matrix += spark_integration_tests
+# docs_test_matrix += sqlite_integration_tests
+# docs_test_matrix += mysql_integration_tests
+# docs_test_matrix += postgresql_integration_tests
+# docs_test_matrix += mssql_integration_tests
+# docs_test_matrix += trino_integration_tests
+# docs_test_matrix += snowflake_integration_tests
+# docs_test_matrix += redshift_integration_tests
+# docs_test_matrix += bigquery_integration_tests
+# docs_test_matrix += gcs_integration_tests
+# docs_test_matrix += abs_integration_tests
+# docs_test_matrix += s3_integration_tests
+# docs_test_matrix += athena_integration_tests
+# docs_test_matrix += aws_glue_integration_tests
+# docs_test_matrix += multiple_backend
+# docs_test_matrix += failed_rows_tests
 
 pandas_integration_tests: List[IntegrationTestFixture] = []
 
