@@ -281,10 +281,10 @@ class AbstractDataContext(ConfigPeer, ABC):
         """
         config_enabled = self.config.analytics_enabled
         env_var_enabled = ENV_CONFIG.posthog_enabled
-        if config_enabled is not None:
-            return config_enabled
-        elif env_var_enabled is not None:
+        if env_var_enabled is not None:
             return env_var_enabled
+        elif config_enabled is not None:
+            return config_enabled
         else:
             return True
 
