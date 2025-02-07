@@ -5,6 +5,8 @@ from great_expectations.validator.metric_configuration import MetricConfiguratio
 
 
 class Metric(BaseModel, ABC):
+    """The abstract base class for defining all metrics."""
+
     @property
     def id(self) -> tuple[str, str, str]:
         return self.to_config().id
@@ -14,6 +16,8 @@ class Metric(BaseModel, ABC):
 
 
 class MapMetric(Metric):
+    """The abstract class for defining metrics that are evaluated on each row."""
+
     table: str
     row_condition: str
 
