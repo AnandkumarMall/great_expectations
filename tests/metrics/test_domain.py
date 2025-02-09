@@ -32,7 +32,7 @@ class TestColumnMap:
             {"batch_id": BATCH_ID, "table": TABLE, "column": ""},
         ],
     )
-    def test_column_map_arguments_non_empty_string_raises(self, kwargs: dict):
+    def test_column_map_arguments_empty_string_raises(self, kwargs: dict):
         with pytest.raises(ValidationError) as e:
             ColumnMap(**kwargs)
         all_errors = e.value.raw_errors
