@@ -41,7 +41,40 @@ class MetaMetric(ModelMetaclass):
 
 
 class Metric(BaseModel, Generic[DomainT], metaclass=MetaMetric):
-    """The abstract base class for defining all metrics."""
+    """The abstract base class for defining all metrics in Great Expectations.
+
+    A Metric represents a measurable property that can be computed over a specific domain
+    of data (e.g., a column, table, or column pair). All concrete metric implementations
+    must inherit from this class and specify their domain type through the generic type parameter.
+
+    Args:
+        domain (DomainT): The domain object that specifies the scope over which this metric
+            will be computed. Must be a subclass of Domain.
+
+    Attributes:
+        domain (DomainT): The configured domain for this metric instance.
+
+    Examples:
+        A metric for column nullity values computed on each row:
+
+        >>> class Null(Metric[ColumnMap]):
+        ...     ...
+
+        A metric for a single table row count value:
+
+        >>> class RowCount(Metric[Table]):
+        ...     ...
+
+    Notes:
+        - The Metric class cannot be instantiated directly - it must be subclassed.
+        - Subclasses must specify a Domain type through the generic type parameter.
+        - The specified Domain type must be registered in the METRIC_REGISTRY.
+        - The MetaMetric metaclass enforces these constraints at class creation time.
+
+    See Also:
+        Domain: The base class for all domain types
+        MetricConfiguration: Configuration class for metric computation
+    """
 
     domain: DomainT
 
