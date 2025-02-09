@@ -7,6 +7,13 @@ from great_expectations.validator.metric_configuration import MetricConfiguratio
 DomainT = TypeVar("DomainT", bound=Domain)
 
 
+class MissingGenericTypeError(TypeError):
+    def __init__(self, class_name: str, generic_superclass) -> None:
+        super().__init__(
+            f"`{class_name}` must be parametrized by a `{generic_superclass}` subclass."
+        )
+
+
 class MissingAttributeError(AttributeError):
     def __init__(self, attribute_name: str, class_name: str) -> None:
         super().__init__(f"`{attribute_name}` must be defined on class `{class_name}`.")
@@ -19,14 +26,16 @@ class MetricValueError(ValueError):
 
 class MetaMetric(ModelMetaclass):
     def __new__(cls, name, bases, attrs):
-        newclass = super().__new__(cls, name, bases, attrs)
+        # ensure the domain generic is defined
+        if "__orig_bases__" not in attrs:
+            raise MissingGenericTypeError(name, "Domain")
         # ensure class definitions include a metric_name
         if "metric_name" not in attrs and "metric_name" not in attrs["__annotations__"]:
             raise MissingAttributeError("metric_name", name)
         # pydantic does not validate ClassVar types, so we are doing it here
         if "metric_name" in attrs and not attrs["metric_name"]:
             raise MetricValueError("metric_name", "non-empty string")
-        return newclass
+        return super().__new__(cls, name, bases, attrs)
 
 
 class Metric(BaseModel, Generic[DomainT], metaclass=MetaMetric):
