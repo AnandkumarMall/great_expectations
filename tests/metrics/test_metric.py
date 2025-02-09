@@ -2,7 +2,6 @@ from uuid import uuid4
 
 import pytest
 
-from great_expectations.compatibility.pydantic import ValidationError
 from great_expectations.core.types import Comparable
 from great_expectations.metrics import Metric
 from great_expectations.metrics.domain import ColumnMap
@@ -12,48 +11,79 @@ TABLE = "my_table"
 COLUMN = "my_column"
 
 
-def test_definition_success():
-    class Above(Metric[ColumnMap]):
-        min_value: Comparable
-        strict_min: bool = False
-
-        metric_name = "column_values.above"
-
-
-def test_definition_missing_domain_raises():
-    with pytest.raises(TypeError):
-
-        class Above(Metric):
+class TestMetricDefinition:
+    def test_success(self):
+        class Above(Metric[ColumnMap]):
             min_value: Comparable
             strict_min: bool = False
 
             metric_name = "column_values.above"
 
+    def test_missing_domain_raises(self):
+        with pytest.raises(TypeError):
 
-def test_definition_missing_metric_name_raises():
-    with pytest.raises(AttributeError):
+            class Above(Metric):
+                min_value: Comparable
+                strict_min: bool = False
 
+                metric_name = "column_values.above"
+
+    def test_missing_metric_name_raises(self):
+        with pytest.raises(AttributeError):
+
+            class Above(Metric[ColumnMap]):
+                min_value: Comparable
+                strict_min: bool = False
+
+    def test_empty_string_metric_name_raises(self):
+        with pytest.raises(ValueError):
+
+            class Above(Metric[ColumnMap]):
+                min_value: Comparable
+                strict_min: bool = False
+
+                metric_name = ""
+
+
+class TestMetricInstantiation:
+    def test_instantiation_success_positional_domain(self):
         class Above(Metric[ColumnMap]):
             min_value: Comparable
             strict_min: bool = False
 
+            metric_name = "column_values.above"
 
-def test_definition_empty_string_metric_name_raises():
-    with pytest.raises(ValueError):
+        Above(
+            ColumnMap(
+                batch_id=BATCH_ID,
+                table=TABLE,
+                column=COLUMN,
+            ),
+            min_value=42,
+        )
 
+    def test_instantiation_success_keyword_domain(self):
         class Above(Metric[ColumnMap]):
             min_value: Comparable
             strict_min: bool = False
 
-            metric_name = ""
+            metric_name = "column_values.above"
 
+        Above(
+            domain=ColumnMap(
+                batch_id=BATCH_ID,
+                table=TABLE,
+                column=COLUMN,
+            ),
+            min_value=42,
+        )
 
-def test_instantiation_missing_domain_raises():
-    class Above(Metric[ColumnMap]):
-        min_value: Comparable
-        strict_min: bool = False
+    def test_instantiation_missing_domain_raises(self):
+        class Above(Metric[ColumnMap]):
+            min_value: Comparable
+            strict_min: bool = False
 
-        metric_name = "column_values.above"
+            metric_name = "column_values.above"
 
-    with pytest.raises(ValidationError):
-        Above(min_value=42)
+        with pytest.raises(TypeError):
+            Above(min_value=42)

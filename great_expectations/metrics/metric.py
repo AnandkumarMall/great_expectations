@@ -45,6 +45,9 @@ class Metric(BaseModel, Generic[DomainT], metaclass=MetaMetric):
 
     metric_name: ClassVar[str]
 
+    def __init__(self, domain: DomainT, **kwargs) -> None:
+        super(Metric, self).__init__(domain=domain, **kwargs)  # noqa: UP008  # workaround to allow domain as a positional argument even though pydantic doesn't lke it
+
     @property
     def id(self) -> tuple[str, str, str]:
         return self.to_config().id
