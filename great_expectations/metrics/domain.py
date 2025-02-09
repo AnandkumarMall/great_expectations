@@ -1,9 +1,9 @@
 from abc import ABC
-from typing import Optional
+from typing import Annotated, Optional
 
-from great_expectations.compatibility.pydantic import BaseModel, StrictStr, constr
+from great_expectations.compatibility.pydantic import BaseModel, Field, StrictStr
 
-NonEmptyString = constr(min_length=1, strict=True)
+NonEmptyString = Annotated[StrictStr, Field(min_length=1)]
 
 
 class Domain(ABC, BaseModel):

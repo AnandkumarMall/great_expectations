@@ -1,11 +1,10 @@
 from typing import ClassVar, Generic, TypeVar
 
-from great_expectations.compatibility.pydantic import BaseModel, ModelMetaclass, constr
+from great_expectations.compatibility.pydantic import BaseModel, ModelMetaclass
 from great_expectations.metrics.domain import Domain
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
 DomainT = TypeVar("DomainT", bound=Domain)
-NonEmptyString = constr(min_length=1, strict=True)
 
 
 class MissingAttributeError(AttributeError):
@@ -14,16 +13,17 @@ class MissingAttributeError(AttributeError):
 
 
 class MetricValueError(ValueError):
-    def __init__(self, attribute_name: str, type_description: str) -> None:
-        super().__init__(f"`{attribute_name}` must be a {type_description}.")
+    def __init__(self, attribute_name: str, expected_type_description: str) -> None:
+        super().__init__(f"`{attribute_name}` must be a {expected_type_description}.")
 
 
 class MetaMetric(ModelMetaclass):
     def __new__(cls, name, bases, attrs):
         newclass = super().__new__(cls, name, bases, attrs)
-        # Ensure "metric_name" ClassVar is always defined
+        # ensure class definitions include a metric_name
         if "metric_name" not in attrs and "metric_name" not in attrs["__annotations__"]:
             raise MissingAttributeError("metric_name", name)
+        # pydantic does not validate ClassVar types, so we are doing it here
         if "metric_name" in attrs and not attrs["metric_name"]:
             raise MetricValueError("metric_name", "non-empty string")
         return newclass
@@ -34,7 +34,7 @@ class Metric(BaseModel, Generic[DomainT], metaclass=MetaMetric):
 
     domain: DomainT
 
-    metric_name: ClassVar[NonEmptyString]
+    metric_name: ClassVar[str]
 
     @property
     def id(self) -> tuple[str, str, str]:
