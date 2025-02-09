@@ -11,19 +11,23 @@ COLUMN = "my_column"
 
 
 class TestAbstractClasses:
+    @pytest.mark.unit
     def test_domain_instantiation_raises(self):
         with pytest.raises(TypeError):
             Domain(batch_id=BATCH_ID)
 
+    @pytest.mark.unit
     def test_map_instantiation_raises(self):
         with pytest.raises(TypeError):
             Map(batch_id=BATCH_ID, table=TABLE)
 
 
 class TestColumnMap:
+    @pytest.mark.unit
     def test_column_map_instantiation_success(self):
         ColumnMap(batch_id=BATCH_ID, table=TABLE, column=COLUMN)
 
+    @pytest.mark.unit
     @pytest.mark.parametrize(
         "kwargs",
         [
