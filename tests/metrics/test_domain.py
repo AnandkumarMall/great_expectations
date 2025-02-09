@@ -37,6 +37,8 @@ class TestColumnMap:
             ColumnMap(**kwargs)
         all_errors = e.value.raw_errors
         assert any(
-            True if isinstance(error.exc, errors.AnyStrMinLengthError) else False
+            True
+            if hasattr(error, "exc") and isinstance(error.exc, errors.AnyStrMinLengthError)
+            else False
             for error in all_errors
         )
