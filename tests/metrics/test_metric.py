@@ -1,59 +1,55 @@
+from unittest import mock
 from uuid import uuid4
 
 import pytest
 
 from great_expectations.core.types import Comparable
 from great_expectations.metrics import Metric
-from great_expectations.metrics.domain import ColumnMap
+from great_expectations.metrics.domain import ColumnMap, DomainNames
+from great_expectations.validator.metric_configuration import MetricConfiguration
 
 BATCH_ID = str(uuid4())
 TABLE = "my_table"
 COLUMN = "my_column"
 
+MOCK_METRIC_REGISTRY = {
+    DomainNames[ColumnMap]: ("above",),
+}
+FULLY_QUALIFIED_METRIC_NAME = "column_values.above"
+
 
 class TestMetricDefinition:
     def test_success(self):
-        class Above(Metric[ColumnMap]):
-            min_value: Comparable
-            strict_min: bool = False
+        with mock.patch("great_expectations.metrics.metric.METRIC_REGISTRY", MOCK_METRIC_REGISTRY):
 
-            metric_name = "column_values.above"
+            class Above(Metric[ColumnMap]):
+                min_value: Comparable
+                strict_min: bool = False
 
-    def test_missing_domain_raises(self):
+    def test_missing_domain_generic_raises(self):
         with pytest.raises(TypeError):
 
             class Above(Metric):
                 min_value: Comparable
                 strict_min: bool = False
 
-                metric_name = "column_values.above"
-
-    def test_missing_metric_name_raises(self):
-        with pytest.raises(AttributeError):
+    def test_unregistered_metric_raises(self):
+        with pytest.raises(TypeError):
 
             class Above(Metric[ColumnMap]):
                 min_value: Comparable
                 strict_min: bool = False
-
-    def test_empty_string_metric_name_raises(self):
-        with pytest.raises(ValueError):
-
-            class Above(Metric[ColumnMap]):
-                min_value: Comparable
-                strict_min: bool = False
-
-                metric_name = ""
 
 
 class TestMetricInstantiation:
-    def test_instantiation_success_positional_domain(self):
+    with mock.patch("great_expectations.metrics.metric.METRIC_REGISTRY", MOCK_METRIC_REGISTRY):
+
         class Above(Metric[ColumnMap]):
             min_value: Comparable
             strict_min: bool = False
 
-            metric_name = "column_values.above"
-
-        Above(
+    def test_instantiation_success_positional_domain(self):
+        self.Above(
             ColumnMap(
                 batch_id=BATCH_ID,
                 table=TABLE,
@@ -63,13 +59,7 @@ class TestMetricInstantiation:
         )
 
     def test_instantiation_success_keyword_domain(self):
-        class Above(Metric[ColumnMap]):
-            min_value: Comparable
-            strict_min: bool = False
-
-            metric_name = "column_values.above"
-
-        Above(
+        self.Above(
             domain=ColumnMap(
                 batch_id=BATCH_ID,
                 table=TABLE,
@@ -79,11 +69,42 @@ class TestMetricInstantiation:
         )
 
     def test_instantiation_missing_domain_raises(self):
+        with pytest.raises(TypeError):
+            self.Above(min_value=42)
+
+
+class TestMetricToConfig:
+    with mock.patch("great_expectations.metrics.metric.METRIC_REGISTRY", MOCK_METRIC_REGISTRY):
+
         class Above(Metric[ColumnMap]):
             min_value: Comparable
             strict_min: bool = False
 
-            metric_name = "column_values.above"
+    def test_success(self):
+        expected_config = MetricConfiguration(
+            metric_name=FULLY_QUALIFIED_METRIC_NAME,
+            metric_domain_kwargs={
+                "batch_id": BATCH_ID,
+                "table": TABLE,
+                "row_condition": None,
+                "column": COLUMN,
+            },
+            metric_value_kwargs={
+                "min_value": 42,
+                "strict_min": False,
+            },
+        )
 
-        with pytest.raises(TypeError):
-            Above(min_value=42)
+        metric = self.Above(
+            ColumnMap(
+                batch_id=BATCH_ID,
+                table=TABLE,
+                column=COLUMN,
+            ),
+            min_value=42,
+        )
+        actual_config = metric.to_config()
+
+        assert actual_config.metric_name == expected_config.metric_name
+        assert actual_config.metric_domain_kwargs == expected_config.metric_domain_kwargs
+        assert actual_config.metric_value_kwargs == expected_config.metric_value_kwargs

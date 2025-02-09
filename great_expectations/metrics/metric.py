@@ -1,27 +1,26 @@
-from typing import ClassVar, Generic, TypeVar
+from typing import Generic, TypeVar, get_args
 
 from great_expectations.compatibility.pydantic import BaseModel, ModelMetaclass
-from great_expectations.metrics.domain import Domain
+from great_expectations.metrics.domain import Domain, DomainNames
+from great_expectations.metrics.registry import METRIC_REGISTRY
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
 DomainT = TypeVar("DomainT", bound=Domain)
 
 
 class MissingGenericTypeError(TypeError):
-    def __init__(self, class_name: str, generic_superclass) -> None:
+    def __init__(self, class_name: str, generic_superclass: str) -> None:
         super().__init__(
             f"`{class_name}` must be parametrized by a `{generic_superclass}` subclass."
         )
 
 
-class MissingAttributeError(AttributeError):
-    def __init__(self, attribute_name: str, class_name: str) -> None:
-        super().__init__(f"`{attribute_name}` must be defined on class `{class_name}`.")
-
-
-class MetricValueError(ValueError):
-    def __init__(self, attribute_name: str, expected_type_description: str) -> None:
-        super().__init__(f"`{attribute_name}` must be a {expected_type_description}.")
+class UnregisteredMetricTypeError(TypeError):
+    def __init__(self, class_name: str, domain_class: type[Domain]) -> None:
+        super().__init__(
+            f"Metric `{class_name.lower()}` was not mapped to "
+            f"domain `{domain_class}`, in the metric registry."
+        )
 
 
 class MetaMetric(ModelMetaclass):
@@ -29,12 +28,15 @@ class MetaMetric(ModelMetaclass):
         # ensure the domain generic is defined
         if "__orig_bases__" not in attrs:
             raise MissingGenericTypeError(name, "Domain")
-        # ensure class definitions include a metric_name
-        if "metric_name" not in attrs and "metric_name" not in attrs["__annotations__"]:
-            raise MissingAttributeError("metric_name", name)
-        # pydantic does not validate ClassVar types, so we are doing it here
-        if "metric_name" in attrs and not attrs["metric_name"]:
-            raise MetricValueError("metric_name", "non-empty string")
+        # ensure metric is registered
+        for base_type in attrs["__orig_bases__"]:
+            for arg in get_args(base_type):
+                if (
+                    isinstance(arg, type)
+                    and issubclass(arg, Domain)
+                    and name.lower() not in METRIC_REGISTRY[DomainNames[arg]]
+                ):
+                    raise UnregisteredMetricTypeError(name, arg)
         return super().__new__(cls, name, bases, attrs)
 
 
@@ -42,8 +44,6 @@ class Metric(BaseModel, Generic[DomainT], metaclass=MetaMetric):
     """The base abstract class for defining all metrics."""
 
     domain: DomainT
-
-    metric_name: ClassVar[str]
 
     # workaround wrapper to allow domain to be a positional argument
     # pydantic doesn't allow positional args otherwise
@@ -54,15 +54,13 @@ class Metric(BaseModel, Generic[DomainT], metaclass=MetaMetric):
     def id(self) -> tuple[str, str, str]:
         return self.to_config().id
 
-    def to_config(self) -> MetricConfiguration:
-        """All concrete Metric implementations must:
-        1. Define a metric name
-        2. Define which class attributes are MetricConfiguration "value" attributes.
-           Value attributes specify the conditions against which metrics should be evaluated.
-        """
+    @property
+    def name(self) -> str:
+        return ".".join([DomainNames[type(self.domain)], str(self.__class__.__name__).lower()])
 
+    def to_config(self) -> MetricConfiguration:
         return MetricConfiguration(
-            metric_name=self.metric_name,
+            metric_name=self.name,
             metric_domain_kwargs=self.domain.dict(),
             metric_value_kwargs=self.dict(exclude={"domain"}),
         )

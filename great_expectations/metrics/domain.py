@@ -23,3 +23,8 @@ class ColumnMap(Map):
     """The generic type for metrics that compute row-level calculations on a single column."""
 
     column: NonEmptyString
+
+
+DomainNames: dict[type[Domain], str] = {
+    ColumnMap: "column_values",
+}
