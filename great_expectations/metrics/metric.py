@@ -1,7 +1,7 @@
 from typing import Generic, TypeVar, get_args
 
 from great_expectations.compatibility.pydantic import BaseModel, ModelMetaclass
-from great_expectations.metrics.domain import Domain, DomainNames
+from great_expectations.metrics.domain import AbstractClassInstantiationError, Domain, DomainNames
 from great_expectations.metrics.registry import METRIC_REGISTRY
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
@@ -41,9 +41,14 @@ class MetaMetric(ModelMetaclass):
 
 
 class Metric(BaseModel, Generic[DomainT], metaclass=MetaMetric):
-    """The base abstract class for defining all metrics."""
+    """The abstract base class for defining all metrics."""
 
     domain: DomainT
+
+    def __new__(cls, *args, **kwargs):
+        if cls is Metric:
+            raise AbstractClassInstantiationError(cls.__name__)
+        return super().__new__(cls)
 
     # workaround wrapper to allow domain to be a positional argument
     # pydantic doesn't allow positional args otherwise

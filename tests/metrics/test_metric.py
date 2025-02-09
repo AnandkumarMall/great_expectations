@@ -18,6 +18,12 @@ MOCK_METRIC_REGISTRY = {
 FULLY_QUALIFIED_METRIC_NAME = "column_values.above"
 
 
+class TestMetric:
+    def test_metric_instantiation_raises(self):
+        with pytest.raises(TypeError):
+            Metric(ColumnMap(batch_id=BATCH_ID, table=TABLE, column=COLUMN))
+
+
 class TestMetricDefinition:
     def test_success(self):
         with mock.patch("great_expectations.metrics.metric.METRIC_REGISTRY", MOCK_METRIC_REGISTRY):
