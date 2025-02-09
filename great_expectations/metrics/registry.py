@@ -1,5 +1,5 @@
-from great_expectations.metrics.domain import ColumnMap, DomainNames
+from great_expectations.metrics.domain import ColumnMap, Domain
 
-METRIC_REGISTRY = {
-    DomainNames[ColumnMap]: ("between",),
+METRIC_REGISTRY: dict[type[Domain], tuple[str, ...]] = {
+    ColumnMap: ("between",),
 }

@@ -34,7 +34,7 @@ class MetaMetric(ModelMetaclass):
                 if (
                     isinstance(arg, type)
                     and issubclass(arg, Domain)
-                    and name.lower() not in METRIC_REGISTRY[DomainNames[arg]]
+                    and name.lower() not in METRIC_REGISTRY[arg]
                 ):
                     raise UnregisteredMetricTypeError(name, arg)
         return super().__new__(cls, name, bases, attrs)

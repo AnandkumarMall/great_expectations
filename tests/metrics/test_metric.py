@@ -5,7 +5,7 @@ import pytest
 
 from great_expectations.core.types import Comparable
 from great_expectations.metrics import Metric
-from great_expectations.metrics.domain import ColumnMap, DomainNames
+from great_expectations.metrics.domain import ColumnMap
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
 BATCH_ID = str(uuid4())
@@ -13,7 +13,7 @@ TABLE = "my_table"
 COLUMN = "my_column"
 
 MOCK_METRIC_REGISTRY = {
-    DomainNames[ColumnMap]: ("above",),
+    ColumnMap: ("above",),
 }
 FULLY_QUALIFIED_METRIC_NAME = "column_values.above"
 
