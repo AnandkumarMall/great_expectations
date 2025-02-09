@@ -41,7 +41,7 @@ class MetaMetric(ModelMetaclass):
 
 
 class Metric(BaseModel, Generic[DomainT], metaclass=MetaMetric):
-    """The abstract base class for defining all metrics in Great Expectations.
+    """The abstract base class for defining all metrics.
 
     A Metric represents a measurable property that can be computed over a specific domain
     of data (e.g., a column, table, or column pair). All concrete metric implementations
