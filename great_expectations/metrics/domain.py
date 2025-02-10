@@ -39,6 +39,17 @@ class ColumnMap(Map):
 
     column: NonEmptyString
 
+    def __init__(
+        self,
+        batch_id: NonEmptyString,
+        table: NonEmptyString,
+        column: NonEmptyString,
+    ):
+        self.batch_id = batch_id
+        self.table = table
+        self.column = column
+        super().__init__(batch_id=batch_id, table=table)
+
 
 DomainNames: dict[type[Domain], str] = {
     ColumnMap: "column_values",
