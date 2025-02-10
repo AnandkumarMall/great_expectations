@@ -53,6 +53,9 @@ class ColumnMap(Map):
 
         >>> class Null(Metric, ColumnMap):
         ...     ...
+
+    See Also:
+        Metric: The abstract base class for defining all metrics
     """
 
     column: NonEmptyString
