@@ -83,6 +83,7 @@ class Metric(BaseModel, metaclass=MetaMetric):
 
     @property
     def name(self) -> str:
+        """The name of the metric as it exists in the regsitry."""
         for base_type in self.__class__.__bases__:
             if issubclass(base_type, Domain):
                 metric_class_name = str(self.__class__.__name__)
@@ -99,16 +100,14 @@ class Metric(BaseModel, metaclass=MetaMetric):
         raise MixinTypeError(self.__class__.__name__, "Domain")
 
     def to_config(self) -> MetricConfiguration:
+        """Returns a MetricConfiguration instance for this Metric."""
         for base_type in self.__class__.__bases__:
             if issubclass(base_type, Domain):
                 domain_keys = set(base_type.__fields__.keys())
-                metric_domain_kwargs = self.dict(include=domain_keys)
-                metric_value_kwargs = self.dict(exclude=domain_keys)
-
                 return MetricConfiguration(
                     metric_name=self.name,
-                    metric_domain_kwargs=metric_domain_kwargs,
-                    metric_value_kwargs=metric_value_kwargs,
+                    metric_domain_kwargs=self.dict(include=domain_keys),
+                    metric_value_kwargs=self.dict(exclude=domain_keys),
                 )
 
         # this should never be reached
