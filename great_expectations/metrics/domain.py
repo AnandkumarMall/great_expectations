@@ -38,7 +38,8 @@ class ColumnMap(Map):
     """A domain type for metrics that compute row-level calculations on a single column.
 
     The ColumnMap domain type is used to define metrics that evaluate conditions or compute
-    values for each row in a single column.
+    values for each row in a single column. This class is intended to be used as a mixin
+    with the Metric class when defining a new Metric.
 
     Attributes:
         batch_id (str): Unique identifier for the batch being processed.
@@ -48,12 +49,10 @@ class ColumnMap(Map):
                                        See: https://docs.greatexpectations.io/docs/core/customize_expectations/expectation_conditions/#create-an-expectation-condition
 
     Examples:
-        >>> domain = ColumnMap(
-        ...     batch_id="my_datasource-my_data_asset-year_2025",
-        ...     table="users",
-        ...     column="email"
-        ...     row_condition='col("created_at")>=date("2025-01-01")'
-        ... )
+        A metric with a ColumnMap domain for column nullity values computed on each row:
+
+        >>> class Null(Metric, ColumnMap):
+        ...     ...
     """
 
     column: NonEmptyString
