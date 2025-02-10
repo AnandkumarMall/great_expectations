@@ -1,6 +1,6 @@
 from great_expectations.compatibility.pydantic import BaseModel, ModelMetaclass
-from great_expectations.metrics.domain import DOMAIN_NAMES, AbstractClassInstantiationError, Domain
-from great_expectations.metrics.registry import METRIC_REGISTRY
+from great_expectations.metrics.domain import AbstractClassInstantiationError, Domain
+from great_expectations.metrics.registry import DOMAIN_NAMES, METRIC_REGISTRY
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
 ALLOWABLE_METRIC_MIXINS = 1
@@ -33,11 +33,7 @@ class MetaMetric(ModelMetaclass):
         for base_type in bases:
             if issubclass(base_type, Domain):
                 try:
-                    _ = DOMAIN_NAMES[base_type]
-                except KeyError:
-                    raise UnregisteredMetricTypeError(name, base_type)
-                try:
-                    registered_metrics_for_domain = METRIC_REGISTRY[base_type]
+                    registered_metrics_for_domain = METRIC_REGISTRY[DOMAIN_NAMES[base_type]]
                 except KeyError:
                     raise UnregisteredMetricTypeError(name, base_type)
                 if name.lower() not in registered_metrics_for_domain:

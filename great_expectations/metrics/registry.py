@@ -1,5 +1,9 @@
 from great_expectations.metrics.domain import ColumnMap, Domain
 
-METRIC_REGISTRY: dict[type[Domain], tuple[str, ...]] = {
-    ColumnMap: ("between",),
+DOMAIN_NAMES: dict[type[Domain], str] = {
+    ColumnMap: "column_values",
+}
+
+METRIC_REGISTRY: dict[str, tuple[str, ...]] = {
+    DOMAIN_NAMES[ColumnMap]: ("between",),
 }

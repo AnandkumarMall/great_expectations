@@ -15,7 +15,7 @@ TABLE = "my_table"
 COLUMN = "my_column"
 
 MOCK_METRIC_REGISTRY = {
-    ColumnMap: ("above",),
+    "column_values": ("above",),
 }
 FULLY_QUALIFIED_METRIC_NAME = "column_values.above"
 
