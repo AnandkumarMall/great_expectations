@@ -3,7 +3,12 @@ from uuid import uuid4
 import pytest
 
 from great_expectations.compatibility.pydantic import ValidationError, errors
-from great_expectations.metrics.domain import ColumnMap, Domain, Map
+from great_expectations.metrics.domain import (
+    AbstractClassInstantiationError,
+    ColumnMap,
+    Domain,
+    Map,
+)
 
 BATCH_ID = str(uuid4())
 TABLE = "my_table"
@@ -13,12 +18,12 @@ COLUMN = "my_column"
 class TestAbstractClasses:
     @pytest.mark.unit
     def test_domain_instantiation_raises(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(AbstractClassInstantiationError):
             Domain(batch_id=BATCH_ID)
 
     @pytest.mark.unit
     def test_map_instantiation_raises(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(AbstractClassInstantiationError):
             Map(batch_id=BATCH_ID, table=TABLE)
 
 

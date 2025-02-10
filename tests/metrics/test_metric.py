@@ -3,9 +3,11 @@ from uuid import uuid4
 
 import pytest
 
+from great_expectations.compatibility.pydantic import ValidationError
 from great_expectations.core.types import Comparable
 from great_expectations.metrics import Metric
-from great_expectations.metrics.domain import ColumnMap
+from great_expectations.metrics.domain import AbstractClassInstantiationError, ColumnMap
+from great_expectations.metrics.metric import MissingMixinTypeError, UnregisteredMetricTypeError
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
 BATCH_ID = str(uuid4())
@@ -21,8 +23,8 @@ FULLY_QUALIFIED_METRIC_NAME = "column_values.above"
 class TestMetric:
     @pytest.mark.unit
     def test_metric_instantiation_raises(self):
-        with pytest.raises(TypeError):
-            Metric(ColumnMap(batch_id=BATCH_ID, table=TABLE, column=COLUMN))
+        with pytest.raises(AbstractClassInstantiationError):
+            Metric(batch_id=BATCH_ID, table=TABLE, column=COLUMN)
 
 
 class TestMetricDefinition:
@@ -30,13 +32,13 @@ class TestMetricDefinition:
     def test_success(self):
         with mock.patch("great_expectations.metrics.metric.METRIC_REGISTRY", MOCK_METRIC_REGISTRY):
 
-            class Above(Metric[ColumnMap]):
+            class Above(Metric, ColumnMap):
                 min_value: Comparable
                 strict_min: bool = False
 
     @pytest.mark.unit
-    def test_missing_domain_generic_raises(self):
-        with pytest.raises(TypeError):
+    def test_missing_domain_mixin_raises(self):
+        with pytest.raises(MissingMixinTypeError):
 
             class Above(Metric):
                 min_value: Comparable
@@ -44,9 +46,9 @@ class TestMetricDefinition:
 
     @pytest.mark.unit
     def test_unregistered_metric_raises(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(UnregisteredMetricTypeError):
 
-            class Above(Metric[ColumnMap]):
+            class Above(Metric, ColumnMap):
                 min_value: Comparable
                 strict_min: bool = False
 
@@ -54,42 +56,29 @@ class TestMetricDefinition:
 class TestMetricInstantiation:
     with mock.patch("great_expectations.metrics.metric.METRIC_REGISTRY", MOCK_METRIC_REGISTRY):
 
-        class Above(Metric[ColumnMap]):
+        class Above(Metric, ColumnMap):
             min_value: Comparable
             strict_min: bool = False
 
     @pytest.mark.unit
-    def test_instantiation_success_positional_domain(self):
+    def test_instantiation_success(self):
         self.Above(
-            ColumnMap(
-                batch_id=BATCH_ID,
-                table=TABLE,
-                column=COLUMN,
-            ),
+            batch_id=BATCH_ID,
+            table=TABLE,
+            column=COLUMN,
             min_value=42,
         )
 
     @pytest.mark.unit
-    def test_instantiation_success_keyword_domain(self):
-        self.Above(
-            domain=ColumnMap(
-                batch_id=BATCH_ID,
-                table=TABLE,
-                column=COLUMN,
-            ),
-            min_value=42,
-        )
-
-    @pytest.mark.unit
-    def test_instantiation_missing_domain_raises(self):
-        with pytest.raises(TypeError):
+    def test_instantiation_missing_domain_parameters_raises(self):
+        with pytest.raises(ValidationError):
             self.Above(min_value=42)
 
 
 class TestMetricToConfig:
     with mock.patch("great_expectations.metrics.metric.METRIC_REGISTRY", MOCK_METRIC_REGISTRY):
 
-        class Above(Metric[ColumnMap]):
+        class Above(Metric, ColumnMap):
             min_value: Comparable
             strict_min: bool = False
 
@@ -110,11 +99,9 @@ class TestMetricToConfig:
         )
 
         metric = self.Above(
-            ColumnMap(
-                batch_id=BATCH_ID,
-                table=TABLE,
-                column=COLUMN,
-            ),
+            batch_id=BATCH_ID,
+            table=TABLE,
+            column=COLUMN,
             min_value=42,
         )
         actual_config = metric.to_config()

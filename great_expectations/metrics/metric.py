@@ -1,18 +1,14 @@
-from typing import Generic, TypeVar, get_args
-
 from great_expectations.compatibility.pydantic import BaseModel, ModelMetaclass
 from great_expectations.metrics.domain import AbstractClassInstantiationError, Domain, DomainNames
 from great_expectations.metrics.registry import METRIC_REGISTRY
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
-DomainT = TypeVar("DomainT", bound=Domain)
+ALLOWABLE_METRIC_MIXINS = 1
 
 
-class MissingGenericTypeError(TypeError):
-    def __init__(self, class_name: str, generic_superclass: str) -> None:
-        super().__init__(
-            f"`{class_name}` must be parametrized by a `{generic_superclass}` subclass."
-        )
+class MissingMixinTypeError(TypeError):
+    def __init__(self, class_name: str, mixin_superclass_name: str) -> None:
+        super().__init__(f"`{class_name}` must be use a `{mixin_superclass_name}` subclass mixin.")
 
 
 class UnregisteredMetricTypeError(TypeError):
@@ -25,49 +21,40 @@ class UnregisteredMetricTypeError(TypeError):
 
 class MetaMetric(ModelMetaclass):
     def __new__(cls, name, bases, attrs):
-        # ensure the domain generic is defined
-        if "__orig_bases__" not in attrs:
-            raise MissingGenericTypeError(name, "Domain")
+        # ensure the Domain mixin is defined
+        if name != "Metric" and len(bases) < ALLOWABLE_METRIC_MIXINS + 1:
+            raise MissingMixinTypeError(name, "Domain")
         # ensure metric is registered
-        for base_type in attrs["__orig_bases__"]:
-            for arg in get_args(base_type):
-                if (
-                    isinstance(arg, type)
-                    and issubclass(arg, Domain)
-                    and name.lower() not in METRIC_REGISTRY[arg]
-                ):
-                    raise UnregisteredMetricTypeError(name, arg)
+        for base_type in bases:
+            if (
+                # isinstance(base_type, type)
+                issubclass(base_type, Domain) and name.lower() not in METRIC_REGISTRY[base_type]
+            ):
+                raise UnregisteredMetricTypeError(name, base_type)
         return super().__new__(cls, name, bases, attrs)
 
 
-class Metric(BaseModel, Generic[DomainT], metaclass=MetaMetric):
+class Metric(BaseModel, metaclass=MetaMetric):
     """The abstract base class for defining all metrics.
 
     A Metric represents a measurable property that can be computed over a specific domain
     of data (e.g., a column, table, or column pair). All concrete metric implementations
-    must inherit from this class and specify their domain type through the generic type parameter.
-
-    Args:
-        domain (Domain): The domain object that specifies the scope over which this metric
-            will be computed. Must be a subclass of Domain.
-
-    Attributes:
-        domain (Domain): The configured domain for this metric instance.
+    must inherit from this class and specify their domain type as a mixin.
 
     Examples:
         A metric for column nullity values computed on each row:
 
-        >>> class Null(Metric[ColumnMap]):
+        >>> class Null(Metric, ColumnMap):
         ...     ...
 
         A metric for a single table row count value:
 
-        >>> class RowCount(Metric[Table]):
+        >>> class RowCount(Metric, Table):
         ...     ...
 
     Notes:
         - The Metric class cannot be instantiated directly - it must be subclassed.
-        - Subclasses must specify a Domain type through the generic type parameter.
+        - Subclasses must specify a Domain type as a mixin.
         - The specified Domain type must be registered in the METRIC_REGISTRY.
         - The MetaMetric metaclass enforces these constraints at class creation time.
 
@@ -76,17 +63,10 @@ class Metric(BaseModel, Generic[DomainT], metaclass=MetaMetric):
         MetricConfiguration: Configuration class for metric computation
     """
 
-    domain: DomainT
-
     def __new__(cls, *args, **kwargs):
         if cls is Metric:
             raise AbstractClassInstantiationError(cls.__name__)
         return super().__new__(cls)
-
-    # workaround wrapper to allow domain to be a positional argument
-    # pydantic doesn't allow positional args otherwise
-    def __init__(self, domain: DomainT, **kwargs) -> None:
-        super(Metric, self).__init__(domain=domain, **kwargs)  # noqa: UP008  # instantiate positional arg as kwarg
 
     @property
     def id(self) -> tuple[str, str, str]:
@@ -94,11 +74,19 @@ class Metric(BaseModel, Generic[DomainT], metaclass=MetaMetric):
 
     @property
     def name(self) -> str:
-        return ".".join([DomainNames[type(self.domain)], str(self.__class__.__name__).lower()])
+        for base_type in self.__class__.__bases__:
+            if issubclass(base_type, Domain):
+                return ".".join([DomainNames[base_type], str(self.__class__.__name__).lower()])
 
     def to_config(self) -> MetricConfiguration:
+        for base_type in self.__class__.__bases__:
+            if issubclass(base_type, Domain):
+                domain_keys = set(base_type.__fields__.keys())
+                metric_domain_kwargs = self.dict(include=domain_keys)
+                metric_value_kwargs = self.dict(exclude=domain_keys)
+
         return MetricConfiguration(
             metric_name=self.name,
-            metric_domain_kwargs=self.domain.dict(),
-            metric_value_kwargs=self.dict(exclude={"domain"}),
+            metric_domain_kwargs=metric_domain_kwargs,
+            metric_value_kwargs=metric_value_kwargs,
         )

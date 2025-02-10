@@ -5,7 +5,7 @@ from great_expectations.metrics import Metric
 from great_expectations.metrics.domain import ColumnMap
 
 
-class Between(Metric[ColumnMap]):
+class Between(Metric, ColumnMap):
     min_value: Optional[Comparable] = None
     max_value: Optional[Comparable] = None
     strict_min: bool = False
