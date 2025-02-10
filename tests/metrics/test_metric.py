@@ -69,11 +69,12 @@ class TestMetricDefinition:
 
     @pytest.mark.unit
     def test_unregistered_domain_raises(self):
-        with pytest.raises(UnregisteredMetricTypeError):
+        with mock.patch("great_expectations.metrics.metric.METRIC_REGISTRY", MOCK_METRIC_REGISTRY):
+            with pytest.raises(UnregisteredMetricTypeError):
 
-            class Above(Metric, MockDomain):
-                min_value: Comparable
-                strict_min: bool = False
+                class Above(Metric, MockDomain):
+                    min_value: Comparable
+                    strict_min: bool = False
 
     @pytest.mark.unit
     def test_unregistered_metric_raises(self):

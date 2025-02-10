@@ -1,9 +1,11 @@
+from typing import Final
+
 from great_expectations.compatibility.pydantic import BaseModel, ModelMetaclass
 from great_expectations.metrics.domain import AbstractClassInstantiationError, Domain
 from great_expectations.metrics.registry import DOMAIN_NAMES, METRIC_REGISTRY
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
-ALLOWABLE_METRIC_MIXINS = 1
+ALLOWABLE_METRIC_MIXINS: Final[int] = 1
 
 
 class MixinTypeError(TypeError):
