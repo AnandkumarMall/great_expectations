@@ -63,11 +63,17 @@ class ColumnMap(Map):
         batch_id: NonEmptyString,
         table: NonEmptyString,
         column: NonEmptyString,
+        row_condition: Optional[StrictStr] = None,
     ):
         self.batch_id = batch_id
         self.table = table
         self.column = column
-        super().__init__(batch_id=batch_id, table=table)
+        self.row_condition = row_condition
+        super().__init__(
+            batch_id=batch_id,
+            table=table,
+            row_condition=row_condition,
+        )
 
 
 DomainNames: dict[type[Domain], str] = {
