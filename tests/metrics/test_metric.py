@@ -68,6 +68,14 @@ class TestMetricDefinition:
                 strict_min: bool = False
 
     @pytest.mark.unit
+    def test_unregistered_domain_raises(self):
+        with pytest.raises(UnregisteredMetricTypeError):
+
+            class Above(Metric, MockDomain):
+                min_value: Comparable
+                strict_min: bool = False
+
+    @pytest.mark.unit
     def test_unregistered_metric_raises(self):
         with pytest.raises(UnregisteredMetricTypeError):
 

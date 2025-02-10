@@ -1,5 +1,5 @@
 from great_expectations.compatibility.pydantic import BaseModel, ModelMetaclass
-from great_expectations.metrics.domain import AbstractClassInstantiationError, Domain, DomainNames
+from great_expectations.metrics.domain import DOMAIN_NAMES, AbstractClassInstantiationError, Domain
 from great_expectations.metrics.registry import METRIC_REGISTRY
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
@@ -31,8 +31,17 @@ class MetaMetric(ModelMetaclass):
             raise MixinTypeError(name, "Domain")
         # ensure metric is registered
         for base_type in bases:
-            if issubclass(base_type, Domain) and name.lower() not in METRIC_REGISTRY[base_type]:
-                raise UnregisteredMetricTypeError(name, base_type)
+            if issubclass(base_type, Domain):
+                try:
+                    _ = DOMAIN_NAMES[base_type]
+                except KeyError:
+                    raise UnregisteredMetricTypeError(name, base_type)
+                try:
+                    registered_metrics_for_domain = METRIC_REGISTRY[base_type]
+                except KeyError:
+                    raise UnregisteredMetricTypeError(name, base_type)
+                if name.lower() not in registered_metrics_for_domain:
+                    raise UnregisteredMetricTypeError(name, base_type)
         return super().__new__(cls, name, bases, attrs)
 
 
@@ -78,7 +87,14 @@ class Metric(BaseModel, metaclass=MetaMetric):
     def name(self) -> str:
         for base_type in self.__class__.__bases__:
             if issubclass(base_type, Domain):
-                return ".".join([DomainNames[base_type], str(self.__class__.__name__).lower()])
+                metric_class_name = str(self.__class__.__name__)
+                try:
+                    domain_name = DOMAIN_NAMES[base_type]
+                except KeyError:
+                    # this should never be reached
+                    # that the metric is registered should have been confirmed in MetaMetric.__new__
+                    raise UnregisteredMetricTypeError(metric_class_name, base_type)
+                return ".".join([domain_name, metric_class_name.lower()])
 
         # this should never be reached
         # that a Domain exists in __bases__ should have been confirmed in MetaMetric.__new__

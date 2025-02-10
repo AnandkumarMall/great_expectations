@@ -61,6 +61,6 @@ class ColumnMap(Map):
     column: NonEmptyString
 
 
-DomainNames: dict[type[Domain], str] = {
+DOMAIN_NAMES: dict[type[Domain], str] = {
     ColumnMap: "column_values",
 }
