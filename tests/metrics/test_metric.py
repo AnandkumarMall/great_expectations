@@ -24,6 +24,9 @@ class MockDomain(Domain):
     galaxy: str
 
 
+class NotADomain: ...
+
+
 class TestMetric:
     @pytest.mark.unit
     def test_metric_instantiation_raises(self):
@@ -60,7 +63,7 @@ class TestMetricDefinition:
     def test_non_domain_mixin_raises(self):
         with pytest.raises(MixinTypeError):
 
-            class Above(Metric, str):
+            class Above(Metric, NotADomain):
                 min_value: Comparable
                 strict_min: bool = False
 

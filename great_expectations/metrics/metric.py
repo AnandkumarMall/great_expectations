@@ -80,6 +80,10 @@ class Metric(BaseModel, metaclass=MetaMetric):
             if issubclass(base_type, Domain):
                 return ".".join([DomainNames[base_type], str(self.__class__.__name__).lower()])
 
+        # this should never be reached
+        # that a Domain exists in __bases__ should have been confirmed in MetaMetric.__new__
+        raise MixinTypeError(self.__class__.__name__, "Domain")
+
     def to_config(self) -> MetricConfiguration:
         for base_type in self.__class__.__bases__:
             if issubclass(base_type, Domain):
