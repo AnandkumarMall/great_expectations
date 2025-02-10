@@ -83,7 +83,7 @@ class Metric(BaseModel, metaclass=MetaMetric):
 
     @property
     def name(self) -> str:
-        """The name of the metric as it exists in the regsitry."""
+        """The name of the metric as it exists in the registry."""
         for base_type in self.__class__.__bases__:
             if issubclass(base_type, Domain):
                 metric_class_name = str(self.__class__.__name__)
