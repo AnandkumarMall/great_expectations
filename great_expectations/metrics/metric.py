@@ -23,7 +23,7 @@ class UnregisteredMetricTypeError(TypeError):
 
 class MetaMetric(ModelMetaclass):
     def __new__(cls, name, bases, attrs):
-        # ensure the Domain mixin is defined
+        # ensure a single Domain mixin is defined
         if name != "Metric" and (
             len(bases) != ALLOWABLE_METRIC_MIXINS + 1
             or not any(issubclass(base_type, Domain) for base_type in bases)
@@ -92,3 +92,7 @@ class Metric(BaseModel, metaclass=MetaMetric):
                     metric_domain_kwargs=metric_domain_kwargs,
                     metric_value_kwargs=metric_value_kwargs,
                 )
+
+        # this should never be reached
+        # that a Domain exists in __bases__ should have been confirmed in MetaMetric.__new__
+        raise MixinTypeError(self.__class__.__name__, "Domain")
