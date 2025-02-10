@@ -6,9 +6,11 @@ from great_expectations.validator.metric_configuration import MetricConfiguratio
 ALLOWABLE_METRIC_MIXINS = 1
 
 
-class MissingMixinTypeError(TypeError):
+class MixinTypeError(TypeError):
     def __init__(self, class_name: str, mixin_superclass_name: str) -> None:
-        super().__init__(f"`{class_name}` must be use a `{mixin_superclass_name}` subclass mixin.")
+        super().__init__(
+            f"`{class_name}` must use a single `{mixin_superclass_name}` subclass mixin."
+        )
 
 
 class UnregisteredMetricTypeError(TypeError):
@@ -22,8 +24,8 @@ class UnregisteredMetricTypeError(TypeError):
 class MetaMetric(ModelMetaclass):
     def __new__(cls, name, bases, attrs):
         # ensure the Domain mixin is defined
-        if name != "Metric" and len(bases) < ALLOWABLE_METRIC_MIXINS + 1:
-            raise MissingMixinTypeError(name, "Domain")
+        if name != "Metric" and len(bases) != ALLOWABLE_METRIC_MIXINS + 1:
+            raise MixinTypeError(name, "Domain")
         # ensure metric is registered
         for base_type in bases:
             if (
@@ -85,8 +87,8 @@ class Metric(BaseModel, metaclass=MetaMetric):
                 metric_domain_kwargs = self.dict(include=domain_keys)
                 metric_value_kwargs = self.dict(exclude=domain_keys)
 
-        return MetricConfiguration(
-            metric_name=self.name,
-            metric_domain_kwargs=metric_domain_kwargs,
-            metric_value_kwargs=metric_value_kwargs,
-        )
+                return MetricConfiguration(
+                    metric_name=self.name,
+                    metric_domain_kwargs=metric_domain_kwargs,
+                    metric_value_kwargs=metric_value_kwargs,
+                )

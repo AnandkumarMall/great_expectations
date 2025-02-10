@@ -6,8 +6,8 @@ import pytest
 from great_expectations.compatibility.pydantic import ValidationError
 from great_expectations.core.types import Comparable
 from great_expectations.metrics import Metric
-from great_expectations.metrics.domain import AbstractClassInstantiationError, ColumnMap
-from great_expectations.metrics.metric import MissingMixinTypeError, UnregisteredMetricTypeError
+from great_expectations.metrics.domain import AbstractClassInstantiationError, ColumnMap, Domain
+from great_expectations.metrics.metric import MixinTypeError, UnregisteredMetricTypeError
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
 BATCH_ID = str(uuid4())
@@ -18,6 +18,10 @@ MOCK_METRIC_REGISTRY = {
     ColumnMap: ("above",),
 }
 FULLY_QUALIFIED_METRIC_NAME = "column_values.above"
+
+
+class MockDomain(Domain):
+    galaxy: str
 
 
 class TestMetric:
@@ -38,9 +42,17 @@ class TestMetricDefinition:
 
     @pytest.mark.unit
     def test_missing_domain_mixin_raises(self):
-        with pytest.raises(MissingMixinTypeError):
+        with pytest.raises(MixinTypeError):
 
             class Above(Metric):
+                min_value: Comparable
+                strict_min: bool = False
+
+    @pytest.mark.unit
+    def test_more_than_one_domain_mixin_raises(self):
+        with pytest.raises(MixinTypeError):
+
+            class Above(Metric, ColumnMap, MockDomain):
                 min_value: Comparable
                 strict_min: bool = False
 
