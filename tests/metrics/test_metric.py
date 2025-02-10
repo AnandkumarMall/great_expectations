@@ -57,6 +57,14 @@ class TestMetricDefinition:
                 strict_min: bool = False
 
     @pytest.mark.unit
+    def test_non_domain_mixin_raises(self):
+        with pytest.raises(MixinTypeError):
+
+            class Above(Metric, str):
+                min_value: Comparable
+                strict_min: bool = False
+
+    @pytest.mark.unit
     def test_unregistered_metric_raises(self):
         with pytest.raises(UnregisteredMetricTypeError):
 

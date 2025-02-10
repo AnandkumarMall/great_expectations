@@ -24,14 +24,14 @@ class UnregisteredMetricTypeError(TypeError):
 class MetaMetric(ModelMetaclass):
     def __new__(cls, name, bases, attrs):
         # ensure the Domain mixin is defined
-        if name != "Metric" and len(bases) != ALLOWABLE_METRIC_MIXINS + 1:
+        if name != "Metric" and (
+            len(bases) != ALLOWABLE_METRIC_MIXINS + 1
+            or not any(issubclass(base_type, Domain) for base_type in bases)
+        ):
             raise MixinTypeError(name, "Domain")
         # ensure metric is registered
         for base_type in bases:
-            if (
-                # isinstance(base_type, type)
-                issubclass(base_type, Domain) and name.lower() not in METRIC_REGISTRY[base_type]
-            ):
+            if issubclass(base_type, Domain) and name.lower() not in METRIC_REGISTRY[base_type]:
                 raise UnregisteredMetricTypeError(name, base_type)
         return super().__new__(cls, name, bases, attrs)
 
