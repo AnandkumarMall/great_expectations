@@ -48,11 +48,11 @@ class Metric(BaseModel, Generic[DomainT], metaclass=MetaMetric):
     must inherit from this class and specify their domain type through the generic type parameter.
 
     Args:
-        domain (DomainT): The domain object that specifies the scope over which this metric
+        domain (Domain): The domain object that specifies the scope over which this metric
             will be computed. Must be a subclass of Domain.
 
     Attributes:
-        domain (DomainT): The configured domain for this metric instance.
+        domain (Domain): The configured domain for this metric instance.
 
     Examples:
         A metric for column nullity values computed on each row:
