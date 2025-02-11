@@ -1,4 +1,3 @@
-from abc import ABC
 from typing import Annotated, Optional
 
 from great_expectations.compatibility.pydantic import BaseModel, Field, StrictStr
@@ -11,7 +10,7 @@ class AbstractClassInstantiationError(TypeError):
         super().__init__(f"Cannot instantiate abstract class `{class_name}`.")
 
 
-class Domain(BaseModel, ABC):
+class Domain(BaseModel):
     """The abstract base class for defining all types of domains over which metrics are computed."""
 
     batch_id: NonEmptyString
@@ -22,7 +21,7 @@ class Domain(BaseModel, ABC):
         return super().__new__(cls)
 
 
-class Map(Domain, ABC):
+class Map(Domain):
     """The abstract base class for metric domain types that compute row-level calculations."""
 
     table: NonEmptyString
