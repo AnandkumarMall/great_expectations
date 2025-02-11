@@ -1,5 +1,4 @@
 from unittest import mock
-from uuid import uuid4
 
 import pytest
 
@@ -10,7 +9,7 @@ from great_expectations.metrics.domain import AbstractClassInstantiationError, C
 from great_expectations.metrics.metric import MixinTypeError, UnregisteredMetricTypeError
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
-BATCH_ID = str(uuid4())
+BATCH_ID = "my_data_source-my_asset-year_2025"
 TABLE = "my_table"
 COLUMN = "my_column"
 
