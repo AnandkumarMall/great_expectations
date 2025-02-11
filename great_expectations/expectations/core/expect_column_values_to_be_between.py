@@ -15,6 +15,12 @@ from great_expectations.expectations.model_field_descriptions import (
     COLUMN_DESCRIPTION,
     MOSTLY_DESCRIPTION,
 )
+from great_expectations.metrics.column_map.between import (
+    MAX_VALUE_DESCRIPTION,
+    MIN_VALUE_DESCRIPTION,
+    STRICT_MAX_DESCRIPTION,
+    STRICT_MIN_DESCRIPTION,
+)
 from great_expectations.render import LegacyRendererType, RenderedStringTemplateContent
 from great_expectations.render.renderer.renderer import renderer
 from great_expectations.render.renderer_configuration import (
@@ -41,10 +47,6 @@ if TYPE_CHECKING:
 EXPECTATION_SHORT_DESCRIPTION = (
     "Expect the column entries to be between a minimum value and a maximum value (inclusive)."
 )
-MIN_VALUE_DESCRIPTION = "The minimum value for a column entry."
-MAX_VALUE_DESCRIPTION = "The maximum value for a column entry."
-STRICT_MIN_DESCRIPTION = "If True, values must be strictly larger than min_value."
-STRICT_MAX_DESCRIPTION = "If True, values must be strictly smaller than max_value."
 DATA_QUALITY_ISSUES = [DataQualityIssues.NUMERIC.value]
 SUPPORTED_DATA_SOURCES = [
     "Pandas",
@@ -73,13 +75,13 @@ class ExpectColumnValuesToBeBetween(ColumnMapExpectation):
         column (str): \
             {COLUMN_DESCRIPTION}
         min_value (comparable type or None): \
-        {MIN_VALUE_DESCRIPTION}
+        {MIN_VALUE_DESCRIPTION} If None, no lower bound is enforced.
         max_value (comparable type or None): \
-        {MAX_VALUE_DESCRIPTION}
+        {MAX_VALUE_DESCRIPTION} If None, no upper bound is enforced.
         strict_min (boolean): \
-            {STRICT_MIN_DESCRIPTION} Default=False.
+            {STRICT_MIN_DESCRIPTION} Defaults to False.
         strict_max (boolean): \
-            {STRICT_MAX_DESCRIPTION} Default=False.
+            {STRICT_MAX_DESCRIPTION} Defaults to False.
 
     Other Parameters:
         mostly (None or a float between 0 and 1): \
