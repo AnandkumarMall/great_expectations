@@ -1,5 +1,7 @@
 from typing import Final
 
+from typing_extensions import dataclass_transform
+
 from great_expectations.compatibility.pydantic import BaseModel, ModelMetaclass
 from great_expectations.metrics.domain import AbstractClassInstantiationError, Domain
 from great_expectations.metrics.registry import DOMAIN_NAMES, METRIC_REGISTRY
@@ -23,6 +25,7 @@ class UnregisteredMetricTypeError(TypeError):
         )
 
 
+@dataclass_transform()
 class MetaMetric(ModelMetaclass):
     def __new__(cls, name, bases, attrs):
         # ensure a single Domain mixin is defined
