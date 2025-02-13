@@ -15,7 +15,7 @@ from great_expectations.expectations.model_field_descriptions import (
     COLUMN_DESCRIPTION,
     MOSTLY_DESCRIPTION,
 )
-from great_expectations.metrics.column_map.between import (
+from great_expectations.metrics.column_values.between import (
     MAX_VALUE_DESCRIPTION,
     MIN_VALUE_DESCRIPTION,
     STRICT_MAX_DESCRIPTION,
