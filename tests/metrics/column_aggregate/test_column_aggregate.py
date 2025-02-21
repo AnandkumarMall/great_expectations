@@ -1,14 +1,14 @@
 from pathlib import Path
 
 import pandas
+import pytest
+from pytest import FixtureRequest
+
 from great_expectations.metrics.column_aggregate.mean import (
     ColumnValuesMean,
     ColumnValuesMeanResult,
 )
 from great_expectations.metrics.metric_results import MetricErrorResult
-import pytest
-from pytest import FixtureRequest
-
 from tests.integration.test_utils.data_source_config import (
     PandasDataFrameDatasourceTestConfig,
     PostgreSQLDatasourceTestConfig,
