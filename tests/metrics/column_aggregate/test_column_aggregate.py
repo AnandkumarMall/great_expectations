@@ -68,7 +68,6 @@ def setup_postgres(dataframe: pandas.DataFrame) -> PostgresBatchTestSetup:
 )
 def test_mean_success(setup_datasource: str, request: FixtureRequest) -> None:
     batch_setup = request.getfixturevalue(setup_datasource)
-    breakpoint()
     with batch_setup.batch_test_context() as batch:
         metric = ColumnValuesMean(batch_id=batch.id, column="number")
         metric_result = batch.compute_metrics(metric)
