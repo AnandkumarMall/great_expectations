@@ -13,7 +13,7 @@ class AbstractClassInstantiationError(TypeError):
 
 class Domain(BaseModel):
     """The abstract base class for defining all types of domains over which metrics are computed."""
-    
+
     def __new__(cls, *args, **kwargs):
         if cls is Domain:
             raise AbstractClassInstantiationError(cls.__name__)

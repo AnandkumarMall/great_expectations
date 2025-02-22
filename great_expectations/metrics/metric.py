@@ -1,4 +1,3 @@
-from functools import cache
 from typing import ClassVar, Final, Generic, TypeVar
 
 from typing_extensions import dataclass_transform, get_args
@@ -8,7 +7,6 @@ from great_expectations.metrics.domain import AbstractClassInstantiationError, D
 from great_expectations.metrics.metric_results import MetricResult
 from great_expectations.validator.metric_configuration import (
     MetricConfiguration,
-    MetricConfigurationID,
 )
 
 ALLOWABLE_METRIC_MIXINS: Final[int] = 1
@@ -123,11 +121,11 @@ class Metric(Generic[_MetricResult], BaseModel, metaclass=MetaMetric):
         # To make this clear we could do this at init time, in model_validator (pydantic v2)
         # or a pre=False root_validator (pydantic v1). However, we'd have to do a deep copy
         # to plumb in the batch_id or that would update the value between calls. To avoid that
-        # complication, we make a new one each time. 
+        # complication, we make a new one each time.
         config = Metric._to_config(
-                instance_class=self.__class__,
-                metric_value_set=frozenset(self.dict().items()),
-            )
+            instance_class=self.__class__,
+            metric_value_set=frozenset(self.dict().items()),
+        )
         config.metric_domain_kwargs["batch_id"] = batch_id
         return config
 
