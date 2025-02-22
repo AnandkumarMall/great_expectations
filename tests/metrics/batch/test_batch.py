@@ -34,7 +34,7 @@ class TestBatchRowCount:
             data=self.DATA_FRAME,
         )
         with batch_setup.batch_test_context() as batch:
-            metric = BatchRowCount(batch_id=batch.id)
+            metric = BatchRowCount()
             metric_result = batch.compute_metrics(metric)
             assert isinstance(metric_result, BatchRowCountResult)
             assert metric_result.value == self.ROW_COUNT
@@ -47,9 +47,7 @@ class TestBatchRowCount:
             base_dir=tmp_path,
         )
         with batch_setup.batch_test_context() as batch:
-            metric = BatchRowCount(
-                batch_id=batch.id,
-            )
+            metric = BatchRowCount()
             metric_result = batch.compute_metrics(metric)
             assert isinstance(metric_result, BatchRowCountResult)
             assert metric_result.value == self.ROW_COUNT
@@ -60,7 +58,7 @@ class TestBatchRowCount:
             config=PostgreSQLDatasourceTestConfig(), data=self.DATA_FRAME, extra_data={}
         )
         with batch_setup.batch_test_context() as batch:
-            metric = BatchRowCount(batch_id=batch.id)
+            metric = BatchRowCount()
             metric_result = batch.compute_metrics(metric)
             assert isinstance(metric_result, BatchRowCountResult)
             assert metric_result.value == self.ROW_COUNT

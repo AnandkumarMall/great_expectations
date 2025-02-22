@@ -69,7 +69,7 @@ def setup_postgres(dataframe: pandas.DataFrame) -> PostgresBatchTestSetup:
 def test_mean_success(setup_datasource: str, request: FixtureRequest) -> None:
     batch_setup = request.getfixturevalue(setup_datasource)
     with batch_setup.batch_test_context() as batch:
-        metric = ColumnValuesMean(batch_id=batch.id, column="number")
+        metric = ColumnValuesMean(column="number")
         metric_result = batch.compute_metrics(metric)
         assert isinstance(metric_result, ColumnValuesMeanResult)
         assert metric_result.value == 2.5
@@ -86,6 +86,6 @@ def test_mean_success(setup_datasource: str, request: FixtureRequest) -> None:
 def test_mean_failure(setup_datasource: str, request: FixtureRequest) -> None:
     batch_setup = request.getfixturevalue(setup_datasource)
     with batch_setup.batch_test_context() as batch:
-        metric = ColumnValuesMean(batch_id=batch.id, column="string")
+        metric = ColumnValuesMean(column="string")
         metric_result = batch.compute_metrics(metric)
         assert isinstance(metric_result, MetricErrorResult)

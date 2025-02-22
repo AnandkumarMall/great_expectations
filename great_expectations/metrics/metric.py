@@ -31,6 +31,11 @@ class UnregisteredMetricError(ValueError):
         super().__init__(f"Metric `{metric_name}` was not found in the registry.")
 
 
+class EmptyStrError(ValueError):
+    def __init__(self, param_name) -> None:
+        super().__init__("{param_name} must be a non-empty string.")
+
+
 @dataclass_transform()
 class MetaMetric(ModelMetaclass):
     """Metaclass for Metric classes that maintains a registry of all concrete Metric types."""
@@ -110,16 +115,21 @@ class Metric(Generic[_MetricResult], BaseModel, metaclass=MetaMetric):
             raise AbstractClassInstantiationError(cls.__name__)
         return super().__new__(cls)
 
-    @property
-    def id(self) -> MetricConfigurationID:
-        return self.config.id
+    def config(self, batch_id: str) -> MetricConfiguration:
+        if len(batch_id) == 0:
+            raise EmptyStrError("batch_id")
 
-    @property
-    def config(self) -> MetricConfiguration:
-        return Metric._to_config(
-            instance_class=self.__class__,
-            metric_value_set=frozenset(self.dict().items()),
-        )
+        # This class is frozen so Metric._to_config will always return the same value.
+        # To make this clear we could do this at init time, in model_validator (pydantic v2)
+        # or a pre=False root_validator (pydantic v1). However, we'd have to do a deep copy
+        # to plumb in the batch_id or that would update the value between calls. To avoid that
+        # complication, we make a new one each time. 
+        config = Metric._to_config(
+                instance_class=self.__class__,
+                metric_value_set=frozenset(self.dict().items()),
+            )
+        config.metric_domain_kwargs["batch_id"] = batch_id
+        return config
 
     @classmethod
     def get_metric_result_type(cls) -> type[_MetricResult]:
@@ -127,7 +137,6 @@ class Metric(Generic[_MetricResult], BaseModel, metaclass=MetaMetric):
         return get_args(getattr(cls, "__orig_bases__", [])[0])[0]
 
     @staticmethod
-    @cache
     def _to_config(
         instance_class: type["Metric"], metric_value_set: frozenset[tuple]
     ) -> MetricConfiguration:

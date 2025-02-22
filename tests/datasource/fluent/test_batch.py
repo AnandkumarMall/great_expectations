@@ -302,7 +302,6 @@ def test_batch_compute_metrics_single_metric_success(
 ):
     _, batch = pandas_setup
     metric = ColumnValuesBetween(
-        batch_id=batch.id,
         column="vendor_id",
         min_value=0,
     )
@@ -316,11 +315,10 @@ def test_batch_compute_metrics_multiple_metrics_success(
 ):
     _, batch = pandas_setup
     metric_1 = ColumnValuesBetween(
-        batch_id=batch.id,
         column="passenger_count",
         min_value=0,
     )
-    metric_2 = BatchRowCount(batch_id=batch.id)
+    metric_2 = BatchRowCount()
     metrics: list[Metric] = [metric_1, metric_2]
     requested_metric_count = len(metrics)
     metric_results = batch.compute_metrics(metrics)
@@ -336,11 +334,10 @@ def test_batch_compute_metrics_multiple_metrics_error(
 ):
     _, batch = pandas_setup
     metric_1 = ColumnValuesBetween(
-        batch_id=batch.id,
         column="not_a_column",
         min_value=0,
     )
-    metric_2 = BatchRowCount(batch_id=batch.id)
+    metric_2 = BatchRowCount()
     metrics: list[Metric] = [metric_1, metric_2]
     requested_metric_count = len(metrics)
     metric_results = batch.compute_metrics(metrics)
