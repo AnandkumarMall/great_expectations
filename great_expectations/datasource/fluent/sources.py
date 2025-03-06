@@ -569,6 +569,9 @@ class DataSourceManager:
             new_datasource._data_context = self._data_context
             new_datasource.test_connection()
             if datasource_name in self.all():
+                # We're updating a data source only, so don't overwrite existing assets.
+                existing_assets = self.all()[datasource_name].assets
+                new_datasource.assets = existing_assets
                 return_obj = self._data_context._update_fluent_datasource(datasource=new_datasource)
             else:
                 return_obj = self._data_context._add_fluent_datasource(datasource=new_datasource)
