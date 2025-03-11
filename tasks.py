@@ -1232,3 +1232,8 @@ def print_public_api(ctx: Context):
     for module_info in pkgutil.walk_packages(["great_expectations"], prefix="great_expectations."):
         importlib.import_module(module_info.name)
     print(great_expectations._docs_decorators.public_api_introspector)
+
+
+@invoke.task()
+def hello_world(ctx: Context):
+    print("hello, world")
