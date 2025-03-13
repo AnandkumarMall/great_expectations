@@ -2486,3 +2486,16 @@ class AbstractDataContext(ConfigPeer, ABC):
             self.fluent_config.update_datasources(datasources=fluent_datasources)
 
         return self.fluent_config.get_datasources_as_dict()
+    
+    def prepare_checkpoint_run(
+        self,
+        checkpoint: gx.Checkpoint,
+        batch_parameters: Dict[str, Any],
+        expectation_parameters: gx.SuiteParameterDict,
+    ) -> None:
+        """Context specific preparation for a checkpoint run.
+        
+        Defaults to a no-op but can be overriden for context specific checkpoint run preparation.
+        The preparation can update the input arguments in place.
+        """
+        ...
