@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-from urllib.parse import urljoin
 import uuid
 from typing import (
     TYPE_CHECKING,
@@ -13,6 +12,7 @@ from typing import (
     Optional,
     Union,
 )
+from urllib.parse import urljoin
 
 from requests import HTTPError, Response
 
@@ -666,12 +666,12 @@ class CloudDataContext(SerializableDataContext):
         expectation_parameters: SuiteParameterDict,
     ) -> None:
         """CloudContext specific preparation for a checkpoint run.
-        
+
         Actualizes windowed parameters by updating expectation_parameters in place.
         """
         if not self._checkpoint_has_windowed_expectations(checkpoint):
             return
-        
+
         base_url = self.ge_cloud_config.base_url
         org_id = self.ge_cloud_config.organization_id
         expectation_parameters_url = urljoin(
@@ -684,14 +684,13 @@ class CloudDataContext(SerializableDataContext):
         if not response.ok:
             raise gx_exceptions.GXCloudError(
                 message="Unable to retrieve expectation_parameters for Checkpoint with "
-                        f"ID={checkpoint.id}.",
+                f"ID={checkpoint.id}.",
                 response=response,
             )
         data = response.json()
         try:
-            overlapping_keys = (
-                set(expectation_parameters.keys()) & 
-                set(data["data"]["expectation_parameters"].keys())
+            overlapping_keys = set(expectation_parameters.keys()) & set(
+                data["data"]["expectation_parameters"].keys()
             )
             if overlapping_keys:
                 logger.warning(

@@ -64,12 +64,13 @@ from great_expectations.exceptions.exceptions import (
 )
 from great_expectations.exceptions.resource_freshness import ResourceFreshnessAggregateError
 from great_expectations.expectations.expectation_configuration import ExpectationConfiguration
-from great_expectations.expectations.window import Window, Offset
+from great_expectations.expectations.window import Offset, Window
 from tests.test_utils import working_directory
 
 if TYPE_CHECKING:
-    from great_expectations.data_context.data_context.cloud_data_context import CloudDataContext
     from pytest_mock import MockerFixture
+
+    from great_expectations.data_context.data_context.cloud_data_context import CloudDataContext
 
 
 @pytest.mark.unit
@@ -1629,7 +1630,7 @@ def test_checkpoint_expectation_parameters(
 def test_windowed_expectation_runs(
     empty_cloud_context_fluent: CloudDataContext,
     mocker: MockerFixture,
-) -> None: 
+) -> None:
     # Arrange: Setup context and entities so we can run a checkpoint
     context = empty_cloud_context_fluent
     col_name = "my_col"
@@ -1641,56 +1642,60 @@ def test_windowed_expectation_runs(
         .add_batch_definition("my_batch_definition")
     )
     expectation = gx.expectations.ExpectColumnMeanToBeBetween(
-      column=col_name,
-      min_value={ "$PARAMETER": "my_min" },
-      max_value={ "$PARAMETER": "my_max" },
-      windows=[
-          Window(
-              constraint_fn='mean', 
-              parameter_name='my_min', 
-              range=3, 
-              offset=Offset(positive=0.05, negative=0.05), 
-              strict=False
-        ),
-         Window(
-            constraint_fn='mean',
-            parameter_name='my_max',
-            range=3,
-            offset=Offset(positive=0.05, negative=0.05),
-            strict=False
-        ),
-      ]
+        column=col_name,
+        min_value={"$PARAMETER": "my_min"},
+        max_value={"$PARAMETER": "my_max"},
+        windows=[
+            Window(
+                constraint_fn="mean",
+                parameter_name="my_min",
+                range=3,
+                offset=Offset(positive=0.05, negative=0.05),
+                strict=False,
+            ),
+            Window(
+                constraint_fn="mean",
+                parameter_name="my_max",
+                range=3,
+                offset=Offset(positive=0.05, negative=0.05),
+                strict=False,
+            ),
+        ],
     )
     suite = context.suites.add(gx.ExpectationSuite("my_suite", expectations=[expectation]))
     validation_def = context.validation_definitions.add(
-        gx.ValidationDefinition(
-            name="my_validation_definition",
-            suite=suite,
-            data=batch_def
-        )
+        gx.ValidationDefinition(name="my_validation_definition", suite=suite, data=batch_def)
     )
     checkpoint = context.checkpoints.add(
-        Checkpoint(
-            name="my_checkpoint",
-            validation_definitions=[validation_def]
-        )
+        Checkpoint(name="my_checkpoint", validation_definitions=[validation_def])
     )
 
     # Patch external requests made when running a checkpoint.
     # Since we are using mocker instead of mock, we don't need to use this as a context manager
-    mocker.patch.object(
-        Checkpoint, "is_fresh", return_value=CheckpointFreshnessDiagnostics(errors=[])
-    ),
+    (
+        mocker.patch.object(
+            Checkpoint, "is_fresh", return_value=CheckpointFreshnessDiagnostics(errors=[])
+        ),
+    )
     # We set the returned min and max values returned by cloud
     # This is a magic mock since it needs to support being used as a context manager
     mock_session = mocker.MagicMock()
     cloud_min = 0.234
     cloud_max = 0.456
-    mock_session.__enter__.return_value.get.return_value.json.return_value = {'data': {'expectation_parameters': {'my_min': cloud_min, 'my_max': cloud_max}}}
-    mocker.patch('great_expectations.data_context.data_context.cloud_data_context.create_session', return_value=mock_session)
+    mock_session.__enter__.return_value.get.return_value.json.return_value = {
+        "data": {"expectation_parameters": {"my_min": cloud_min, "my_max": cloud_max}}
+    }
+    mocker.patch(
+        "great_expectations.data_context.data_context.cloud_data_context.create_session",
+        return_value=mock_session,
+    )
 
     # Act: Run the checkpoint
-    checkpoint_result = checkpoint.run({"dataframe": dataframe,})
+    checkpoint_result = checkpoint.run(
+        {
+            "dataframe": dataframe,
+        }
+    )
 
     # Assert: Look at the configured expectation min and max and compare it to the returned cloud values
     assert len(checkpoint_result.run_results) == 1
@@ -1698,5 +1703,11 @@ def test_windowed_expectation_runs(
     result_list = outer_results.results
     assert len(result_list) == 1
     result = result_list[0]
-    assert result["expectation_config"]["rendered_content"][0].value.params["min_value"]["value"] == cloud_min
-    assert result["expectation_config"]["rendered_content"][0].value.params["max_value"]["value"] == cloud_max
+    assert (
+        result["expectation_config"]["rendered_content"][0].value.params["min_value"]["value"]
+        == cloud_min
+    )
+    assert (
+        result["expectation_config"]["rendered_content"][0].value.params["max_value"]["value"]
+        == cloud_max
+    )
