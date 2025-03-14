@@ -255,11 +255,12 @@ class MetricListMetricRetriever(MetricRetriever):
         ]
         return any(metric in metric_list for metric in column_metrics)
 
+    @override
     def _get_table_column_types(self, batch_request: BatchRequest) -> Metric:
         """Get the table column types from cache if available, otherwise compute them."""
         if batch_request.data_asset_name in self._table_column_types_cache:
             return self._table_column_types_cache[batch_request.data_asset_name]
-        
+
         metric = self._get_table_metrics(
             batch_request=batch_request,
             metric_name=MetricTypes.TABLE_COLUMN_TYPES,
@@ -268,13 +269,14 @@ class MetricListMetricRetriever(MetricRetriever):
         self._table_column_types_cache[batch_request.data_asset_name] = metric
         return metric
 
+    @override
     def get_validator(self, batch_request: BatchRequest) -> Validator:
         """Get a validator for the batch request, using a cached validator if available."""
         data_asset_name = batch_request.data_asset_name
-        
+
         if data_asset_name in self._validators_cache:
             return self._validators_cache[data_asset_name]
-        
+
         validator = self._context.get_validator(batch_request=batch_request)
         self._validators_cache[data_asset_name] = validator
         return validator

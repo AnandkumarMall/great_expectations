@@ -18,10 +18,8 @@ from functools import wraps
 from inspect import (
     BoundArguments,
     signature,
-    stack,
 )
 from numbers import Number
-from pathlib import Path
 from types import ModuleType
 from typing import (
     TYPE_CHECKING,
