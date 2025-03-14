@@ -324,9 +324,9 @@ class Checkpoint(BaseModel):
             else:
                 diagnostics.raise_for_error()
 
-        if batch_parameters == None:
+        if batch_parameters is None:
             batch_parameters = {}
-        if expectation_parameters == None:
+        if expectation_parameters is None:
             expectation_parameters = SuiteParameterDict()
         run_id = run_id or RunIdentifier(run_time=dt.datetime.now(dt.timezone.utc))
         self._prepare_checkpoint_run_for_context(batch_parameters, expectation_parameters)

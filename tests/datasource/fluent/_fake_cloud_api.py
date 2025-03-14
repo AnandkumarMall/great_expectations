@@ -792,7 +792,10 @@ def post_validation_results_cb(request: PreparedRequest) -> CallbackResult:
                 {
                     "data": {
                         "id": validation_id,
-                        "result_url": f"{GX_CLOUD_MOCK_BASE_URL}organizations/{FAKE_ORG_ID}/validation-results/{validation_id}",
+                        "result_url": (
+                            f"{GX_CLOUD_MOCK_BASE_URL}organizations/{FAKE_ORG_ID}/"
+                            "validation-results/{validation_id}"
+                        ),
                     }
                 }
             ),

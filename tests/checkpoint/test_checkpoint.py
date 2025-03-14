@@ -1697,7 +1697,8 @@ def test_windowed_expectation_runs(
         }
     )
 
-    # Assert: Look at the configured expectation min and max and compare it to the returned cloud values
+    # Assert: Look at the configured expectation min and max and compare it to the returned cloud
+    # values
     assert len(checkpoint_result.run_results) == 1
     outer_results = list(checkpoint_result.run_results.values())[0]
     result_list = outer_results.results
