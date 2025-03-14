@@ -10,8 +10,7 @@ from typing import (
     Sequence,
 )
 
-from great_expectations.core.domain import SemanticDomainTypes, Domain
-from great_expectations.core.metric_domain_types import MetricDomainTypes
+from great_expectations.core.domain import SemanticDomainTypes
 from great_expectations.data_context import AbstractDataContext
 from great_expectations.datasource.fluent import BatchRequest
 from great_expectations.datasource.fluent.interfaces import Batch
@@ -159,7 +158,12 @@ class MetricRetriever(abc.ABC):
         table_column_types = self._get_table_column_types(batch_request)
         numeric_column_names = []
         for column_type in table_column_types.value:
-            if column_type.get("type") and column_type["type"].upper() in ["FLOAT", "INTEGER", "NUMERIC", "DECIMAL"]:
+            if column_type.get("type") and column_type["type"].upper() in [
+                "FLOAT",
+                "INTEGER",
+                "NUMERIC",
+                "DECIMAL",
+            ]:
                 if column_type["name"] not in exclude_column_names:
                     numeric_column_names.append(column_type["name"])
         return numeric_column_names
@@ -188,9 +192,13 @@ class MetricRetriever(abc.ABC):
         column_names = []
         for semantic_type in include_semantic_types:
             if semantic_type == SemanticDomainTypes.NUMERIC:
-                column_names.extend(self._get_numeric_column_names(batch_request, exclude_column_names))
+                column_names.extend(
+                    self._get_numeric_column_names(batch_request, exclude_column_names)
+                )
             elif semantic_type == SemanticDomainTypes.DATETIME:
-                column_names.extend(self._get_timestamp_column_names(batch_request, exclude_column_names))
+                column_names.extend(
+                    self._get_timestamp_column_names(batch_request, exclude_column_names)
+                )
         return list(set(column_names))  # Remove duplicates
 
     def _get_table_metrics(
