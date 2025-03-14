@@ -96,6 +96,7 @@ if TYPE_CHECKING:
     from great_expectations.core.expectation_validation_result import (
         ExpectationValidationResult,
     )
+    from great_expectations.core.suite_parameters import SuiteParameterDict
     from great_expectations.data_context.data_context_variables import (
         DataContextVariables,
     )
@@ -2491,7 +2492,7 @@ class AbstractDataContext(ConfigPeer, ABC):
         self,
         checkpoint: gx.Checkpoint,
         batch_parameters: Dict[str, Any],
-        expectation_parameters: gx.SuiteParameterDict,
+        expectation_parameters: SuiteParameterDict,
     ) -> None:
         """Context specific preparation for a checkpoint run.
 
