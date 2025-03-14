@@ -663,12 +663,6 @@ ITEMS_IGNORED_FROM_PUBLIC_API = [
     ),
     PrintableDefinition(
         file=pathlib.Path(
-            "great_expectations/expectations/regex_based_column_map_expectation.py"
-        ),
-        name="validate_configuration",
-    ),
-    PrintableDefinition(
-        file=pathlib.Path(
             "great_expectations/expectations/set_based_column_map_expectation.py"
         ),
         name="validate_configuration",
@@ -678,18 +672,6 @@ ITEMS_IGNORED_FROM_PUBLIC_API = [
             "great_expectations/experimental/metric_repository/metric_retriever.py"
         ),
         name="get_validator",
-    ),
-    PrintableDefinition(
-        file=pathlib.Path(
-            "great_expectations/experimental/rule_based_profiler/helpers/util.py"
-        ),
-        name="build_batch_request",
-    ),
-    PrintableDefinition(
-        file=pathlib.Path(
-            "great_expectations/experimental/rule_based_profiler/rule_based_profiler.py"
-        ),
-        name="run",
     ),
     PrintableDefinition(
         file=pathlib.Path("great_expectations/render/components.py"),

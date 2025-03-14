@@ -12,6 +12,7 @@ from great_expectations.experimental.metric_repository.metrics import (
     ColumnMetric,
     Metric,
     MetricTypes,
+    TableMetric,
 )
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,8 @@ class MetricListMetricRetriever(MetricRetriever):
     def __init__(self, context: AbstractDataContext):
         super().__init__(context=context)
         self._validator: Validator | None = None
+        self._table_column_types_cache: dict[str, Metric] = {}
+        self._validators_cache: dict[str, Validator] = {}
 
     @override
     def get_metrics(
@@ -62,6 +65,9 @@ class MetricListMetricRetriever(MetricRetriever):
         table_column_types = list(
             filter(lambda m: m.metric_name == MetricTypes.TABLE_COLUMN_TYPES, table_metrics)
         )[0]
+
+        # Cache the table column types for this batch request
+        self._table_column_types_cache[batch_request.data_asset_name] = table_column_types
 
         # We need to skip columns that do not report a type, because the metric computation
         # to determine semantic type will fail.
@@ -248,3 +254,27 @@ class MetricListMetricRetriever(MetricRetriever):
             MetricTypes.COLUMN_NULL_COUNT,
         ]
         return any(metric in metric_list for metric in column_metrics)
+
+    def _get_table_column_types(self, batch_request: BatchRequest) -> Metric:
+        """Get the table column types from cache if available, otherwise compute them."""
+        if batch_request.data_asset_name in self._table_column_types_cache:
+            return self._table_column_types_cache[batch_request.data_asset_name]
+        
+        metric = self._get_table_metrics(
+            batch_request=batch_request,
+            metric_name=MetricTypes.TABLE_COLUMN_TYPES,
+            metric_type=TableMetric[list[dict[str, str]]],
+        )
+        self._table_column_types_cache[batch_request.data_asset_name] = metric
+        return metric
+
+    def get_validator(self, batch_request: BatchRequest) -> Validator:
+        """Get a validator for the batch request, using a cached validator if available."""
+        data_asset_name = batch_request.data_asset_name
+        
+        if data_asset_name in self._validators_cache:
+            return self._validators_cache[data_asset_name]
+        
+        validator = self._context.get_validator(batch_request=batch_request)
+        self._validators_cache[data_asset_name] = validator
+        return validator

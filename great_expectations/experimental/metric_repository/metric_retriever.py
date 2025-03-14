@@ -10,7 +10,10 @@ from typing import (
     Sequence,
 )
 
-from great_expectations.core.domain import SemanticDomainTypes
+from great_expectations.core.domain import SemanticDomainTypes, Domain
+from great_expectations.core.metric_domain_types import MetricDomainTypes
+from great_expectations.data_context import AbstractDataContext
+from great_expectations.datasource.fluent import BatchRequest
 from great_expectations.datasource.fluent.interfaces import Batch
 from great_expectations.experimental.metric_repository.metrics import (
     ColumnMetric,
@@ -18,23 +21,17 @@ from great_expectations.experimental.metric_repository.metrics import (
     MetricTypes,
     TableMetric,
 )
-from great_expectations.experimental.rule_based_profiler.domain_builder import ColumnDomainBuilder
 from great_expectations.validator.exception_info import ExceptionInfo
 from great_expectations.validator.metric_configuration import (
     MetricConfiguration,
     MetricConfigurationID,
 )
+from great_expectations.validator.validator import Validator
 
 if TYPE_CHECKING:
-    from great_expectations.data_context import AbstractDataContext
-    from great_expectations.datasource.fluent import BatchRequest
-    from great_expectations.experimental.metric_repository.metrics import Metric
     from great_expectations.validator.metrics_calculator import (
         _AbortedMetricsInfoDict,
         _MetricsDict,
-    )
-    from great_expectations.validator.validator import (
-        Validator,
     )
 
 
@@ -159,11 +156,13 @@ class MetricRetriever(abc.ABC):
         exclude_column_names: List[str],
     ) -> list[str]:
         """Get the names of all numeric columns in the batch."""
-        return self._get_column_names_for_semantic_types(
-            batch_request=batch_request,
-            include_semantic_types=[SemanticDomainTypes.NUMERIC],
-            exclude_column_names=exclude_column_names,
-        )
+        table_column_types = self._get_table_column_types(batch_request)
+        numeric_column_names = []
+        for column_type in table_column_types.value:
+            if column_type.get("type") and column_type["type"].upper() in ["FLOAT", "INTEGER", "NUMERIC", "DECIMAL"]:
+                if column_type["name"] not in exclude_column_names:
+                    numeric_column_names.append(column_type["name"])
+        return numeric_column_names
 
     def _get_timestamp_column_names(
         self,
@@ -171,11 +170,13 @@ class MetricRetriever(abc.ABC):
         exclude_column_names: List[str],
     ) -> list[str]:
         """Get the names of all timestamp columns in the batch."""
-        return self._get_column_names_for_semantic_types(
-            batch_request=batch_request,
-            include_semantic_types=[SemanticDomainTypes.DATETIME],
-            exclude_column_names=exclude_column_names,
-        )
+        table_column_types = self._get_table_column_types(batch_request)
+        timestamp_column_names = []
+        for column_type in table_column_types.value:
+            if column_type.get("type") and "TIMESTAMP" in column_type["type"].upper():
+                if column_type["name"] not in exclude_column_names:
+                    timestamp_column_names.append(column_type["name"])
+        return timestamp_column_names
 
     def _get_column_names_for_semantic_types(
         self,
@@ -184,21 +185,13 @@ class MetricRetriever(abc.ABC):
         exclude_column_names: List[str],
     ) -> list[str]:
         """Get the names of all columns matching semantic types in the batch."""
-        validator = self.get_validator(batch_request=batch_request)
-        domain_builder = ColumnDomainBuilder(
-            include_semantic_types=include_semantic_types,  # type: ignore[arg-type]  # ColumnDomainBuilder supports other ways of specifying semantic types
-            exclude_column_names=exclude_column_names,
-        )
-        assert isinstance(validator.active_batch, Batch), (
-            f"validator.active_batch is type {type(validator.active_batch).__name__} "
-            f"instead of type {Batch.__name__}"
-        )
-        batch_id = validator.active_batch.id
-        column_names = domain_builder.get_effective_column_names(
-            validator=validator,
-            batch_ids=[batch_id],
-        )
-        return column_names
+        column_names = []
+        for semantic_type in include_semantic_types:
+            if semantic_type == SemanticDomainTypes.NUMERIC:
+                column_names.extend(self._get_numeric_column_names(batch_request, exclude_column_names))
+            elif semantic_type == SemanticDomainTypes.DATETIME:
+                column_names.extend(self._get_timestamp_column_names(batch_request, exclude_column_names))
+        return list(set(column_names))  # Remove duplicates
 
     def _get_table_metrics(
         self,
@@ -323,7 +316,7 @@ class MetricRetriever(abc.ABC):
             else:
                 column_types_converted_to_str.append({"name": raw_column_type["name"]})
 
-        return TableMetric[List[str]](
+        return TableMetric[list[dict[str, str]]](
             batch_id=batch_id,
             metric_name=metric_name,
             value=column_types_converted_to_str,

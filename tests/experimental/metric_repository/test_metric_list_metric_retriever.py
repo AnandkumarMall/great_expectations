@@ -14,7 +14,6 @@ from great_expectations.experimental.metric_repository.metrics import (
     MetricTypes,
     TableMetric,
 )
-from great_expectations.experimental.rule_based_profiler.domain_builder import ColumnDomainBuilder
 from great_expectations.validator.exception_info import ExceptionInfo
 from great_expectations.validator.validator import Validator
 
@@ -114,7 +113,7 @@ def test_get_metrics_table_metrics_only(
             value=["col1", "col2"],
             exception=None,
         ),
-        TableMetric[List[str]](
+        TableMetric[list[dict[str, str]]](
             batch_id="batch_id",
             metric_name="table.column_types",
             value=[
@@ -180,7 +179,7 @@ def test_get_metrics_full_list(
             value=["col1", "col2"],
             exception=None,
         ),
-        TableMetric[List[str]](
+        TableMetric[list[dict[str, str]]](
             batch_id="batch_id",
             metric_name="table.column_types",
             value=[
@@ -365,7 +364,7 @@ def test_get_metrics_metrics_missing(
             value=["col1", "col2"],
             exception=None,
         ),
-        TableMetric[List[str]](
+        TableMetric[list[dict[str, str]]](
             batch_id="batch_id",
             metric_name="table.column_types",
             value=[
@@ -458,7 +457,7 @@ def test_get_metrics_with_exception(
             value=["col1", "col2"],
             exception=None,
         ),
-        TableMetric[List[str]](
+        TableMetric[list[dict[str, str]]](
             batch_id="batch_id",
             metric_name="table.column_types",
             value=[
@@ -536,7 +535,7 @@ def test_get_metrics_with_column_type_missing(
             value=["col1", "col2"],
             exception=None,
         ),
-        TableMetric[List[str]](
+        TableMetric[list[dict[str, str]]](
             batch_id="batch_id",
             metric_name="table.column_types",
             value=[
@@ -610,7 +609,7 @@ def test_get_metrics_with_timestamp_columns(
             value=["timestamp_col"],
             exception=None,
         ),
-        TableMetric[List[str]](
+        TableMetric[list[dict[str, str]]](
             batch_id="batch_id",
             metric_name="table.column_types",
             value=[{"name": "timestamp_col", "type": "TIMESTAMP_NTZ"}],
@@ -662,10 +661,6 @@ def test_get_metrics_only_gets_a_validator_once(
         computed_metrics,
         aborted_metrics,
     )
-    mocker.patch(
-        f"{ColumnDomainBuilder.__module__}.{ColumnDomainBuilder.__name__}.get_effective_column_names",
-        return_value=["col1", "col2"],
-    )
     metric_retriever.get_metrics(batch_request=mock_batch_request, metric_list=metrics_list)
 
     mock_context.get_validator.assert_called_once_with(batch_request=mock_batch_request)
@@ -697,13 +692,9 @@ def test_get_metrics_only_gets_new_validator_on_asset_change(
         computed_metrics,
         aborted_metrics,
     )
-    mocker.patch(
-        f"{ColumnDomainBuilder.__module__}.{ColumnDomainBuilder.__name__}.get_effective_column_names",
-        return_value=["col1", "col2"],
-    )
     metric_retriever.get_metrics(batch_request=mock_batch_request_variant, metric_list=metrics_list)
 
-    assert mock_context.get_validator.call_count == 4
+    assert mock_context.get_validator.call_count == 1
     mock_context.get_validator.assert_called_with(batch_request=mock_batch_request_variant)
 
 
@@ -862,7 +853,7 @@ def test_get_metrics_with_timestamp_columns_exclude_time(
             value=["timestamp_col", "time_col"],
             exception=None,
         ),
-        TableMetric[List[str]](
+        TableMetric[list[dict[str, str]]](
             batch_id="batch_id",
             metric_name="table.column_types",
             value=[

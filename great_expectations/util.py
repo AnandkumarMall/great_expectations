@@ -655,23 +655,7 @@ def convert_decimal_to_float(d: SupportsFloat) -> float:
     """
     This method convers "decimal.Decimal" to standard "float" type.
     """
-    rule_based_profiler_call: bool = (
-        len(
-            list(
-                filter(
-                    lambda frame_info: Path(frame_info.filename).name == "parameter_builder.py"
-                    and frame_info.function == "get_metrics",
-                    stack(),
-                )
-            )
-        )
-        > 0
-    )
-    if (
-        not rule_based_profiler_call
-        and isinstance(d, decimal.Decimal)
-        and requires_lossy_conversion(d=d)
-    ):
+    if isinstance(d, decimal.Decimal) and requires_lossy_conversion(d=d):
         logger.warning(
             f"Using lossy conversion for decimal {d} to float object to support serialization."
         )
