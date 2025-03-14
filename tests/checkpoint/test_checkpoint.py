@@ -1626,10 +1626,23 @@ def test_checkpoint_expectation_parameters(
     assert results.success
 
 
+@pytest.mark.parametrize(
+    "expectation_params",
+    [
+        pytest.param(None, id="none expectation params"),
+        pytest.param({}, id="empty expectation params"),
+        pytest.param({"my_min": 0.234, "my_max": 0.456}, id="overlapping expectation params"),
+        pytest.param(
+            {"my_min": 0.234, "other": 0.456},
+            id="overlapping and extra expectation params"
+        ),
+    ],
+)
 @pytest.mark.unit
 def test_windowed_expectation_runs(
     empty_cloud_context_fluent: CloudDataContext,
     mocker: MockerFixture,
+    expectation_params: dict[str, float] | None,
 ) -> None:
     # Arrange: Setup context and entities so we can run a checkpoint
     context = empty_cloud_context_fluent
@@ -1692,9 +1705,10 @@ def test_windowed_expectation_runs(
 
     # Act: Run the checkpoint
     checkpoint_result = checkpoint.run(
-        {
+        batch_parameters={
             "dataframe": dataframe,
-        }
+        },
+        expectation_parameters=expectation_params,
     )
 
     # Assert: Look at the configured expectation min and max and compare it to the returned cloud
