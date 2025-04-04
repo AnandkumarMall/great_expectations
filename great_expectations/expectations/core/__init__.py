@@ -87,6 +87,9 @@ from .expect_multicolumn_values_to_be_unique import ExpectMulticolumnValuesToBeU
 from .expect_select_column_values_to_be_unique_within_record import (
     ExpectSelectColumnValuesToBeUniqueWithinRecord,
 )
+from .expect_source_query_to_match_target_query import (
+    ExpectSourceQueryToMatchTargetQuery,
+)
 from .expect_table_column_count_to_be_between import ExpectTableColumnCountToBeBetween
 from .expect_table_column_count_to_equal import ExpectTableColumnCountToEqual
 from .expect_table_columns_to_match_ordered_list import (

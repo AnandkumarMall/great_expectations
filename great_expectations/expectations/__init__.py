@@ -48,6 +48,7 @@ from .core import (
     ExpectMulticolumnSumToEqual,
     ExpectMulticolumnValuesToBeUnique,
     ExpectSelectColumnValuesToBeUniqueWithinRecord,
+    ExpectSourceQueryToMatchTargetQuery,
     ExpectTableColumnCountToBeBetween,
     ExpectTableColumnCountToEqual,
     ExpectTableColumnsToMatchOrderedList,
