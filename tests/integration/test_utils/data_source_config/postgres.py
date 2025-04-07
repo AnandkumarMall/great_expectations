@@ -73,9 +73,6 @@ class PostgresBatchTestSetup(SQLBatchTestSetup[PostgreSQLDatasourceTestConfig]):
             )
             # Create a batch for each extra table
             batch_name = self._random_resource_name()
-            batch = asset.add_batch_definition_whole_table(name=batch_name).get_batch()
-            # Store the batch in the validator's batch manager
-            validator = self.context.get_validator(batch=batch)
-            validator.execution_engine.batch_manager.load_batch_list([batch])
+            asset.add_batch_definition_whole_table(name=batch_name)
 
         return main_asset

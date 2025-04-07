@@ -30,18 +30,6 @@ class QueryTable(QueryMetricProvider):
         metrics: Dict[str, Any],
         runtime_configuration: dict,
     ) -> list[dict]:
-        # Get the data source name if provided
-        data_source_name = metric_domain_kwargs.get("data_source_name")
-        if data_source_name:
-            # Get the validator from the execution engine
-            validator = execution_engine._validator
-            if validator is None:
-                raise ValueError("Validator is required to get execution engine for data source")  # noqa: TRY003
-            # Get the execution engine for the specified data source
-            execution_engine = validator.data_context.data_sources.get(
-                data_source_name
-            ).get_execution_engine()
-
         batch_selectable, _, _ = execution_engine.get_compute_domain(
             metric_domain_kwargs, domain_type=MetricDomainTypes.TABLE
         )
@@ -67,18 +55,6 @@ class QueryTable(QueryMetricProvider):
         metrics: Dict[str, Any],
         runtime_configuration: dict,
     ) -> list[dict]:
-        # Get the data source name if provided
-        data_source_name = metric_domain_kwargs.get("data_source_name")
-        if data_source_name:
-            # Get the validator from the execution engine
-            validator = execution_engine._validator
-            if validator is None:
-                raise ValueError("Validator is required to get execution engine for data source")  # noqa: TRY003
-            # Get the execution engine for the specified data source
-            execution_engine = validator.data_context.data_sources.get(
-                data_source_name
-            ).get_execution_engine()
-
         query = cls._get_query_from_metric_value_kwargs(metric_value_kwargs)
 
         df: pyspark.DataFrame
