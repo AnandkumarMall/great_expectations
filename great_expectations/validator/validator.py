@@ -166,6 +166,8 @@ class Validator:
         )
         execution_engine.batch_manager.reset_batch_cache()
         self._execution_engine: ExecutionEngine = execution_engine
+        # Set the validator on the execution engine
+        self._execution_engine._validator = self
 
         if batches:
             self.load_batch_list(batch_list=batches)

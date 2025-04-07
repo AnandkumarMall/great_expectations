@@ -51,10 +51,31 @@ class PostgresBatchTestSetup(SQLBatchTestSetup[PostgreSQLDatasourceTestConfig]):
 
     @override
     def make_asset(self) -> TableAsset:
-        return self.context.data_sources.add_postgres(
-            name=self._random_resource_name(), connection_string=self.connection_string
-        ).add_table_asset(
+        # Create a single data source for all tables
+        data_source_name = self._random_resource_name()
+        data_source = self.context.data_sources.add_postgres(
+            name=data_source_name, connection_string=self.connection_string
+        )
+
+        # Add the main table asset
+        main_asset = data_source.add_table_asset(
             name=self._random_resource_name(),
             table_name=self.table_name,
             schema_name=self.schema,
         )
+
+        # Add the extra table assets
+        for table_data in self.extra_table_data.values():
+            asset = data_source.add_table_asset(
+                name=self._random_resource_name(),
+                table_name=table_data.name,
+                schema_name=self.schema,
+            )
+            # Create a batch for each extra table
+            batch_name = self._random_resource_name()
+            batch = asset.add_batch_definition_whole_table(name=batch_name).get_batch()
+            # Store the batch in the validator's batch manager
+            validator = self.context.get_validator(batch=batch)
+            validator.execution_engine.batch_manager.load_batch_list([batch])
+
+        return main_asset
