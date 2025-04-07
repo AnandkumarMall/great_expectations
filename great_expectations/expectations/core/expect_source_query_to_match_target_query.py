@@ -19,9 +19,6 @@ class ExpectSourceQueryToMatchTargetQuery(BatchExpectation):
     target_query: str
     source_data_source_name: str
     source_query: str
-    source_batch_id: str
-
-    domain_keys = ("batch_id",)
 
     @override
     def get_validation_dependencies(
@@ -46,9 +43,7 @@ class ExpectSourceQueryToMatchTargetQuery(BatchExpectation):
         # Get source query results
         source_metric_configuration = MetricConfiguration(
             metric_name="query.table",
-            metric_domain_kwargs={
-                "batch_id": self.source_batch_id,
-            },
+            metric_domain_kwargs={},
             metric_value_kwargs={
                 "query": self.source_query,
                 "data_source_name": self.source_data_source_name,
@@ -62,9 +57,7 @@ class ExpectSourceQueryToMatchTargetQuery(BatchExpectation):
         # Get target query results
         target_metric_configuration = MetricConfiguration(
             metric_name="query.table",
-            metric_domain_kwargs={
-                "batch_id": self.batch_id,
-            },
+            metric_domain_kwargs={},
             metric_value_kwargs={
                 "query": self.target_query,
                 "data_source_name": self.source_data_source_name,

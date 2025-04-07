@@ -72,8 +72,6 @@ def test_expect_source_query_to_match_target_query_set_success(
         source_query=SUCCESS_QUERIES[0][
             1
         ],  # queries the data source provided by the Expectation (source_data_source_name)
-        batch_id=target_batch.id,
-        source_batch_id=batch_for_datasource.id,
     )
     result = batch_for_datasource.validate(expectation)
     assert result.success
