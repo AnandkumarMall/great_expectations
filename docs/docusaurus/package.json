@@ -31,7 +31,6 @@
     "docusaurus-gtm-plugin": "0.0.2",
     "docusaurus-plugin-sass": "0.2.2",
     "dotenv": "^16.4.1",
-    "image-size": "1.2.1",
     "plugin-image-zoom": "ataft/plugin-image-zoom",
     "posthog-docusaurus": "^2.0.4",
     "react": "^18.2.0",
