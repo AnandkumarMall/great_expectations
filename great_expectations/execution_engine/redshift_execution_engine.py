@@ -87,19 +87,14 @@ class ColumnTypes(BaseColumnTypes):
         schema_filter: str = f"and table_schema = '{schema_name}'" if schema_name else ""
         query = sa.text(
             f"""
-            SELECT
-                column_name, data_type, character_maximum_length
-            FROM
-                information_schema.columns
-            WHERE
-                table_name = '{table_name}'
-                {schema_filter};
+            SELECT column_name, data_type, character_maximum_length
+            FROM information_schema.columns
+            WHERE table_name = '{table_name}' {schema_filter};
             """
         )
         rows = execution_engine.execute_query(query)
 
-        for r in rows:
-            column_name, data_type, character_maximum_length = r
+        for column_name, data_type, character_maximum_length in rows:
             redshift_type = REDSHIFT_TYPES.get(data_type)
             if redshift_type is None:
                 raise RedshiftExecutionEngineError(
@@ -109,6 +104,7 @@ class ColumnTypes(BaseColumnTypes):
             if character_maximum_length is not None:
                 column_type = redshift_type(character_maximum_length)
             result.append({"name": column_name, "type": column_type})
+
         return result
 
     @classmethod
