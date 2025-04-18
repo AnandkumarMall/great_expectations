@@ -41,7 +41,10 @@ def test_redshift_execution_engine_resolve_metrics(mocker):
         ("qux", "character varying", 100),
     ]
 
-    mocker.patch.object(engine, "execute_query", return_value=mock_query_result_set)
+    # Patch the execute_query method on the class instead of the instance
+    mocker.patch.object(
+        RedshiftExecutionEngine, "execute_query", return_value=mock_query_result_set
+    )
 
     #  act
     resolved_metrics: dict[MetricConfigurationID, MetricValue] = engine.resolve_metrics(
