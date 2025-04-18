@@ -1,5 +1,3 @@
-from unittest.mock import Mock
-
 import pytest
 from sqlalchemy.sql.sqltypes import BOOLEAN, CHAR, INTEGER, VARCHAR
 
@@ -12,23 +10,23 @@ from great_expectations.validator.metric_configuration import (
 
 
 @pytest.mark.unit
-def test_redshift_execution_engine_resolve_metrics():
+def test_redshift_execution_engine_resolve_metrics(mocker):
     # arrange
     engine = RedshiftExecutionEngine(
         connection_string="redshift+psycopg2://foo:bar@baz:5439/dev?sslmode=require"
     )
 
     # Create a mock for the batch_manager
-    batch_manager_mock = Mock()
+    batch_manager_mock = mocker.Mock()
     # Create a mock for the active_batch property
-    active_batch_mock = Mock()
+    active_batch_mock = mocker.Mock()
     # Set the active_batch property to return our mock
     batch_manager_mock.active_batch = active_batch_mock
 
     # Assign the mock to the engine
     engine._batch_manager = batch_manager_mock
 
-    engine.raw_connection = Mock()
+    engine.raw_connection = mocker.Mock()
 
     metric = MetricConfiguration(
         metric_name="table.column_types",
@@ -43,7 +41,7 @@ def test_redshift_execution_engine_resolve_metrics():
         ("qux", "character varying", 100),
     ]
 
-    engine.execute_query = Mock(return_value=mock_query_result_set)
+    mocker.patch.object(engine, "execute_query", return_value=mock_query_result_set)
 
     #  act
     resolved_metrics: dict[MetricConfigurationID, MetricValue] = engine.resolve_metrics(
