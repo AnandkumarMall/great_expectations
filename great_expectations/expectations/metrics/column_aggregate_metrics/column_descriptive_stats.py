@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from great_expectations.compatibility.pydantic import BaseModel
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.execution_engine import (
     ExecutionEngine,
@@ -14,19 +13,13 @@ from great_expectations.expectations.metrics.column_aggregate_metric_provider im
     ColumnAggregateMetricProvider,
 )
 from great_expectations.expectations.metrics.metric_provider import metric_value
+from great_expectations.metrics.column.descriptive_stats import DescriptiveStats
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
 if TYPE_CHECKING:
     from great_expectations.expectations.expectation_configuration import (
         ExpectationConfiguration,
     )
-
-
-class DescriptiveStats(BaseModel):
-    min: float
-    max: float
-    mean: float
-    standard_deviation: float
 
 
 class ColumnDescriptiveStats(ColumnAggregateMetricProvider):
