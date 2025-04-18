@@ -82,43 +82,34 @@ class ColumnTypes(BaseColumnTypes):
         # For sqlalchemy 2 use this new implementation which avoids incompatible parts of dialect
         # Get the table information
         assert isinstance(execution_engine, RedshiftExecutionEngine)
+        result = []
         table_name, schema_name = cls._get_table_schema(execution_engine, metric_domain_kwargs)
-        full_table_name = f'"{schema_name}"."{table_name}"' if schema_name else f"{table_name}"
-        # Query for the column information
-        query = sa.text(f"""
-            select * from pg_get_cols('{full_table_name}')
-            cols(view_schema name, view_name name, col_name name, col_type varchar, col_num int);
-        """)
-        raw_result = execution_engine.execute_query(query)
-        # Parse out metadata
-        column_metadata = []
-        # The raw result is a tuple of strings, one for each row.
-        for r in raw_result:
-            _schema, _table, column, raw_column_type, _column_num = r
-            # If the type is parameterized, we must removed the arguments to the types to do a
-            # string lookup from the type string to the actual type.
-            column_type_str_parts = raw_column_type.split("(")
-            column_base_type = REDSHIFT_TYPES.get(column_type_str_parts[0])
-            if column_base_type is None:
+        schema_filter: str = f"and table_schema = '{schema_name}'" if schema_name else ""
+        query = sa.text(
+            f"""
+            SELECT
+                column_name, data_type, character_maximum_length
+            FROM
+                information_schema.columns
+            WHERE
+                table_name = '{table_name}'
+                {schema_filter};
+            """
+        )
+        rows = execution_engine.execute_query(query)
+
+        for r in rows:
+            column_name, data_type, character_maximum_length = r
+            redshift_type = REDSHIFT_TYPES.get(data_type)
+            if redshift_type is None:
                 raise RedshiftExecutionEngineError(
-                    message=f"Unknown Redshift column type: {raw_column_type}"
+                    message=f"Unknown Redshift column type: {data_type}"
                 )
-            # We expect our split on the raw column type to be either:
-            #  length 1: no arguments
-            #  length 2: has arguments
-            # We don't expect any argument nesting.
-            expected_column_type_str_parts = [1, 2]
-            if len(column_type_str_parts) == expected_column_type_str_parts[0]:
-                column_type = column_base_type()
-            elif len(column_type_str_parts) == expected_column_type_str_parts[1]:
-                column_type_args = column_type_str_parts[1].rstrip(")").split(",")
-                column_type = column_base_type(*column_type_args)
-            else:
-                raise RedshiftExecutionEngineError(
-                    message=f"Unexpected nesting of arguments in column type: {raw_column_type}"
-                )
-            column_metadata.append({"name": column, "type": column_type})
-        return column_metadata
+            column_type = redshift_type()
+            if character_maximum_length is not None:
+                column_type = redshift_type(character_maximum_length)
+            result.append({"name": column_name, "type": column_type})
+        return result
 
     @classmethod
     def _get_table_schema(
