@@ -194,7 +194,7 @@ def test_polish_and_ratchet_pins_and_upper_bounds():
     )
 
     # Polish and ratchet this number down as low as possible
-    assert len(sorted_packages_with_pins_or_upper_bounds) == 34
+    assert len(sorted_packages_with_pins_or_upper_bounds) == 36
     assert set(sorted_packages_with_pins_or_upper_bounds) == {
         (
             "requirements-dev-api-docs-test.txt",
@@ -215,6 +215,7 @@ def test_polish_and_ratchet_pins_and_upper_bounds():
             "pyathena",
             (("<", "3"), (">=", "2.0.0")),
         ),
+        ("requirements-dev-sqlalchemy.txt", "sqlalchemy", (("<", "2.0.0"),)),
         (
             "requirements-dev-sqlalchemy.txt",
             "sqlalchemy-dremio",
@@ -243,6 +244,7 @@ def test_polish_and_ratchet_pins_and_upper_bounds():
         ("requirements-dev.txt", "posthog", (("<", "4"), (">", "3"))),
         ("requirements-dev.txt", "pyathena", (("<", "3"), (">=", "2.0.0"))),
         ("requirements-dev.txt", "pypd", (("==", "1.1.0"),)),
+        ("requirements-dev.txt", "sqlalchemy", (("<", "2.0.0"),)),
         ("requirements-dev.txt", "sqlalchemy-dremio", (("==", "1.2.1"),)),
         ("requirements-dev.txt", "teradatasqlalchemy", (("==", "17.0.0.5"),)),
         ("requirements-dev.txt", "xlrd", (("<", "2.0.0"), (">=", "1.1.0"))),
