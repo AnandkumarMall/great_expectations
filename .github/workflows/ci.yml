@@ -275,7 +275,7 @@ jobs:
       - name: Install dependencies
         run: pip install . -c constraints-dev.txt -r reqs/requirements-dev-test.txt
 
-      - name: Install dependencies
+      - name: Install SQLAlchemy 2
         run: pip install sqlalchemy>=2
 
       - name: Run the unit tests
