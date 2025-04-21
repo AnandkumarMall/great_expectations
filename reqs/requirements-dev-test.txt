@@ -3,4 +3,3 @@
 --requirement requirements-dev-contrib.txt
 --requirement requirements-dev-api-docs-test.txt
 --requirement requirements-dev-gx-redshift.txt
-sqlalchemy>=2
