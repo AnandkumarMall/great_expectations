@@ -43,5 +43,5 @@ class TrackedSession(requests.Session):
         Prefer `mocker.patch("requests.Session", return_value=tracked_session)` over this for tests.
         """
         tracked_session = TrackedSession()
-        gx_cloud_store_backend.requests.Session = lambda: tracked_session  # type: ignore[assignment]
+        gx_cloud_store_backend.requests.Session = lambda: tracked_session  # type: ignore[assignment, misc]
         return tracked_session
