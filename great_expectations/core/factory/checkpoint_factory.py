@@ -113,10 +113,11 @@ class CheckpointFactory(Factory[Checkpoint]):
             DataContextError: when Checkpoint is not found.
         """
         key = self._store.get_key(name=name, id=None)
-        if not self._store.has_key(key=key):
-            raise DataContextError(f"Checkpoint with name {name} was not found.")  # noqa: TRY003 # FIXME CoP
 
-        return self._get(key=key)
+        try:
+            return self._get(key=key)
+        except Exception:
+            raise DataContextError(f"Checkpoint with name {name} was not found.")  # noqa: TRY003 # FIXME CoP
 
     @public_api
     @override
