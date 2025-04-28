@@ -164,12 +164,15 @@ class DatasourceStore(Store):
         datasource_key: Union[DataContextVariableKey, GXCloudIdentifier] = (
             self.store_backend.build_key(name=name)
         )
-        if not self.has_key(datasource_key):
+
+        try:
+            datasource_from_backend = self.get(datasource_key)
+        except Exception:
             raise ValueError(  # noqa: TRY003 # FIXME CoP
                 f"Unable to load datasource `{name}` -- no configuration found or invalid configuration."  # noqa: E501 # FIXME CoP
             )
 
-        datasource_config: FluentDatasource = copy.deepcopy(self.get(datasource_key))  # type: ignore[arg-type] # FIXME CoP
+        datasource_config: FluentDatasource = copy.deepcopy(datasource_from_backend)  # type: ignore[arg-type] # FIXME CoP
         datasource_config.name = name
         return datasource_config
 
