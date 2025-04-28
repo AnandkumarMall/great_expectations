@@ -74,6 +74,22 @@ class CheckpointFactory(Factory[Checkpoint]):
 
     @public_api
     @override
+    def fetch(self, name: str) -> Checkpoint:
+        """Get a Checkpoint from the collection by name, bypassing the cache.
+
+        This method will always fetch the latest version from the store, but will
+        update the cache with the fetched value.
+
+        Args:
+            name: Name of Checkpoint to fetch
+
+        Raises:
+            DataContextError: when Checkpoint is not found.
+        """
+        return super().fetch(name)
+
+    @public_api
+    @override
     def all(self) -> Iterable[Checkpoint]:
         """Get all Checkpoints."""
         return super().all()
@@ -102,7 +118,7 @@ class CheckpointFactory(Factory[Checkpoint]):
         self._store.add(key=key, value=checkpoint)
 
         # TODO: Add id adding logic to CheckpointStore to prevent round trip
-        persisted_checkpoint = self._get(key=key)
+        persisted_checkpoint = self._get_by_key(key=key)
 
         submit_event(
             event=CheckpointCreatedEvent(
@@ -145,11 +161,7 @@ class CheckpointFactory(Factory[Checkpoint]):
     @override
     def _get(self, name: str) -> Checkpoint:
         key = self._store.get_key(name=name, id=None)
-
-        try:
-            return self._get_by_key(key=key)
-        except Exception:
-            raise DataContextError(f"Checkpoint with name {name} was not found.")  # noqa: TRY003 # FIXME CoP
+        return self._get_by_key(key=key)
 
     @override
     def _all(self) -> Iterable[Checkpoint]:
@@ -165,7 +177,7 @@ class CheckpointFactory(Factory[Checkpoint]):
     @override
     def _add_or_update(self, checkpoint: Checkpoint) -> Checkpoint:
         # Always add or update underlying validation definitions to avoid freshness issues
-        validation_definition_factory = project_manager.get_validation_definition_factory()
+        validation_definition_factory = project_manager.get_validation_definitions_factory()
         for validation_definition in checkpoint.validation_definitions:
             validation_definition_factory.add_or_update(validation_definition)
         checkpoint.save()
