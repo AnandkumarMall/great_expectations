@@ -134,10 +134,11 @@ class SuiteFactory(Factory[ExpectationSuite]):
     @override
     def _get(self, name: str) -> ExpectationSuite:
         key = self._store.get_key(name=name, id=None)
-        if not self._store.has_key(key=key):
+        try:
+            suite_dict = self._store.get(key=key)
+            return self._store.deserialize_suite_dict(suite_dict)
+        except Exception:
             raise DataContextError(f"ExpectationSuite with name {name} was not found.")  # noqa: TRY003 # FIXME CoP
-        suite_dict = self._store.get(key=key)
-        return self._store.deserialize_suite_dict(suite_dict)
 
     @override
     def _all(self) -> Iterable[ExpectationSuite]:

@@ -3,7 +3,6 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING, Optional, Union
 
-import great_expectations.exceptions as gx_exceptions
 from great_expectations._docs_decorators import public_api
 from great_expectations.analytics.client import submit as submit_event
 from great_expectations.analytics.events import ValidationDefinitionRanEvent
@@ -149,11 +148,12 @@ class ValidationDefinition(BaseModel):
         if not validation_definition_diagnostics.success:
             return validation_definition_diagnostics
 
-        store = project_manager.get_validation_definition_store()
-        key = store.get_key(name=self.name, id=self.id)
+        # store = project_manager.get_validation_definition_store()
+        # key = store.get_key(name=self.name, id=self.id)
 
         try:
-            validation_definition = store.get(key=key)
+            # validation_definition = store.get(key=key)
+            validation_definition = project_manager._project.validation_definitions.get(self.name)
         except (
             StoreBackendError,  # Generic error from stores
             InvalidKeyError,  # Ephemeral context error
@@ -199,20 +199,8 @@ class ValidationDefinition(BaseModel):
             raise ValueError("Serialized suite did not contain expected identifiers") from e  # noqa: TRY003 # FIXME CoP
 
         name = suite_identifiers.name
-        id = suite_identifiers.id
 
-        expectation_store = project_manager.get_expectations_store()
-        key = expectation_store.get_key(name=name, id=id)
-
-        try:
-            config: dict = expectation_store.get(key)
-        except gx_exceptions.InvalidKeyError as e:
-            raise ValueError(f"Could not find suite with name: {name} and id: {id}") from e  # noqa: TRY003 # FIXME CoP
-
-        suite = ExpectationSuite(**config)
-        if suite._include_rendered_content:
-            suite.render()
-        return suite
+        return project_manager._project.suites.get(name)
 
     @classmethod
     def _decode_data(cls, data_dict: dict) -> BatchDefinition:

@@ -28,7 +28,6 @@ from great_expectations.analytics.events import (
     ExpectationSuiteExpectationDeletedEvent,
     ExpectationSuiteExpectationUpdatedEvent,
 )
-from great_expectations.compatibility.pydantic import ValidationError as PydanticValidationError
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.core.freshness_diagnostics import (
     ExpectationSuiteFreshnessDiagnostics,
@@ -36,13 +35,9 @@ from great_expectations.core.freshness_diagnostics import (
 from great_expectations.core.serdes import _IdentifierBundle
 from great_expectations.data_context.data_context.context_factory import project_manager
 from great_expectations.exceptions import (
-    ExpectationSuiteError,
     ExpectationSuiteNotAddedError,
-    ExpectationSuiteNotFoundError,
     ExpectationSuiteNotFreshError,
-    StoreBackendError,
 )
-from great_expectations.exceptions.exceptions import InvalidKeyError
 from great_expectations.types import SerializableDictDot
 from great_expectations.util import (
     convert_to_json_serializable,  # noqa: TID251 # FIXME CoP
@@ -286,29 +281,31 @@ class ExpectationSuite(SerializableDictDot):
         )
 
     def _is_fresh(self) -> ExpectationSuiteFreshnessDiagnostics:
-        suite_dict: dict | None
-        try:
-            key = self._store.get_key(name=self.name, id=self.id)
-            suite_dict = self._store.get(key=key)
-        except (
-            StoreBackendError,  # Generic error from stores
-            InvalidKeyError,  # Ephemeral context error
-        ):
-            suite_dict = None
-        if not suite_dict:
-            return ExpectationSuiteFreshnessDiagnostics(
-                errors=[ExpectationSuiteNotFoundError(name=self.name)]
-            )
+        # suite_dict: dict | None
+        # try:
+        #     key = self._store.get_key(name=self.name, id=self.id)
+        #     suite_dict = self._store.get(key=key)
+        #     suite =
+        # except (
+        #     StoreBackendError,  # Generic error from stores
+        #     InvalidKeyError,  # Ephemeral context error
+        # ):
+        #     suite_dict = None
+        # if not suite_dict:
+        #     return ExpectationSuiteFreshnessDiagnostics(
+        #         errors=[ExpectationSuiteNotFoundError(name=self.name)]
+        #     )
 
-        suite: ExpectationSuite | None
-        try:
-            suite = self._store.deserialize_suite_dict(suite_dict=suite_dict)
-        except PydanticValidationError:
-            suite = None
-        if not suite:
-            return ExpectationSuiteFreshnessDiagnostics(
-                errors=[ExpectationSuiteError(f"Could not deserialize suite '{self.name}'")]
-            )
+        # suite: ExpectationSuite | None
+        # try:
+        #     suite = self._store.deserialize_suite_dict(suite_dict=suite_dict)
+        # except PydanticValidationError:
+        #     suite = None
+        # if not suite:
+        #     return ExpectationSuiteFreshnessDiagnostics(
+        #         errors=[ExpectationSuiteError(f"Could not deserialize suite '{self.name}'")]
+        #     )
+        suite = project_manager._project.suites.fetch(self.name)
 
         return ExpectationSuiteFreshnessDiagnostics(
             errors=[] if self == suite else [ExpectationSuiteNotFreshError(name=self.name)]

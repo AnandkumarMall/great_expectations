@@ -126,10 +126,11 @@ class ValidationDefinitionFactory(Factory[ValidationDefinition]):
     @override
     def _get(self, name: str) -> ValidationDefinition:
         key = self._store.get_key(name=name, id=None)
-        if not self._store.has_key(key=key):
-            raise DataContextError(f"ValidationDefinition with name {name} was not found.")  # noqa: TRY003 # FIXME CoP
 
-        return cast(ValidationDefinition, self._store.get(key=key))
+        try:
+            return cast(ValidationDefinition, self._store.get(key=key))
+        except Exception:
+            raise DataContextError(f"ValidationDefinition with name {name} was not found.")  # noqa: TRY003 # FIXME CoP
 
     @override
     def _all(self) -> Iterable[ValidationDefinition]:

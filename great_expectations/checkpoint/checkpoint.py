@@ -452,11 +452,8 @@ class Checkpoint(BaseModel):
         if not checkpoint_diagnostics.success:
             return checkpoint_diagnostics
 
-        store = project_manager.get_checkpoints_store()
-        key = store.get_key(name=self.name, id=self.id)
-
         try:
-            checkpoint = store.get(key=key)
+            checkpoint = project_manager._project.checkpoints.fetch(self.name)
         except (
             StoreBackendError,  # Generic error from stores
             InvalidKeyError,  # Ephemeral context error
