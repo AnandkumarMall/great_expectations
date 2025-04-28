@@ -26,6 +26,7 @@ class SuiteFactory(Factory[ExpectationSuite]):
     """
 
     def __init__(self, store: ExpectationsStore):
+        super().__init__()
         self._store = store
 
     @property
@@ -43,6 +44,57 @@ class SuiteFactory(Factory[ExpectationSuite]):
         Raises:
             DataContextError: if ExpectationSuite already exists
         """
+        return super().add(suite)
+
+    @public_api
+    @override
+    def delete(self, name: str) -> None:
+        """Delete an ExpectationSuite from the collection.
+
+        Args:
+            name: The name of the ExpectationSuite to delete
+
+        Raises:
+            DataContextError: if ExpectationSuite doesn't exist
+        """
+        super().delete(name)
+
+    @public_api
+    @override
+    def get(self, name: str) -> ExpectationSuite:
+        """Get an ExpectationSuite from the collection by name.
+
+        Args:
+            name: Name of ExpectationSuite to get
+
+        Raises:
+            DataContextError: when ExpectationSuite is not found.
+        """
+        return super().get(name)
+
+    @public_api
+    @override
+    def all(self) -> Iterable[ExpectationSuite]:
+        """Get all ExpectationSuites."""
+        return super().all()
+
+    @public_api
+    @override
+    def add_or_update(self, suite: ExpectationSuite) -> ExpectationSuite:
+        """Add or update an ExpectationSuite by name.
+
+        If an ExpectationSuite with the same name exists, overwrite it, otherwise
+        create a new ExpectationSuite. On update, Expectations in the Suite which
+        match a previously existing Expectation maintain a stable ID, and
+        Expectations which have changed receive a new ID.
+
+        Args:
+            suite: ExpectationSuite to add or update
+        """
+        return super().add_or_update(suite)
+
+    @override
+    def _add(self, suite: ExpectationSuite) -> ExpectationSuite:
         key = self._store.get_key(name=suite.name, id=None)
         if self._store.has_key(key=key):
             raise DataContextError(  # noqa: TRY003 # FIXME CoP
@@ -61,19 +113,10 @@ class SuiteFactory(Factory[ExpectationSuite]):
 
         return suite
 
-    @public_api
     @override
-    def delete(self, name: str) -> None:
-        """Delete an ExpectationSuite from the collection.
-
-        Args:
-            name: The name of the ExpectationSuite to delete
-
-        Raises:
-            DataContextError: if ExpectationSuite doesn't exist
-        """
+    def _delete(self, name: str) -> None:
         try:
-            suite = self.get(name=name)
+            suite = self._get(name=name)
         except DataContextError as e:
             raise DataContextError(  # noqa: TRY003 # FIXME CoP
                 f"Cannot delete ExpectationSuite with name {name} because it cannot be found."
@@ -88,28 +131,16 @@ class SuiteFactory(Factory[ExpectationSuite]):
             )
         )
 
-    @public_api
     @override
-    def get(self, name: str) -> ExpectationSuite:
-        """Get an ExpectationSuite from the collection by name.
-
-        Args:
-            name: Name of ExpectationSuite to get
-
-        Raises:
-            DataContextError: when ExpectationSuite is not found.
-        """
-
+    def _get(self, name: str) -> ExpectationSuite:
         key = self._store.get_key(name=name, id=None)
         if not self._store.has_key(key=key):
             raise DataContextError(f"ExpectationSuite with name {name} was not found.")  # noqa: TRY003 # FIXME CoP
         suite_dict = self._store.get(key=key)
         return self._store.deserialize_suite_dict(suite_dict)
 
-    @public_api
     @override
-    def all(self) -> Iterable[ExpectationSuite]:
-        """Get all ExpectationSuites."""
+    def _all(self) -> Iterable[ExpectationSuite]:
         dicts = self._store.get_all()
         # Marshmallow validation was done in the previous get_all() call for
         # suites but we can still die here because pydantic validation happens
@@ -130,23 +161,12 @@ class SuiteFactory(Factory[ExpectationSuite]):
                 raise
         return deserializable_suites
 
-    @public_api
     @override
-    def add_or_update(self, suite: ExpectationSuite) -> ExpectationSuite:
-        """Add or update an ExpectationSuite by name.
-
-        If an ExpectationSuite with the same name exists, overwrite it, otherwise
-        create a new ExpectationSuite. On update, Expectations in the Suite which
-        match a previously existing Expectation maintain a stable ID, and
-        Expectations which have changed receive a new ID.
-
-        Args:
-            suite: ExpectationSuite to add or update
-        """
+    def _add_or_update(self, suite: ExpectationSuite) -> ExpectationSuite:
         try:
-            existing_suite = self.get(name=suite.name)
+            existing_suite = self._get(name=suite.name)
         except DataContextError:
-            return self.add(suite=suite)
+            return self._add(suite=suite)
 
         # add IDs to expectations that haven't changed
         existing_expectations = existing_suite.expectations

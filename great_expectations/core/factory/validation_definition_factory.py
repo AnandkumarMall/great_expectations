@@ -27,6 +27,7 @@ class ValidationDefinitionFactory(Factory[ValidationDefinition]):
     """
 
     def __init__(self, store: ValidationDefinitionStore) -> None:
+        super().__init__()
         self._store = store
 
     @public_api
@@ -34,12 +35,61 @@ class ValidationDefinitionFactory(Factory[ValidationDefinition]):
     def add(self, validation: ValidationDefinition) -> ValidationDefinition:
         """Add a ValidationDefinition to the collection.
 
-        Parameters:
+        Args:
             validation: ValidationDefinition to add
 
         Raises:
             DataContextError: if ValidationDefinition already exists
         """
+        return super().add(validation)
+
+    @public_api
+    @override
+    def delete(self, name: str) -> None:
+        """Delete a ValidationDefinition from the collection.
+
+        Args:
+            name: The name of the ValidationDefinition to delete
+
+        Raises:
+            DataContextError: if ValidationDefinition doesn't exist
+        """
+        super().delete(name)
+
+    @public_api
+    @override
+    def get(self, name: str) -> ValidationDefinition:
+        """Get a ValidationDefinition from the collection by name.
+
+        Args:
+            name: Name of ValidationDefinition to get
+
+        Raises:
+            DataContextError: when ValidationDefinition is not found.
+        """
+        return super().get(name)
+
+    @public_api
+    @override
+    def all(self) -> Iterable[ValidationDefinition]:
+        """Get all ValidationDefinitions."""
+        return super().all()
+
+    @public_api
+    @override
+    def add_or_update(self, validation: ValidationDefinition) -> ValidationDefinition:
+        """Add or update a ValidationDefinition by name.
+
+        If a ValidationDefinition with the same name exists, overwrite it, otherwise
+        create a new ValidationDefinition.
+
+        Args:
+            validation: ValidationDefinition to add or update
+        """
+        return super().add_or_update(validation)
+
+    @override
+    def _add(self, validation: ValidationDefinition) -> ValidationDefinition:
         key = self._store.get_key(name=validation.name, id=None)
         if self._store.has_key(key=key):
             raise DataContextError(  # noqa: TRY003 # FIXME CoP
@@ -55,19 +105,10 @@ class ValidationDefinitionFactory(Factory[ValidationDefinition]):
 
         return validation
 
-    @public_api
     @override
-    def delete(self, name: str) -> None:
-        """Delete a ValidationDefinition from the collection.
-
-        Parameters:
-            name: The name of the ValidationDefinition to delete
-
-        Raises:
-            DataContextError: if ValidationDefinition doesn't exist
-        """
+    def _delete(self, name: str) -> None:
         try:
-            validation_definition = self.get(name=name)
+            validation_definition = self._get(name=name)
         except DataContextError as e:
             raise DataContextError(  # noqa: TRY003 # FIXME CoP
                 f"Cannot delete ValidationDefinition with name {name} because it cannot be found."
@@ -82,49 +123,29 @@ class ValidationDefinitionFactory(Factory[ValidationDefinition]):
             )
         )
 
-    @public_api
     @override
-    def get(self, name: str) -> ValidationDefinition:
-        """Get a ValidationDefinition from the collection by name.
-
-        Parameters:
-            name: Name of ValidationDefinition to get
-
-        Raises:
-            DataContextError: when ValidationDefinition is not found.
-        """
+    def _get(self, name: str) -> ValidationDefinition:
         key = self._store.get_key(name=name, id=None)
         if not self._store.has_key(key=key):
             raise DataContextError(f"ValidationDefinition with name {name} was not found.")  # noqa: TRY003 # FIXME CoP
 
         return cast(ValidationDefinition, self._store.get(key=key))
 
-    @public_api
     @override
-    def all(self) -> Iterable[ValidationDefinition]:
-        """Get all ValidationDefinitions."""
+    def _all(self) -> Iterable[ValidationDefinition]:
         return self._store.get_all()
 
-    @public_api
     @override
-    def add_or_update(self, validation: ValidationDefinition) -> ValidationDefinition:
-        """Add or update an ValidationDefinition by name.
-
-        If an ValidationDefinition with the same name exists, overwrite it, otherwise
-        create a new ValidationDefinition.
-
-        Args:
-            validation: ValidationDefinition to add or update
-        """
+    def _add_or_update(self, validation: ValidationDefinition) -> ValidationDefinition:
         # Always add or update underlying suite to avoid freshness issues
         suite_factory = project_manager.get_suite_factory()
         validation.suite = suite_factory.add_or_update(suite=validation.suite)
         validation.data.save()
 
         try:
-            existing_validation = self.get(name=validation.name)
+            existing_validation = self._get(name=validation.name)
         except DataContextError:
-            return self.add(validation=validation)
+            return self._add(validation=validation)
         validation.id = existing_validation.id
         validation.save()
 
