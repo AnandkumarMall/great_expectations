@@ -368,7 +368,7 @@ class Checkpoint(BaseModel):
     ) -> Dict[ValidationResultIdentifier, ExpectationSuiteValidationResult]:
         run_results: Dict[ValidationResultIdentifier, ExpectationSuiteValidationResult] = {}
         for validation_definition in self.validation_definitions:
-            validation_result = validation_definition.run(
+            validation_result = validation_definition.run_without_freshness_check(
                 checkpoint_id=self.id,
                 batch_parameters=batch_parameters,
                 expectation_parameters=expectation_parameters,

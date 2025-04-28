@@ -288,6 +288,23 @@ class ValidationDefinition(BaseModel):
             else:
                 diagnostics.raise_for_error()
 
+        return self.run_without_freshness_check(
+            checkpoint_id=checkpoint_id,
+            batch_parameters=batch_parameters,
+            expectation_parameters=expectation_parameters,
+            result_format=result_format,
+            run_id=run_id,
+        )
+
+    def run_without_freshness_check(
+        self,
+        *,
+        checkpoint_id: Optional[str] = None,
+        batch_parameters: Optional[BatchParameters] = None,
+        expectation_parameters: Optional[SuiteParameterDict] = None,
+        result_format: ResultFormatUnion = DEFAULT_RESULT_FORMAT,
+        run_id: RunIdentifier | None = None,
+    ) -> ExpectationSuiteValidationResult:
         validator = Validator(
             batch_definition=self.batch_definition,
             batch_parameters=batch_parameters,
