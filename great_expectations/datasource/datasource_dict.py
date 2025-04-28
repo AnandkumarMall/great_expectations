@@ -99,6 +99,10 @@ class DatasourceDict(UserDict):
                     self._in_memory_data_assets[in_memory_asset_name] = asset
         return ds
 
+    def fetch(self, name: str) -> FluentDatasource:
+        ds = self._get_ds_from_store(name)
+        return self._init_fluent_datasource(name=name, ds=ds)
+
     def _get_ds_from_store(self, name: str) -> FluentDatasource:
         try:
             return self._datasource_store.retrieve_by_name(name)
@@ -195,5 +199,11 @@ class CacheableDatasourceDict(DatasourceDict):
 
         # Upon cache miss, retrieve from store and add to cache
         ds = super().__getitem__(name)
+        self.data[name] = ds
+        return ds
+
+    @override
+    def fetch(self, name: str) -> FluentDatasource:
+        ds = super().fetch(name)
         self.data[name] = ds
         return ds

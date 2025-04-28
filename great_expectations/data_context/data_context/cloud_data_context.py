@@ -59,7 +59,7 @@ from great_expectations.data_context.types.base import (
 )
 from great_expectations.data_context.types.resource_identifiers import GXCloudIdentifier
 from great_expectations.data_context.util import instantiate_class_from_config
-from great_expectations.datasource.datasource_dict import DatasourceDict
+from great_expectations.datasource.datasource_dict import CacheableDatasourceDict
 from great_expectations.datasource.fluent import Datasource as FluentDatasource
 from great_expectations.exceptions.exceptions import DataContextError
 
@@ -456,7 +456,8 @@ class CloudDataContext(SerializableDataContext):
     def _init_datasources(self) -> None:
         # Note that Cloud does NOT populate self._datasources with existing objects on init.
         # Objects are retrieved only when requested and are NOT cached (this differs in ephemeral/file-backed contexts).  # noqa: E501 # FIXME CoP
-        self._datasources = DatasourceDict(
+        # self._datasources = DatasourceDict(
+        self._datasources = CacheableDatasourceDict(
             context=self,
             datasource_store=self._datasource_store,
         )

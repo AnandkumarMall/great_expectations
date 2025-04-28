@@ -127,7 +127,8 @@ class BatchDefinition(pydantic.GenericModel, Generic[PartitionerT]):
 
         datasource: Datasource | None
         try:
-            datasource = datasource_dict[self.data_asset.datasource.name]
+            datasource = datasource_dict.fetch(self.data_asset.datasource.name)
+            # datasource = datasource_dict[self.data_asset.datasource.name]
         except KeyError:
             datasource = None
         if not datasource:
