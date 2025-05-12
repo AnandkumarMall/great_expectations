@@ -267,15 +267,25 @@ class ExpectQueryResultsToMatchSource(BatchExpectation):
         cls,
         a: tuple[Any, ...],
         b: tuple[Any, ...],
-    ):
+    ) -> int:
+        """
+        Compare two tuples, treating None as less than anything else.
+
+        This satisfies the requirements of
+        `sorted(<TUPLES>, key=cmp_to_key(cls._null_safe_tuple_compare))`.
+        None is treated as less than anything else.
+        """
         for x, y in zip(a, b):
-            # Treat None as less than anything else
-            if x is None and y is not None:
+            if x == y:
+                # elements match; go on to next element
+                continue
+            if x is None:
                 return -1
-            if x is not None and y is None:
+            if y is None:
                 return 1
-            if x != y:
-                # Fall back to native comparison
-                return (x > y) - (x < y)
+            if x > y:
+                return 1
+            if x < y:
+                return -1
         # If all items equal so far, compare by length
-        return (len(a) > len(b)) - (len(a) < len(b))
+        return len(a) > len(b)
