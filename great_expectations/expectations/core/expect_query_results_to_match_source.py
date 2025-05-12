@@ -165,9 +165,6 @@ class ExpectQueryResultsToMatchSource(BatchExpectation):
             # creates a hashmap with row values as key and count of duplicate rows as value
             target_results_frequency_map = Counter(tuple(row.values()) for row in target_results)
             source_results_frequency_map = Counter(tuple(row.values()) for row in source_results)
-            # decrements source row count values by target row count values
-            count_in_source_not_target = source_results_frequency_map.copy()
-            count_in_source_not_target.subtract(target_results_frequency_map)
 
             # Get the matches: if we see a value X times in source, and Y times in target, min(X, Y)
             # is the number of matches.
@@ -186,6 +183,8 @@ class ExpectQueryResultsToMatchSource(BatchExpectation):
                 1 - (match_count / max(source_result_count, target_result_count))
             ) * 100
 
+            # NOTE: counter_a - counter_b reduces the numbers in counter_a to as low as 0,
+            # but will not go negative
             missing_rows = self._compute_row_data(
                 col_names=self._get_column_names_from_result(source_results),
                 frequency_map=source_results_frequency_map - target_results_frequency_map,
@@ -236,7 +235,13 @@ class ExpectQueryResultsToMatchSource(BatchExpectation):
                 {"a": 3, "b": 4},
              ]
         """
-        row_values = sorted(frequency_map.elements(), key=cmp_to_key(cls._null_safe_tuple_compare))
+        # Convert the frequency map to an iterator of row values,
+        # so we'll have multiple of anything that has a count > 1.
+        # Then ensure we're sorted (deterministic output).
+        # We define our own comparator for the sorting so that we can handle tuples
+        # with None values, since e.g. `(1, None) < (1, 2)` fails with a TypeError.
+        all_elements = frequency_map.elements()
+        row_values = sorted(all_elements, key=cmp_to_key(cls._null_safe_tuple_compare))
 
         return [
             {col_names[i]: row_values[i] for i in range(len(col_names))}

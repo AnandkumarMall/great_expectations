@@ -392,7 +392,6 @@ def test_column_ordering(
         )
     )
 
-    breakpoint()
     assert result.result["details"] == {
         "unexpected_rows": unexpected_rows,
         "missing_rows": missing_rows,
