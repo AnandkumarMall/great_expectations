@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from functools import cmp_to_key
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional, Tuple, Type, Union
 
 from great_expectations.compatibility import pydantic
 from great_expectations.compatibility.typing_extensions import override
@@ -13,10 +13,22 @@ from great_expectations.expectations.model_field_descriptions import MOSTLY_DESC
 from great_expectations.expectations.model_field_types import (
     MostlyField,  # noqa: TC001  # pydantic needs the actual type
 )
+from great_expectations.render.components import (
+    AtomicDiagnosticRendererType,
+    RenderedAtomicContent,
+    RenderedAtomicValue,
+)
+from great_expectations.render.renderer.renderer import renderer
+from great_expectations.render.renderer_configuration import (
+    RendererSchema,
+    RendererTableValue,
+    RendererValueType,
+)
 
 if TYPE_CHECKING:
     from great_expectations.core import ExpectationValidationResult
     from great_expectations.execution_engine import ExecutionEngine
+    from great_expectations.expectations.expectation_configuration import ExpectationConfiguration
 
 
 EXPECTATION_SHORT_DESCRIPTION = (
@@ -212,6 +224,98 @@ class ExpectQueryResultsToMatchSource(BatchExpectation):
                     },
                 },
             }
+
+    @override
+    @classmethod
+    @renderer(renderer_type=AtomicDiagnosticRendererType.OBSERVED_VALUE)
+    def _atomic_diagnostic_observed_value(
+        cls,
+        configuration: Optional[ExpectationConfiguration] = None,
+        result: Optional[ExpectationValidationResult] = None,
+        runtime_configuration: Optional[dict] = None,
+    ) -> list[RenderedAtomicContent]:
+        details = cls._get_details_from_results(result)
+
+        missing_rows: list[dict[str, Any]] = details["missing_rows"]
+        unexpected_rows: list[dict[str, Any]] = details["unexpected_rows"]
+        missing_rows_table = cls._create_observed_values_table(missing_rows)
+        unexpected_rows_table = cls._create_observed_values_table(unexpected_rows)
+
+        return [
+            cls._create_table_rendered_atomic_content(
+                missing_rows_table,
+                no_table_msg="No missing rows",
+            ),
+            cls._create_table_rendered_atomic_content(
+                unexpected_rows_table,
+                no_table_msg="No unexpected rows",
+            ),
+        ]
+
+    @classmethod
+    def _get_details_from_results(
+        cls, result: Optional[ExpectationValidationResult]
+    ) -> dict[str, Any]:
+        assert result and result.result, "Must have result"
+        details = result.result.get("details")
+        assert isinstance(details, dict), "Details must exist and be a dict"
+        return details
+
+    @classmethod
+    def _create_table_rendered_atomic_content(
+        cls,
+        table: list[list[RendererTableValue]],
+        no_table_msg: str,
+    ) -> RenderedAtomicContent:
+        if not table:
+            return RenderedAtomicContent(
+                name=AtomicDiagnosticRendererType.OBSERVED_VALUE,
+                value=RenderedAtomicValue(
+                    schema={"type": "StringValueType"},
+                    template=no_table_msg,
+                ),
+                value_type="StringValueType",
+            )
+
+        return RenderedAtomicContent(
+            name=AtomicDiagnosticRendererType.OBSERVED_VALUE,
+            value=RenderedAtomicValue(
+                schema={"type": "TableType"},
+                header_row=table[0],
+                table=table[1:],
+            ),
+            value_type="TableType",
+        )
+
+    @classmethod
+    def _create_observed_values_table(
+        cls,
+        rows: list[dict[str, Any]],
+    ) -> list[list[RendererTableValue]]:
+        if not rows:
+            return []
+
+        col_names = cls._get_column_names_from_result(rows)
+        header_row = [
+            RendererTableValue(
+                schema=RendererSchema(type=RendererValueType.STRING),
+                value=col_name,
+            )
+            for col_name in col_names
+        ]
+        output_rows: list[list[RendererTableValue]] = []
+        for row in rows:
+            output_rows.append(
+                [
+                    RendererTableValue(
+                        schema=RendererSchema(type=RendererValueType.STRING),
+                        value=str(row[col_name]),
+                    )
+                    for col_name in col_names
+                ]
+            )
+
+        return [header_row, *output_rows]
 
     @classmethod
     def _compute_row_data(
