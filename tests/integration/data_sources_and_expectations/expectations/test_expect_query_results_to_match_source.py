@@ -5,6 +5,11 @@ import pytest
 
 import great_expectations.expectations as gxe
 from great_expectations.expectations.metrics.util import MAX_RESULT_RECORDS
+from great_expectations.render.components import (
+    AtomicDiagnosticRendererType,
+    RenderedAtomicContent,
+    RenderedAtomicValue,
+)
 from tests.integration.conftest import (
     MultiSourceBatch,
     MultiSourceTestConfig,
@@ -443,3 +448,46 @@ def test_expect_query_results_to_match_source_error(multi_source_batch: MultiSou
     )
     assert not result.success
     assert list(result.exception_info.values())[0]["raised_exception"]
+
+
+DATA_WITH_MANY_COLUMNS = pd.DataFrame({ch: [1, 2, 3] for ch in "abcdefg"})
+OTHER_DATA_WITH_MANY_COLUMNS = pd.DataFrame({ch: [4, 5, 6] for ch in "abcdefg"})
+
+
+@multi_source_batch_setup(
+    multi_source_test_configs=SQLITE_ONLY,
+    target_data=DATA_WITH_MANY_COLUMNS,
+    source_data=DATA_WITH_MANY_COLUMNS,
+)
+def test_rendering_no_differences(multi_source_batch: MultiSourceBatch):
+    """NOTE: the queries here use kinda weird ordering to ensure that our output table
+    actually reflects the right order.
+    """
+    source_table = multi_source_batch.source_table_name
+    result = multi_source_batch.target_batch.validate(
+        gxe.ExpectQueryResultsToMatchSource(
+            target_query="SELECT e, a, d, g, b, e FROM {batch} ORDER BY e",
+            source_data_source_name=multi_source_batch.source_data_source_name,
+            source_query=f"SELECT g, d, g, c, e, a  FROM {source_table} ORDER BY g",
+        )
+    )
+    result.render()
+
+    assert result.rendered_content == [
+        RenderedAtomicContent(
+            name=AtomicDiagnosticRendererType.OBSERVED_VALUE,
+            value=RenderedAtomicValue(
+                schema={"type": "StringValueType"},
+                template="No missing rows",
+            ),
+            value_type="StringValueType",
+        ),
+        RenderedAtomicContent(
+            name=AtomicDiagnosticRendererType.OBSERVED_VALUE,
+            value=RenderedAtomicValue(
+                schema={"type": "StringValueType"},
+                template="No unexpected rows",
+            ),
+            value_type="StringValueType",
+        ),
+    ]
