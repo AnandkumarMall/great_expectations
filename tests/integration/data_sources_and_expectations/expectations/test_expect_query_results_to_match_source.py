@@ -597,40 +597,40 @@ def test_rendering_with_one_column(multi_source_batch: MultiSourceBatch):
                 template="$ov__0 $ov__1 $ov__2 $exp__0 $exp__1 $exp__2",
                 params={
                     "expected_value": {
-                        "schema": {"type": RendererValueType.ARRAY},
+                        "schema": RendererSchema(type=RendererValueType.ARRAY),
                         "value": [2, 3, 3],
                     },
                     "observed_value": {
-                        "schema": {"type": RendererValueType.ARRAY},
+                        "schema": RendererSchema(type=RendererValueType.ARRAY),
                         "value": [4, 5, 5],
                     },
                     "exp__0": {
-                        "schema": {"type": RendererValueType.NUMBER},
+                        "schema": RendererSchema(type=RendererValueType.NUMBER),
                         "render_state": ObservedValueRenderState.MISSING,
                         "value": 2,
                     },
                     "exp__1": {
-                        "schema": {"type": RendererValueType.NUMBER},
+                        "schema": RendererSchema(type=RendererValueType.NUMBER),
                         "render_state": ObservedValueRenderState.MISSING,
                         "value": 3,
                     },
                     "exp__2": {
-                        "schema": {"type": RendererValueType.NUMBER},
+                        "schema": RendererSchema(type=RendererValueType.NUMBER),
                         "render_state": ObservedValueRenderState.MISSING,
                         "value": 3,
                     },
                     "ov__0": {
-                        "schema": {"type": RendererValueType.NUMBER},
+                        "schema": RendererSchema(type=RendererValueType.NUMBER),
                         "render_state": ObservedValueRenderState.UNEXPECTED,
                         "value": 4,
                     },
                     "ov__1": {
-                        "schema": {"type": RendererValueType.NUMBER},
+                        "schema": RendererSchema(type=RendererValueType.NUMBER),
                         "render_state": ObservedValueRenderState.UNEXPECTED,
                         "value": 5,
                     },
                     "ov__2": {
-                        "schema": {"type": RendererValueType.NUMBER},
+                        "schema": RendererSchema(type=RendererValueType.NUMBER),
                         "render_state": ObservedValueRenderState.UNEXPECTED,
                         "value": 5,
                     },
