@@ -19,6 +19,7 @@ from great_expectations.expectations.model_field_types import (
 )
 from great_expectations.render.components import (
     AtomicDiagnosticRendererType,
+    AtomicPrescriptiveRendererType,
     RenderedAtomicContent,
     RenderedAtomicValue,
 )
