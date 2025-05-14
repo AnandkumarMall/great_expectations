@@ -1064,6 +1064,28 @@ class Batch:
         # Immutable generated attribute
         self._id = self._create_id()
 
+    def __del__(self):
+        """Clean up resources when this object is garbage collected."""
+        try:
+            self.close()
+        except Exception as e:
+            logger.warning(f"Error closing Batch: {e}")
+
+    def close(self):
+        """Ensure that any database connections used by this Batch are properly closed."""
+        # Close the BatchData which might hold database connections
+        if hasattr(self, "_data") and self._data is not None:
+            # BatchData doesn't have a close method directly, but we can close the execution engine
+            # that's associated with it
+            if hasattr(self._data, "execution_engine") and self._data.execution_engine is not None:
+                try:
+                    self._data.execution_engine.close()
+                except Exception as e:
+                    import logging
+
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Error closing execution engine in Batch.close(): {e}")
+
     def _create_id(self) -> str:
         options_list = []
         for key, value in self.batch_request.options.items():

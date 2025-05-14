@@ -1337,3 +1337,34 @@ class SQLDatasource(Datasource):
             batch_metadata=batch_metadata or {},
         )
         return self._add_asset(asset)
+
+    def __del__(self):
+        """Cleanup resources when this object is garbage collected."""
+        try:
+            self.close()
+        except Exception as e:
+            LOGGER.warning(f"Error closing execution engine: {e}")
+
+    def close(self):
+        """Close and dispose of the execution engine and database connections.
+
+        This method should be called when the datasource is no longer needed to free up
+        database connections and other resources.
+        """
+        if hasattr(self, "_execution_engine") and self._execution_engine is not None:
+            try:
+                self._execution_engine.close()
+                self._execution_engine = None
+            except Exception as e:
+                LOGGER.warning(f"Error closing execution engine: {e}")
+
+        if hasattr(self, "_engine") and self._engine is not None:
+            try:
+                self._engine.dispose()
+                self._engine = None
+            except Exception as e:
+                LOGGER.warning(f"Error disposing engine: {e}")
+
+        # Reset cached strings to force recreation on next use
+        self._cached_connection_string = ""
+        self._cached_execution_engine_kwargs = {}

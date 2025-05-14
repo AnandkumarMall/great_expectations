@@ -9,6 +9,7 @@ import os
 import random
 import re
 import string
+import threading
 import traceback
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -154,6 +155,10 @@ _PERSISTED_CONNECTION_DIALECTS = (
     GXSqlDialect.MSSQL,
     GXSqlDialect.BIGQUERY,
 )
+
+# Add a counter to track open connections
+_connection_counter = 0
+_connection_counter_lock = threading.Lock()
 
 
 def _dialect_requires_persisted_connection(
@@ -1245,6 +1250,20 @@ class SqlAlchemyExecutionEngine(ExecutionEngine):
         Returns:
             Sqlalchemy connection
         """  # noqa: E501 # FIXME CoP
+        global _connection_counter  # noqa: PLW0603
+
+        with _connection_counter_lock:
+            _connection_counter += 1
+            current_count = _connection_counter
+
+        import traceback
+
+        stack = "".join(traceback.format_stack())
+        connection_id = id(self)
+        logger.critical(
+            f"Opening connection #{current_count} for engine {connection_id}\nStack trace:\n{stack}"
+        )
+
         if self.dialect_name in _PERSISTED_CONNECTION_DIALECTS:
             try:
                 if not self._connection:
@@ -1255,8 +1274,13 @@ class SqlAlchemyExecutionEngine(ExecutionEngine):
                 # so we need to keep the connection alive.
                 pass
         else:
-            with self.engine.connect() as connection:
-                yield connection
+            try:
+                with self.engine.connect() as connection:
+                    yield connection
+            finally:
+                with _connection_counter_lock:
+                    _connection_counter -= 1
+                    logger.critical(f"Closed connection, current count: {_connection_counter}")
 
     @new_method_or_class(version="0.16.14")
     def execute_query(
