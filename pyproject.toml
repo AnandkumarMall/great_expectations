@@ -449,7 +449,9 @@ filterwarnings = [
     # the pkg_resources module distributed with setuptools has been deprecated
     # we should never use it but it is used in some of our dependencies
     # https://setuptools.pypa.io/en/latest/pkg_resources.html
-    "once:pkg_resources is deprecated as an API:DeprecationWarning",
+    "ignore: pkg_resources is deprecated as an API:DeprecationWarning",
+    "ignore: pkg_resources is deprecated as an API:UserWarning",
+
     # ruamel, google, etc.
     "once:Deprecated call to `pkg_resources.declare_namespace:DeprecationWarning",
 
@@ -641,8 +643,9 @@ filterwarnings = [
     'ignore: Deprecated API features detected! These feature\(s\) are not compatible with SQLAlchemy 2\.0\.',
     # snowflake
     # Warning is emitted when snowflake-sqlalchemy 1.6 is installed alongside sqlalchemy 1
-    "module: The GenericFunction 'flatten' is already registered and is going to be overridden:sqlalchemy.exc.SAWarning"
-
+    "module: The GenericFunction 'flatten' is already registered and is going to be overridden:sqlalchemy.exc.SAWarning",
+    # pyOpenSSL 25.0.1 starting raising this warning only for connecting to snowflake but no other datasources.
+    "ignore: Attempting to mutate a Context after a Connection was created. In the future, this will raise an exception",
 
     # --------------------------------------- TEMPORARY IGNORES --------------------------------------------------------
 ]

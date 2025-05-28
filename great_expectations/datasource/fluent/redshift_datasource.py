@@ -3,6 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, Literal, Type, Union
 
+from great_expectations._docs_decorators import public_api
 from great_expectations.compatibility.pydantic import (
     AnyUrl,
     BaseModel,
@@ -25,7 +26,12 @@ class RedshiftDsn(AnyUrl):
     }
 
 
+@public_api
 class RedshiftSSLModes(Enum):
+    """
+    Enum for the different SSL modes supported by the Redshift database.
+    """
+
     DISABLE = "disable"
     ALLOW = "allow"
     PREFER = "prefer"
@@ -34,6 +40,7 @@ class RedshiftSSLModes(Enum):
     VERIFY_FULL = "verify-full"
 
 
+@public_api
 class RedshiftConnectionDetails(BaseModel):
     """
     Information needed to connect to a Redshift database.
@@ -47,6 +54,7 @@ class RedshiftConnectionDetails(BaseModel):
     sslmode: RedshiftSSLModes
 
 
+@public_api
 class RedshiftDatasource(SQLDatasource):
     """Adds a Redshift datasource to the data context using psycopg2.
 
@@ -55,7 +63,6 @@ class RedshiftDatasource(SQLDatasource):
         connection_string: The SQLAlchemy connection string used to connect to the Redshift database
             For example:
             "redshift+psycopg2://user:password@host.amazonaws.com:5439/database?sslmode=sslmode".
-        If connection_details is used, connection_string cannot also be provided.
         assets: An optional dictionary whose keys are TableAsset or QueryAsset names and whose
             values are TableAsset or QueryAsset objects.
     """

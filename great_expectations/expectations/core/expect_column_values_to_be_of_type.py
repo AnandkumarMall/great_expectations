@@ -25,7 +25,7 @@ from great_expectations.expectations.expectation import (
     ColumnMapExpectation,
     render_suite_parameter_string,
 )
-from great_expectations.expectations.metadata_types import DataQualityIssues
+from great_expectations.expectations.metadata_types import DataQualityIssues, SupportedDataSources
 from great_expectations.expectations.model_field_descriptions import COLUMN_DESCRIPTION
 from great_expectations.expectations.registry import get_metric_kwargs
 from great_expectations.render import LegacyRendererType, RenderedStringTemplateContent
@@ -74,19 +74,19 @@ TYPE__DESCRIPTION = """
     A string representing the data type that each column should have as entries. \
     Valid types are defined by the current backend implementation and are dynamically loaded.
     """
-SUPPORTED_DATA_SOURCES = [
-    "Pandas",
-    "Spark",
-    "SQLite",
-    "PostgreSQL",
-    "Redshift",
-    "MySQL",
-    "MSSQL",
-    "BigQuery",
-    "Snowflake",
-    "Databricks (SQL)",
-]
 DATA_QUALITY_ISSUES = [DataQualityIssues.SCHEMA.value]
+SUPPORTED_DATA_SOURCES = [
+    SupportedDataSources.PANDAS.value,
+    SupportedDataSources.SPARK.value,
+    SupportedDataSources.SQLITE.value,
+    SupportedDataSources.POSTGRESQL.value,
+    SupportedDataSources.MYSQL.value,
+    SupportedDataSources.MSSQL.value,
+    SupportedDataSources.BIGQUERY.value,
+    SupportedDataSources.SNOWFLAKE.value,
+    SupportedDataSources.DATABRICKS.value,
+    SupportedDataSources.REDSHIFT.value,
+]
 
 
 class ExpectColumnValuesToBeOfType(ColumnMapExpectation):
@@ -418,10 +418,17 @@ class ExpectColumnValuesToBeOfType(ColumnMapExpectation):
             GXSqlDialect.POSTGRESQL,
             GXSqlDialect.SNOWFLAKE,
         ]:
-            success = (
-                isinstance(actual_column_type, str)
-                and actual_column_type.lower() == expected_type.lower()
-            )
+            # For these dialects, actual_column_type should be a string or CaseInsensitiveString
+            if isinstance(actual_column_type, str):
+                # CaseInsensitiveString objects will automatically do case-insensitive comparison
+                success = actual_column_type == expected_type
+            else:
+                # Handle the case where it's not a string type
+                # This should never happen, but we'll handle it just in case
+                # the column type should be converted to a CaseInsensitiveString
+                # for these three dialects in metrics/util.py:get_sqlalchemy_column_metadata
+                success = str(actual_column_type).lower() == expected_type.lower()
+
             return {
                 "success": success,
                 "result": {"observed_value": actual_column_type},

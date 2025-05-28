@@ -14,6 +14,67 @@ When we deprecate our public APIs, we will
 
 Before we completely remove the functionality in a new major release, there will be at least one minor release that contains the deprecation so that you can smoothly transition to the new API.
 
+### 1.4.5
+* [DOCS] ExpectAI for all Data Sources ([#11178](https://github.com/great-expectations/great_expectations/pull/11178))
+* [MAINTENANCE] Fix nightly data source cleanup action setup ([#11176](https://github.com/great-expectations/great_expectations/pull/11176))
+* [MAINTENANCE] pre-commit autoupdate ([#10480](https://github.com/great-expectations/great_expectations/pull/10480))
+* [MAINTENANCE] Do not fail tests on snowflake ssl connection warning. ([#11180](https://github.com/great-expectations/great_expectations/pull/11180))
+* [MAINTENANCE] Upgrade ruff ([#11182](https://github.com/great-expectations/great_expectations/pull/11182))
+* [MAINTENANCE] Update Posthog analytics events ([#11179](https://github.com/great-expectations/great_expectations/pull/11179))
+* [MAINTENANCE] Rename multi-source Expectation and parameters ([#11185](https://github.com/great-expectations/great_expectations/pull/11185))
+* [MAINTENANCE] Add single value rendering path to multi-source Expectation ([#11186](https://github.com/great-expectations/great_expectations/pull/11186))
+* [CONTRIB] use existing LRU cache for secrets store ([#11184](https://github.com/great-expectations/great_expectations/pull/11184)) (thanks @ThiloSchneider-fraport)
+* [CONTRIB] add GEOMETRY, and SUPER types to REDSHIFT_TYPES ([#11183](https://github.com/great-expectations/great_expectations/pull/11183)) (thanks @VolkovGeoPhy)
+
+### 1.4.4
+* [FEATURE] Compute missing/unexpected rows for ExpectQueryResultsToMatchSource ([#11161](https://github.com/great-expectations/great_expectations/pull/11161))
+* [FEATURE] ExpectQueryResultsToMatchSource table diagnostic renderer ([#11168](https://github.com/great-expectations/great_expectations/pull/11168))
+* [FEATURE] ExpectQueryResultsToMatchSource renderer for single-column … ([#11173](https://github.com/great-expectations/great_expectations/pull/11173))
+* [DOCS] remove link checker ([#11162](https://github.com/great-expectations/great_expectations/pull/11162))
+* [MAINTENANCE] Fix dying mssql compatibility tests. ([#11153](https://github.com/great-expectations/great_expectations/pull/11153))
+* [MAINTENANCE] Bump prismjs from 1.29.0 to 1.30.0 in /docs/docusaurus ([#11126](https://github.com/great-expectations/great_expectations/pull/11126))
+* [MAINTENANCE] Breakout redshift tests into own job. ([#11167](https://github.com/great-expectations/great_expectations/pull/11167))
+* [MAINTENANCE] Bring back redshift creds for docs tests ([#11169](https://github.com/great-expectations/great_expectations/pull/11169))
+* [MAINTENANCE] Improve `ExpectQueryResultsToMatchSource` docstring ([#11158](https://github.com/great-expectations/great_expectations/pull/11158))
+* [MAINTENANCE] Nightly redshift cleanup ([#11166](https://github.com/great-expectations/great_expectations/pull/11166))
+* [MAINTENANCE] Bump image-size from 1.2.0 to 1.2.1 in /docs/docusaurus ([#11125](https://github.com/great-expectations/great_expectations/pull/11125))
+* [MAINTENANCE] Add prescriptive atomic renderer to `ExpectQueryResultsToMatchSource` ([#11160](https://github.com/great-expectations/great_expectations/pull/11160))
+* [MAINTENANCE] Resolve datetime deprecation warnings ([#11134](https://github.com/great-expectations/great_expectations/pull/11134)) (thanks @emmanuel-ferdman)
+* [MAINTENANCE] Bump http-proxy-middleware from 2.0.7 to 2.0.9 in /docs/docusaurus ([#11120](https://github.com/great-expectations/great_expectations/pull/11120))
+* [MAINTENANCE] Bump @babel/runtime from 7.26.9 to 7.27.0 in /docs/docusaurus ([#11124](https://github.com/great-expectations/great_expectations/pull/11124))
+* [MAINTENANCE] Bump estree-util-value-to-estree from 3.3.2 to 3.3.3 in /docs/docusaurus ([#11121](https://github.com/great-expectations/great_expectations/pull/11121))
+* [MAINTENANCE] ensure latest docker compose ([#11156](https://github.com/great-expectations/great_expectations/pull/11156))
+* [MAINTENANCE] Fix flakey test and simplify another assertion ([#11163](https://github.com/great-expectations/great_expectations/pull/11163))
+* [MAINTENANCE] Update `ExpectQueryResultsToMatchSource` DQI ([#11164](https://github.com/great-expectations/great_expectations/pull/11164))
+* [MAINTENANCE] Bump @babel/helpers from 7.26.9 to 7.27.0 in /docs/docusaurus ([#11123](https://github.com/great-expectations/great_expectations/pull/11123))
+* [MAINTENANCE] Change DQ issue for `ExpectQueryResultsToMatchSource` ([#11174](https://github.com/great-expectations/great_expectations/pull/11174))
+* [CONTRIB] Update ruff badge ([#10905](https://github.com/great-expectations/great_expectations/pull/10905)) (thanks @esadek)
+
+### 1.4.3
+* [FEATURE] Test infra to support source to target expectations ([#11138](https://github.com/great-expectations/great_expectations/pull/11138))
+* [FEATURE] QueryDataSourceTable metric + provider ([#11149](https://github.com/great-expectations/great_expectations/pull/11149))
+* [DOCS] ExpectAI approval workflow ([#11072](https://github.com/great-expectations/great_expectations/pull/11072))
+* [DOCS] restore link checker ([#11135](https://github.com/great-expectations/great_expectations/pull/11135))
+* [DOCS] alerts for ExpectAI ([#11154](https://github.com/great-expectations/great_expectations/pull/11154))
+* [MAINTENANCE] Temporarily pin gx-redshift for python 3.9 ([#11142](https://github.com/great-expectations/great_expectations/pull/11142))
+* [MAINTENANCE] Revert "[DOCS] restore link checker" ([#11145](https://github.com/great-expectations/great_expectations/pull/11145))
+* [MAINTENANCE] Capitalize "Expectation" in mostly description ([#11147](https://github.com/great-expectations/great_expectations/pull/11147))
+* [MAINTENANCE] Add `SupportedDataSources` enum ([#11143](https://github.com/great-expectations/great_expectations/pull/11143))
+* [MAINTENANCE] Restore link checker ([#11146](https://github.com/great-expectations/great_expectations/pull/11146))
+* [MAINTENANCE] Remove slow test cases ([#11152](https://github.com/great-expectations/great_expectations/pull/11152))
+* [MAINTENANCE] Remove test_expectations_v3_api.py ([#11098](https://github.com/great-expectations/great_expectations/pull/11098))
+* [MAINTENANCE] Revert: "Temporarily pin gx-redshift for python 3.9" ([#11151](https://github.com/great-expectations/great_expectations/pull/11151))
+
+### 1.4.2
+* [FEATURE] Changes to Redshift `connection_string` validator to support a dict type ([#11119](https://github.com/great-expectations/great_expectations/pull/11119))
+* [FEATURE] expectations: redshift support ([#11128](https://github.com/great-expectations/great_expectations/pull/11128))
+* [DOCS] make try gx core code sample match descriptive text ([#11129](https://github.com/great-expectations/great_expectations/pull/11129))
+* [DOCS] hide broken table of contents ([#11130](https://github.com/great-expectations/great_expectations/pull/11130))
+* [MAINTENANCE] Add Galina to core devs. Remove others. ([#11117](https://github.com/great-expectations/great_expectations/pull/11117))
+* [MAINTENANCE] Add metric docstrings and fix import paths ([#11118](https://github.com/great-expectations/great_expectations/pull/11118))
+* [MAINTENANCE] Update type packaging ([#11115](https://github.com/great-expectations/great_expectations/pull/11115))
+* [MAINTENANCE] Improve `MetricErrorResult` and `Batch.compute_metrics()` API typing ([#11127](https://github.com/great-expectations/great_expectations/pull/11127))
+
 ### 1.4.1
 * [FEATURE] Allow user to provide connection details to connect to Redshift ([#11105](https://github.com/great-expectations/great_expectations/pull/11105))
 * [FEATURE] Add `ColumnDescriptiveStats` metric ([#11108](https://github.com/great-expectations/great_expectations/pull/11108))

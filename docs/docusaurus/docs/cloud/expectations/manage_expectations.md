@@ -16,8 +16,8 @@ An Expectation is a verifiable assertion about your data. They make implicit ass
 
 The following table lists the available GX Cloud Expectations.
 
-| Data quality issue |                    Expectation                       |                                                               Description                                                              | Dynamic Parameters? |
-|------------------|----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|-------------------|
+| Data quality issue |                    Expectation                       | Description                                                                                                                            | Dynamic Parameters? |
+|------------------|----------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|-------------------|
 | Completeness       | **column values to be null**                         | Expect the column values to be null.                                                                                                   | Yes                 |
 | Completeness       | **column values to not be null**                     | Expect the column values to not be null.                                                                                               | Yes                 |
 | Numeric            | **column max to be between**                         | Expect the column maximum to be between a minimum and a maximum value.                                                                 | Yes                 |
@@ -30,13 +30,13 @@ The following table lists the available GX Cloud Expectations.
 | Numeric            | **column values to be between**                      | Expect the column entries to be between a minimum value and a maximum value.                                                           | No                  |
 | Numeric            | **column z scores to be less than**                  | Expect the Z-scores of a column's values to be less than a given threshold.                                                            | No                  |
 | Numeric            | **multicolumn sum to equal**                         | Expect that the sum of row values in a specified column list is the same for each row, and equal to a specified sum total.             | No                  |
-| Schema             | **column to exist**                                  | Checks for the existence of a specified column within a table.                                                                         | No                  |
+| Schema             | **column to exist**                                  | Checks for the existence of a specified column within a table or view.                                                                 | No                  |
 | Schema             | **column values to be in type list**                 | Expect a column to contain values from a specified type list.                                                                          | No                  |
 | Schema             | **column values to be of type**                      | Expect a column to contain values of a specified data type.                                                                            | No                  |
-| Schema             | **table column count to be between**                 | Expect the number of columns in a table to be between two values.                                                                      | Yes                 |
-| Schema             | **table column count to equal**                      | Expect the number of columns in a table to equal a value.                                                                              | No                  |
-| Schema             | **table columns to match ordered list**              | Expect the columns in a table to exactly match a specified list.                                                                       | No                  |
-| Schema             | **table columns to match set**                       | Expect the columns in a table to match an unordered set.                                                                               | No                  |
+| Schema             | **table column count to be between**                 | Expect the number of columns in a table or view to be between two values.                                                              | Yes                 |
+| Schema             | **table column count to equal**                      | Expect the number of columns in a table or view to equal a value.                                                                      | No                  |
+| Schema             | **table columns to match ordered list**              | Expect the columns in a table or view to exactly match a specified list.                                                               | No                  |
+| Schema             | **table columns to match set**                       | Expect the columns in a table or view to match an unordered set.                                                                       | No                  |
 | Uniqueness         | **column distinct values to be in set**              | Expect the set of distinct column values to be contained by a given set.                                                               | No                  |
 | Uniqueness         | **column distinct values to contain set**            | Expect the set of distinct column values to contain a given set.                                                                       | No                  |
 | Uniqueness         | **column distinct values to equal set**              | Expect the set of distinct column values to equal a given set.                                                                         | No                  |
@@ -61,7 +61,7 @@ The following table lists the available GX Cloud Expectations.
 | Validity           | **column values to not match regex list**            | Expect the column entries to be strings that do not match any of a list of regular expressions. Matches can be anywhere in the string. | No                  |
 | Volume             | **table row count to be between**                    | Expect the number of rows to be between two values.                                                                                    | Yes                 |
 | Volume             | **table row count to equal**                         | Expect the number of rows to equal a value.                                                                                            | No                  |
-| Volume             | **table row count to equal other table**             | Expect the number of rows to equal the number in another table within the same database.                                               | No                  |
+| Volume             | **table row count to equal other table**             | Expect the number of rows to equal the number in another table or view within the same database.                                       | No                  |
 
 
 ## Custom SQL Expectations
@@ -134,24 +134,28 @@ To clear the Expectation condition, click the clear button located on the right-
 
 8. Optional. Run a Validation. See [Run a Validation](/cloud/validations/manage_validations.md#run-a-validation).
 
-:::tip Automate rules for common data quality issues
-When you [create a new Data Asset](/cloud/data_assets/manage_data_assets.md#add-a-data-asset-from-an-existing-data-source), you can choose to automatically generate Expectations for that Data Asset that detect column changes, non-increasing volume, and changes to the percentage of null values in each column.
+:::tip Automate rules for Anomaly Detection
+When you [create a new Data Asset](/cloud/data_assets/manage_data_assets.md#add-a-data-asset-from-an-existing-data-source), you can choose to automatically generate Anomaly Detection Expectations for that Data Asset that detect column changes, non-increasing volume, and changes to the percentage of null values in each column.
 :::
 
 ## Generate Expectations with ExpectAI <span class="beta">Beta</span>
 
 To accelerate test coverage, you can use ExpectAI to generate recommended Expectations for a Data Asset. These will be personalized based on an analysis of a sample of your data.
 
-Keep the following requirements and limitations in mind when working with ExpectAI:
-- Only [Snowflake Data Sources](/cloud/connect/connect_snowflake.md) using password authentication are supported at this time; key-pair authentication is not yet available.
+Keep the following requirements in mind when working with ExpectAI:
 - Your organization must be using a [fully-hosted deployment](/cloud/deploy/deployment_patterns.md).
+- The Data Asset's Data Source must be Databricks SQL, PostgreSQL, Redshift, or Snowflake.
 
 To add AI-recommended Expectations:
 1. In GX Cloud, click **Data Assets**.
 2. In the **Data Assets** list, click the Data Asset name.
 3. Click **Generate Expectations**.
-4. Optional. Run a Validation. See [Run a Validation](/cloud/validations/manage_validations.md#run-a-validation).
-5. Optional. [Edit](#edit-an-expectation) or [delete](#delete-an-expectation) AI-generated Expectations based on the insights you get from running a Validation and your data quality needs.
+   :::note This might take a few minutes
+   ExpectAI may take a few minutes to analyze your data and recommend personalized Expectations. You can navigate away from the page while ExpectAI works in the background. GX will send an [email alert](/cloud/alerts/manage_alerts.md) when your recommended Expectations are ready for review.
+   :::
+4. Review the recommended Expectations and **Approve** (✓) or **Reject** (✗) them within 48 hours. After 48 hours, any remaining recommendations will be discarded.
+5. Optional. Run a Validation. See [Run a Validation](/cloud/validations/manage_validations.md#run-a-validation).
+6. Optional. [Edit](#edit-an-expectation) AI-generated Expectations based on the insights you get from running a Validation and your data quality needs.
 
 
 ## Optional. Define a Batch
@@ -162,7 +166,7 @@ If your Data Asset has at least one DATE or DATETIME column, you can define a Ba
 
 2. In the **Data Assets** list, click the Data Asset name.
 
-3. Click **Define batch**.
+3. Next to the current batch configuration, click <img src="/img/pencil.png" alt="pencil icon" width="20" height="20"/> **Edit batch**.
 
 4. Choose how to **Validate by**. Select the **Entire Asset** tab to provide all Data Asset records to your Expectations and validations, or select one of the **Year**/**Month**/**Day** tabs to use subsets of Data Asset records for your Expectations and validations. **Year** partitions Data Asset records by year, **Month** partitions Data Asset records by year and month, **Day** partitions Data Asset records by year, month, and day.
 
@@ -174,11 +178,13 @@ If your Data Asset has at least one DATE or DATETIME column, you can define a Ba
 
 2. In the **Data Assets** list, click the Data Asset name.
 
-3. Click **Edit Expectation** for the Expectation that you want to edit.
+3. Find the Expectation that you want to edit.
 
-4. Edit the Expectation configuration.
+4. Click <img src="/img/pencil.png" alt="pencil icon" width="20" height="20"/> **Edit Expectation** for the Expectation that you want to edit.
 
-5. Click **Save**.
+5. Edit the Expectation configuration.
+
+6. Click **Save**.
 
 ## Delete an Expectation
 
@@ -186,13 +192,15 @@ If your Data Asset has at least one DATE or DATETIME column, you can define a Ba
 
 2. In the **Data Assets** list, click the Data Asset name.
 
-3. Click **Delete Expectation** for the Expectation you want to delete.
+3. Find the Expectation that you want to delete.
+
+4. Click <img src="/img/trash.png" alt="trash icon" width="20" height="20"/> **Delete Expectation** for the Expectation that you want to delete.
 
    :::tip You can delete Expectations in bulk
-    If you want to delete all Expectations that test for a certain data quality issue, you can instead click **Bulk-delete Expectations** for the relevant category.
+    If you want to delete all Expectations that test for a certain data quality issue, you can instead click <img src="/img/trash.png" alt="trash icon" width="20" height="20"/> **Bulk-delete Expectations** for the relevant category.
     :::
 
-4. Click **Yes, delete Expectation**.
+5. Click **Delete**.
 
 
 
