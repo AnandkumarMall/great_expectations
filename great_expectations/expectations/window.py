@@ -1,5 +1,5 @@
 from great_expectations.compatibility import pydantic
-from great_expectations.compatibility.pydantic import Extra
+from great_expectations.compatibility.pydantic import Extra, Field
 
 
 class Offset(pydantic.BaseModel):
@@ -21,8 +21,11 @@ class Window(pydantic.BaseModel):
 
     constraint_fn: str
     parameter_name: str
-    range: int
-    offset: Offset
+    range: int | None = Field(
+        default=None,
+        description="The number of previous invocations to consider. If None, all invocations will be considered.",
+    )
+    offset: Offset | None = None
     strict: bool = False
 
     class Config:
