@@ -18,6 +18,7 @@ from great_expectations.datasource.fluent.data_connector.file_path_data_connecto
 if TYPE_CHECKING:
     from botocore.client import BaseClient
 
+    from great_expectations.alias_types import PathStr
     from great_expectations.core.batch import LegacyBatchDefinition
 
 
@@ -66,6 +67,7 @@ class S3DataConnector(FilePathDataConnector):
         max_keys: int = 1000,
         recursive_file_discovery: bool = False,
         file_path_template_map_fn: Optional[Callable] = None,
+        whole_directory_path_override: Optional[PathStr] = None,
     ) -> None:
         self._s3_client: BaseClient = s3_client
 
@@ -83,6 +85,7 @@ class S3DataConnector(FilePathDataConnector):
             datasource_name=datasource_name,
             data_asset_name=data_asset_name,
             file_path_template_map_fn=file_path_template_map_fn,
+            whole_directory_path_override=whole_directory_path_override,
         )
 
     @classmethod
@@ -97,6 +100,7 @@ class S3DataConnector(FilePathDataConnector):
         max_keys: int = 1000,
         recursive_file_discovery: bool = False,
         file_path_template_map_fn: Optional[Callable] = None,
+        whole_directory_path_override: Optional[PathStr] = None,
     ) -> S3DataConnector:
         """Builds "S3DataConnector", which links named DataAsset to AWS S3.
 
@@ -124,6 +128,7 @@ class S3DataConnector(FilePathDataConnector):
             max_keys=max_keys,
             recursive_file_discovery=recursive_file_discovery,
             file_path_template_map_fn=file_path_template_map_fn,
+            whole_directory_path_override=whole_directory_path_override,
         )
 
     @classmethod
@@ -158,6 +163,9 @@ class S3DataConnector(FilePathDataConnector):
             }
         )
 
+    # TODO: investigate whether we need to override
+    # _generate_batch_spec_parameters_from_batch_definition to support building the batch spec.
+    #  See FilePathDataConnector.
     @override
     def build_batch_spec(self, batch_definition: LegacyBatchDefinition) -> S3BatchSpec:
         """
