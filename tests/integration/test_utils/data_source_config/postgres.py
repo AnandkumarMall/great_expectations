@@ -1,8 +1,9 @@
 import types
-from typing import TYPE_CHECKING, Mapping, Optional
+from typing import Mapping, Optional
 
 import pandas as pd
 import pytest
+import sqlalchemy as sa
 
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.data_context import AbstractDataContext
@@ -13,9 +14,6 @@ from tests.integration.test_utils.data_source_config.base import (
     DataSourceTestConfig,
 )
 from tests.integration.test_utils.data_source_config.sql import SQLBatchTestSetup
-
-if TYPE_CHECKING:
-    import sqlalchemy as sa
 
 
 class PostgreSQLDatasourceTestConfig(DataSourceTestConfig):
