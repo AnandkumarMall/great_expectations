@@ -127,8 +127,10 @@ class SnowflakeBatchTestSetup(SQLBatchTestSetup[SnowflakeDatasourceTestConfig]):
                 )
                 return manager.get_engine(connection_details)
 
-            datasource._execution_engine_type = types.MethodType(  # type: ignore[method-assign]
-                _get_engine, datasource
+            object.__setattr__(
+                datasource,
+                "_execution_engine_type",
+                types.MethodType(_get_engine, datasource),
             )
         return datasource.add_table_asset(
             name=self._random_resource_name(),
