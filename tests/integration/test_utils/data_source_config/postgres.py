@@ -1,4 +1,5 @@
-from typing import Mapping, Optional
+import types
+from typing import TYPE_CHECKING, Mapping, Optional
 
 import pandas as pd
 import pytest
@@ -6,12 +7,15 @@ import pytest
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.data_context import AbstractDataContext
 from great_expectations.datasource.fluent.sql_datasource import TableAsset
-from tests.integration.sql_session_manager import SessionSQLEngineManager
+from tests.integration.sql_session_manager import ConnectionDetails, SessionSQLEngineManager
 from tests.integration.test_utils.data_source_config.base import (
     BatchTestSetup,
     DataSourceTestConfig,
 )
 from tests.integration.test_utils.data_source_config.sql import SQLBatchTestSetup
+
+if TYPE_CHECKING:
+    import sqlalchemy as sa
 
 
 class PostgreSQLDatasourceTestConfig(DataSourceTestConfig):
@@ -57,9 +61,23 @@ class PostgresBatchTestSetup(SQLBatchTestSetup[PostgreSQLDatasourceTestConfig]):
 
     @override
     def make_asset(self) -> TableAsset:
-        return self.context.data_sources.add_postgres(
+        datasource = self.context.data_sources.add_postgres(
             name=self._random_resource_name(), connection_string=self.connection_string
-        ).add_table_asset(
+        )
+
+        if isinstance(self.engine_manager, SessionSQLEngineManager):
+            manager = self.engine_manager
+
+            def _get_engine(*args, **kwargs) -> sa.engine.Engine:
+                connection_details = ConnectionDetails(
+                    connection_string=self.connection_string,
+                )
+                return manager.get_engine(connection_details)
+
+            datasource._execution_engine_type = types.MethodType(  # type: ignore[method-assign]
+                _get_engine, datasource
+            )
+        return datasource.add_table_asset(
             name=self._random_resource_name(),
             table_name=self.table_name,
             schema_name=self.schema,

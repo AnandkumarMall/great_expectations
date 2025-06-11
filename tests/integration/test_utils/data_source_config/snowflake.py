@@ -1,4 +1,5 @@
-from typing import Mapping, Optional
+import types
+from typing import TYPE_CHECKING, Mapping, Optional
 
 import pandas as pd
 import pytest
@@ -7,7 +8,7 @@ from great_expectations.compatibility.pydantic import BaseSettings
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.data_context import AbstractDataContext
 from great_expectations.datasource.fluent.sql_datasource import TableAsset
-from tests.integration.sql_session_manager import SessionSQLEngineManager
+from tests.integration.sql_session_manager import ConnectionDetails, SessionSQLEngineManager
 from tests.integration.test_utils.data_source_config.base import (
     BatchTestSetup,
     DataSourceTestConfig,
@@ -15,6 +16,9 @@ from tests.integration.test_utils.data_source_config.base import (
 from tests.integration.test_utils.data_source_config.sql import (
     SQLBatchTestSetup,
 )
+
+if TYPE_CHECKING:
+    import sqlalchemy as sa
 
 
 class SnowflakeDatasourceTestConfig(DataSourceTestConfig):
@@ -105,7 +109,7 @@ class SnowflakeBatchTestSetup(SQLBatchTestSetup[SnowflakeDatasourceTestConfig]):
     def make_asset(self) -> TableAsset:
         schema = self.schema
         assert schema
-        return self.context.data_sources.add_snowflake(
+        datasource = self.context.data_sources.add_snowflake(
             name=self._random_resource_name(),
             account=self.snowflake_connection_config.SNOWFLAKE_ACCOUNT,
             user=self.snowflake_connection_config.SNOWFLAKE_USER,
@@ -114,7 +118,21 @@ class SnowflakeBatchTestSetup(SQLBatchTestSetup[SnowflakeDatasourceTestConfig]):
             schema=schema,
             warehouse=self.snowflake_connection_config.SNOWFLAKE_WAREHOUSE,
             role=self.snowflake_connection_config.SNOWFLAKE_ROLE,
-        ).add_table_asset(
+        )
+
+        if isinstance(self.engine_manager, SessionSQLEngineManager):
+            manager = self.engine_manager
+
+            def _get_engine(self, *args, **kwargs) -> sa.engine.Engine:
+                connection_details = ConnectionDetails(
+                    connection_string=self.connection_string,
+                )
+                return manager.get_engine(connection_details)
+
+            datasource._execution_engine_type = types.MethodType(  # type: ignore[method-assign]
+                _get_engine, datasource
+            )
+        return datasource.add_table_asset(
             name=self._random_resource_name(),
             table_name=self.table_name,
         )
