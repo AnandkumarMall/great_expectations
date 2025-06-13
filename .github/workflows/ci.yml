@@ -22,8 +22,6 @@ on:
     - cron: "0 */3 * * *"
   workflow_dispatch: # allows manual triggering with branch picker
   push:
-    branches:
-      - d/doc-868/put_cloud_snippets_under_test
     # Semantic versioning syntax defined by PyPI: https://pythonpackaging.info/07-Package-Release.html#Versioning-your-code
     tags:
       # Stable release syntax
@@ -231,12 +229,6 @@ jobs:
         run: |
           yarn install
           python ci/checks/validate_docs_snippets.py
-
-      - name: Configure ECR AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: us-east-1
-          role-to-assume: arn:aws:iam::258143015559:role/github-amazonec2containerregistryreadonly
 
       - name: Login to Amazon ECR
         id: login-ecr
