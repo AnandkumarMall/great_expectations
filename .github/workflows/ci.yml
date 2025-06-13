@@ -22,6 +22,8 @@ on:
     - cron: "0 */3 * * *"
   workflow_dispatch: # allows manual triggering with branch picker
   push:
+    branches:
+      - d/doc-868/put_cloud_snippets_under_test
     # Semantic versioning syntax defined by PyPI: https://pythonpackaging.info/07-Package-Release.html#Versioning-your-code
     tags:
       # Stable release syntax
