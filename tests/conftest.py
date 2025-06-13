@@ -19,6 +19,7 @@ import numpy as np
 import packaging
 import pandas as pd
 import pytest
+import setuptools  # noqa: F401  # Import setuptools avoid distutils import order warning
 
 import great_expectations as gx
 from great_expectations.analytics.config import ENV_CONFIG
@@ -131,6 +132,7 @@ REQUIRED_MARKERS: Final[set[str]] = {
     "postgresql",
     "project",
     "pyarrow",
+    "redshift",
     "snowflake",
     "spark",
     "spark_connect",

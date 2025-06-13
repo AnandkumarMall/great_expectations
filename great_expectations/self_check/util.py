@@ -70,6 +70,7 @@ from great_expectations.execution_engine import (
 from great_expectations.execution_engine.sqlalchemy_batch_data import (
     SqlAlchemyBatchData,
 )
+from great_expectations.execution_engine.sqlite_execution_engine import SqliteExecutionEngine
 from great_expectations.expectations.expectation_configuration import (
     ExpectationConfigurationSchema,
 )
@@ -446,7 +447,15 @@ BACKEND_TO_ENGINE_NAME_DICT = {
     "spark": "spark",
 }
 
-BACKEND_TO_ENGINE_NAME_DICT.update({name: "sqlalchemy" for name in SQL_DIALECT_NAMES})
+BACKEND_TO_ENGINE_NAME_DICT.update(dict.fromkeys(SQL_DIALECT_NAMES, "sqlalchemy"))
+
+
+# The default exeuction engine is SqlAlchemyExecutionEngine so we set this and then override
+# with specific values.
+SQLALCHEMY_DIALECT_TO_ENGINE_CLASS_DICT = dict.fromkeys(
+    SQL_DIALECT_NAMES, SqlAlchemyExecutionEngine
+)
+SQLALCHEMY_DIALECT_TO_ENGINE_CLASS_DICT["sqlite"] = SqliteExecutionEngine
 
 
 def get_sqlite_connection_url(sqlite_db_path):
@@ -730,6 +739,13 @@ def build_pandas_validator_with_data(
     )
 
 
+def drop_table(table_name: str, connection_string: str) -> None:
+    engine = sa.create_engine(connection_string)
+    with engine.connect() as conn:
+        conn.execute(sa.text(f"DROP TABLE IF EXISTS {table_name}"))
+        conn.commit()
+
+
 def build_sa_validator_with_data(  # noqa: C901, PLR0912, PLR0913, PLR0915 # FIXME CoP
     df,
     sa_engine_name,
@@ -912,7 +928,8 @@ def build_sa_validator_with_data(  # noqa: C901, PLR0912, PLR0913, PLR0915 # FIX
     else:
         sql_insert_method = None
 
-    execution_engine = SqlAlchemyExecutionEngine(caching=caching, engine=engine)
+    execution_engine_class = SQLALCHEMY_DIALECT_TO_ENGINE_CLASS_DICT[sa_engine_name]
+    execution_engine = execution_engine_class(caching=caching, engine=engine)
     batch_data = SqlAlchemyBatchData(execution_engine=execution_engine, table_name=table_name)
     with execution_engine.get_connection() as connection:
         _debug("Calling df.to_sql")
@@ -1091,7 +1108,7 @@ def build_spark_engine(
     execution_engine = SparkDFExecutionEngine(
         spark_config=spark_config,
         batch_data_dict={
-            batch_id or cast(LegacyBatchDefinition, batch_definition).id: df,
+            batch_id or cast("LegacyBatchDefinition", batch_definition).id: df,
         },
     )
     return execution_engine
@@ -1178,133 +1195,9 @@ def candidate_test_is_on_temporary_notimplemented_list_v2_api(context, expectati
     return False
 
 
-def candidate_test_is_on_temporary_notimplemented_list_v3_api(context, expectation_type):
-    candidate_test_is_on_temporary_notimplemented_list_v3_api_trino = [
-        "expect_column_distinct_values_to_contain_set",
-        "expect_column_max_to_be_between",
-        "expect_column_mean_to_be_between",
-        "expect_column_median_to_be_between",
-        "expect_column_min_to_be_between",
-        "expect_column_most_common_value_to_be_in_set",
-        "expect_column_quantile_values_to_be_between",
-        "expect_column_sum_to_be_between",
-        "expect_column_kl_divergence_to_be_less_than",
-        "expect_column_value_lengths_to_be_between",
-        "expect_column_values_to_be_between",
-        "expect_column_values_to_be_in_set",
-        "expect_column_values_to_be_in_type_list",
-        "expect_column_values_to_be_null",
-        "expect_column_values_to_be_of_type",
-        "expect_column_values_to_be_unique",
-        "expect_column_values_to_match_like_pattern",
-        "expect_column_values_to_match_like_pattern_list",
-        "expect_column_values_to_match_regex",
-        "expect_column_values_to_match_regex_list",
-        "expect_column_values_to_not_be_null",
-        "expect_column_values_to_not_match_like_pattern",
-        "expect_column_values_to_not_match_like_pattern_list",
-        "expect_column_values_to_not_match_regex",
-        "expect_column_values_to_not_match_regex_list",
-        "expect_column_pair_values_a_to_be_greater_than_b",
-        "expect_column_pair_values_to_be_equal",
-        "expect_column_pair_values_to_be_in_set",
-        "expect_compound_columns_to_be_unique",
-        "expect_select_column_values_to_be_unique_within_record",
-        "expect_table_column_count_to_be_between",
-        "expect_table_column_count_to_equal",
-        "expect_table_row_count_to_be_between",
-        "expect_table_row_count_to_equal",
-    ]
-    candidate_test_is_on_temporary_notimplemented_list_v3_api_other_sql = [
-        "expect_column_values_to_be_increasing",
-        "expect_column_values_to_be_decreasing",
-        "expect_column_values_to_match_strftime_format",
-        "expect_column_values_to_be_dateutil_parseable",
-        "expect_column_values_to_be_json_parseable",
-        "expect_column_values_to_match_json_schema",
-        "expect_column_stdev_to_be_between",
-        # "expect_column_unique_value_count_to_be_between",
-        # "expect_column_proportion_of_unique_values_to_be_between",
-        # "expect_column_most_common_value_to_be_in_set",
-        # "expect_column_max_to_be_between",
-        # "expect_column_min_to_be_between",
-        # "expect_column_sum_to_be_between",
-        # "expect_column_pair_values_a_to_be_greater_than_b",
-        # "expect_column_pair_values_to_be_equal",
-        # "expect_column_pair_values_to_be_in_set",
-        # "expect_multicolumn_sum_to_equal",
-        # "expect_compound_columns_to_be_unique",
-        "expect_multicolumn_values_to_be_unique",
-        # "expect_select_column_values_to_be_unique_within_record",
-        "expect_column_pair_cramers_phi_value_to_be_less_than",
-        "expect_column_bootstrapped_ks_test_p_value_to_be_greater_than",
-        "expect_column_chisquare_test_p_value_to_be_greater_than",
-        "expect_column_parameterized_distribution_ks_test_p_value_to_be_greater_than",
-    ]
-    if context in ["trino"]:
-        return expectation_type in set(
-            candidate_test_is_on_temporary_notimplemented_list_v3_api_trino
-        ).union(set(candidate_test_is_on_temporary_notimplemented_list_v3_api_other_sql))
-    if context in SQL_DIALECT_NAMES:
-        expectations_not_implemented_v3_sql = [
-            "expect_column_values_to_be_increasing",
-            "expect_column_values_to_be_decreasing",
-            "expect_column_values_to_match_strftime_format",
-            "expect_column_values_to_be_dateutil_parseable",
-            "expect_column_values_to_be_json_parseable",
-            "expect_column_values_to_match_json_schema",
-            "expect_multicolumn_values_to_be_unique",
-            "expect_column_pair_cramers_phi_value_to_be_less_than",
-            "expect_column_bootstrapped_ks_test_p_value_to_be_greater_than",
-            "expect_column_chisquare_test_p_value_to_be_greater_than",
-            "expect_column_parameterized_distribution_ks_test_p_value_to_be_greater_than",
-        ]
-        if context in ["bigquery"]:
-            ###
-            # NOTE: 20210729 - jdimatteo: Below are temporarily not being tested
-            # with BigQuery. For each disabled test below, please include a link to
-            # a github issue tracking adding the test with BigQuery.
-            ###
-            expectations_not_implemented_v3_sql.append(
-                "expect_column_kl_divergence_to_be_less_than"  # TODO: will collect for over 60 minutes, and will not completes  # noqa: E501 # FIXME CoP
-            )
-            expectations_not_implemented_v3_sql.append(
-                "expect_column_quantile_values_to_be_between"  # TODO: will run but will add about 1hr to pipeline.  # noqa: E501 # FIXME CoP
-            )
-        return expectation_type in expectations_not_implemented_v3_sql
-
-    if context == "spark":
-        return expectation_type in [
-            "expect_table_row_count_to_equal_other_table",
-            "expect_column_values_to_be_in_set",
-            "expect_column_values_to_not_be_in_set",
-            "expect_column_values_to_not_match_regex_list",
-            "expect_column_values_to_match_like_pattern",
-            "expect_column_values_to_not_match_like_pattern",
-            "expect_column_values_to_match_like_pattern_list",
-            "expect_column_values_to_not_match_like_pattern_list",
-            "expect_column_values_to_be_dateutil_parseable",
-            "expect_multicolumn_values_to_be_unique",
-            "expect_column_pair_cramers_phi_value_to_be_less_than",
-            "expect_column_bootstrapped_ks_test_p_value_to_be_greater_than",
-            "expect_column_chisquare_test_p_value_to_be_greater_than",
-            "expect_column_parameterized_distribution_ks_test_p_value_to_be_greater_than",
-        ]
-    if context == "pandas":
-        return expectation_type in [
-            "expect_table_row_count_to_equal_other_table",
-            "expect_column_values_to_match_like_pattern",
-            "expect_column_values_to_not_match_like_pattern",
-            "expect_column_values_to_match_like_pattern_list",
-            "expect_column_values_to_not_match_like_pattern_list",
-            "expect_multicolumn_values_to_be_unique",
-            "expect_column_pair_cramers_phi_value_to_be_less_than",
-            "expect_column_bootstrapped_ks_test_p_value_to_be_greater_than",
-            "expect_column_chisquare_test_p_value_to_be_greater_than",
-            "expect_column_parameterized_distribution_ks_test_p_value_to_be_greater_than",
-        ]
-
-    return False
+# We cache whether we can successfully connect to a test backend so we don't have to
+# validate we can connect over and over again.
+_successful_backend_connection = set()
 
 
 def build_test_backends_list(  # noqa: C901, PLR0912, PLR0913, PLR0915 # FIXME CoP
@@ -1503,9 +1396,11 @@ def build_test_backends_list(  # noqa: C901, PLR0912, PLR0913, PLR0915 # FIXME C
         if include_redshift:
             # noinspection PyUnresolvedReferences
             try:
-                engine = _create_redshift_engine()
-                conn = engine.connect()
-                conn.close()
+                if "redshift" not in _successful_backend_connection:
+                    engine = _create_redshift_engine()
+                    conn = engine.connect()
+                    conn.close()
+                    _successful_backend_connection.add("redshift")
             except (ImportError, ValueError, sa.exc.SQLAlchemyError) as e:
                 if raise_exceptions_for_backends is True:
                     raise ImportError("redshift tests are requested, but unable to connect") from e  # noqa: TRY003 # FIXME CoP
@@ -1608,7 +1503,7 @@ def generate_expectation_tests(  # noqa: C901, PLR0912, PLR0913, PLR0915 # FIXME
         engines_to_include["spark"] = execution_engine_diagnostics.SparkDFExecutionEngine
         engines_to_include["sqlalchemy"] = execution_engine_diagnostics.SqlAlchemyExecutionEngine
         if engines_to_include.get("sqlalchemy") is True and raise_exceptions_for_backends is False:
-            dialects_to_include = {dialect: True for dialect in SQL_DIALECT_NAMES}
+            dialects_to_include = dict.fromkeys(SQL_DIALECT_NAMES, True)
 
     _debug(f"Attempting engines ({engines_to_include}) and dialects ({dialects_to_include})")
 

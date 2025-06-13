@@ -5,6 +5,7 @@ Individual tests can be run by setting the '-k' flag and referencing the name of
 """  # noqa: E501 # FIXME CoP
 
 import importlib.machinery
+import importlib.metadata
 import importlib.util
 import logging
 import os
@@ -12,14 +13,13 @@ import pathlib
 import shutil
 from typing import List
 
-import pkg_resources
 import pytest
 from assets.scripts.build_gallery import execute_shell_command
-from flaky import flaky
-
 from docs.docusaurus.docs.components.examples_under_test import (
     docs_tests,
 )
+from flaky import flaky
+
 from great_expectations.data_context.cloud_constants import GXCloudEnvironmentVariable
 from great_expectations.data_context.data_context.file_data_context import (
     FileDataContext,
@@ -324,12 +324,16 @@ def test_integration_tests(
 ):
     _check_for_skipped_tests(pytest_parsed_arguments, test_configuration)
     _execute_integration_test(
-        integration_test_fixture=test_configuration, tmp_path=tmp_path, monkeypatch=monkeypatch
+        integration_test_fixture=test_configuration,
+        tmp_path=tmp_path,
+        monkeypatch=monkeypatch,
     )
 
 
 def _execute_integration_test(  # noqa: C901, PLR0915 # FIXME CoP
-    integration_test_fixture: IntegrationTestFixture, tmp_path: pathlib.Path, monkeypatch
+    integration_test_fixture: IntegrationTestFixture,
+    tmp_path: pathlib.Path,
+    monkeypatch,
 ):
     """
     Prepare and environment and run integration tests from a list of tests.
@@ -342,7 +346,9 @@ def _execute_integration_test(  # noqa: C901, PLR0915 # FIXME CoP
         base_dir = pathlib.Path(file_relative_path(__file__, "../../"))
         os.chdir(base_dir)
         # Ensure GX is installed in our environment
-        installed_packages = [pkg.key for pkg in pkg_resources.working_set]
+        installed_packages = [
+            dist.metadata["name"].lower() for dist in importlib.metadata.distributions()
+        ]
         if "great-expectations" not in installed_packages:
             execute_shell_command("pip install .")
         os.chdir(tmp_path)

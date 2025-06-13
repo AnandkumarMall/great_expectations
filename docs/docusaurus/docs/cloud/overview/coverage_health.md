@@ -8,7 +8,7 @@ To understand data health, you need to know more than just whether tests are pas
 ## Coverage health metrics
 To help you have a better understanding of data health, GX Cloud provides the following coverage health metrics on the **Data Assets** page:
 
-![Example metrics: Active Coverage 75% warning add Expectations, Active Data Assets 100%, schema 75% warning add Expectations, volume 100%, completeness 50% warning add Expectations.](/img/coverage_health.png)
+![Example metrics: Active Coverage 75% warning, Active Data Assets 100%, schema 75% warning view Data Assets, volume 100%, completeness 50% warning view Data Assets.](/img/coverage_health.png)
 
 - **Active Coverage:** The percentage of Data Assets that have been validated in the last 30 days with an Expectation for schema, volume, or completeness. This is calculated as:
    
@@ -43,5 +43,5 @@ Only current Data Assets are considered in coverage health metrics. Deleted Data
 ## Next steps
 - If **Active Data Assets** are low, [schedule recurring Validations](/cloud/schedules/manage_schedules.md).
 - If **Schema**, **Volume**, or **Completeness** coverage is low, [add Expectations](/cloud/expectations/manage_expectations.md#add-an-expectation).
-- When adding new Data Assets, [automate standard data quality rules](/cloud/overview/automating_rules.md).
+- When adding new Data Assets, [automate rules for Anomaly Detection](/cloud/overview/automating_rules.md).
 

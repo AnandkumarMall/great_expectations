@@ -4,10 +4,10 @@ title: 'Manage Validations'
 description: Create and manage Validations in GX Cloud.
 ---
 
-You can manually run a Validation through the GX Cloud UI. This is useful for exploring your data and fine-tuning your Expectations. To run recurring Validations, use a [schedule](/docs/cloud/schedules/manage_schedules.md) or an [orchestrator](/cloud/connect/connect_airflow.md).
+You can manually run a Validation using the GX Cloud UI. This is useful for exploring your data and fine-tuning your Expectations. To run recurring Validations, use a [schedule](/docs/cloud/schedules/manage_schedules.md) or an [orchestrator](/cloud/connect/connect_airflow.md).
 
 :::tip Manual validations are for GX-managed Expectations only
-To run a validation for an [API-managed Expectation](/cloud/expectations/manage_expectations.md#gx-managed-vs-api-managed-expectations), create and run a [Validation Definition](/core/run_validations/create_a_validation_definition.md).
+To run a validation for an [API-managed Expectation](/cloud/expectations/manage_expectations.md#gx-managed-vs-api-managed-expectations), use the GX Cloud UI to generate the necessary code. For the Data Asset of interest, go to the **Validations** tab, select the **Expectation Suite** that contains your API-managed Expectation, click the code snippet icon next to the **Validate** button, and then click **Generate snippet**.
 :::
 
 <!-- [//]: # (TODO: To learn more about Validations, see Validator.) -->
@@ -30,7 +30,7 @@ To run a validation for an [API-managed Expectation](/cloud/expectations/manage_
 
 ## Run a Validation on a subset of a Data Asset
 
-If you've [defined a Batch](/cloud/expectations/manage_expectations.md#optional-define-a-batch), you can run a Validation on the latest Batch of data, or you can select a specific year, year and month, or year, month, and day period for the Validation. If a Batch is defined, Batch information appears on the Data Asset **Metrics** page and on the **Validations** page in the **Batches & run history** pane.
+If you've [defined a Batch](/cloud/expectations/manage_expectations.md#optional-define-a-batch), you can run a Validation on the latest Batch of data, or you can select a specific year, year and month, or year, month, and day period for the Validation. If a Batch is defined, Batch information appears on the **Validations** page in the **Batches & run history** pane.
 
 To run a Validation for a specific Batch, do the following:
 
