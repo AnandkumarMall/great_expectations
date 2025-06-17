@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, Type
+from typing import TYPE_CHECKING, Any, Dict, Optional, Type, Union
 
 from great_expectations.compatibility import pydantic
-from great_expectations.core.types import Comparable  # noqa: TC001 # FIXME CoP
+from great_expectations.core.suite_parameters import (
+    SuiteParameterDict,  # noqa: TC001 #  # pydantic isinstance
+)
 from great_expectations.expectations.expectation import (
     COLUMN_DESCRIPTION,
     ColumnAggregateExpectation,
@@ -22,6 +24,7 @@ from great_expectations.render.renderer_configuration import (
 )
 from great_expectations.render.util import (
     handle_strict_min_max,
+    num_to_str,
     parse_row_condition_string_pandas_engine,
     substitute_none_for_missing,
 )
@@ -186,10 +189,10 @@ class ExpectColumnProportionOfUniqueValuesToBeBetween(ColumnAggregateExpectation
                 }}
     """  # noqa: E501 # FIXME CoP
 
-    min_value: Optional[Comparable] = pydantic.Field(
+    min_value: Optional[Union[float, SuiteParameterDict]] = pydantic.Field(
         default=None, description=MIN_VALUE_DESCRIPTION
     )
-    max_value: Optional[Comparable] = pydantic.Field(
+    max_value: Optional[Union[float, SuiteParameterDict]] = pydantic.Field(
         default=None, description=MAX_VALUE_DESCRIPTION
     )
     strict_min: bool = pydantic.Field(default=False, description=STRICT_MIN_DESCRIPTION)
@@ -260,51 +263,120 @@ class ExpectColumnProportionOfUniqueValuesToBeBetween(ColumnAggregateExpectation
             )
 
     @classmethod
-    def _prescriptive_template(  # noqa: C901 #  too complex
+    def _convert_renderer_params_to_percentages(
+        cls, renderer_configuration: RendererConfiguration
+    ) -> None:
+        """Convert min_value and max_value from decimal to percentage strings."""
+        if (
+            renderer_configuration.params.min_value
+            and renderer_configuration.params.min_value.value is not None
+        ):
+            percentage_value = (
+                num_to_str(
+                    renderer_configuration.params.min_value.value * 100,
+                    precision=5,
+                    use_locale=True,
+                )
+                + "%"
+            )
+            renderer_configuration.add_param(
+                name="min_value_pct",
+                param_type=RendererValueType.STRING,
+                value=percentage_value,
+            )
+        if (
+            renderer_configuration.params.max_value
+            and renderer_configuration.params.max_value.value is not None
+        ):
+            percentage_value = (
+                num_to_str(
+                    renderer_configuration.params.max_value.value * 100,
+                    precision=5,
+                    use_locale=True,
+                )
+                + "%"
+            )
+            renderer_configuration.add_param(
+                name="max_value_pct",
+                param_type=RendererValueType.STRING,
+                value=percentage_value,
+            )
+
+    @classmethod
+    def _get_unique_template_string(cls, renderer_configuration: RendererConfiguration) -> str:
+        """Generate the template string for unique values proportion."""
+        params = renderer_configuration.params
+
+        if not params.min_value and not params.max_value:
+            return "may have any proportion of unique values."
+
+        at_least_str = "greater than or equal to"
+        if params.strict_min:
+            at_least_str = cls._get_strict_min_string(renderer_configuration=renderer_configuration)
+        at_most_str = "less than or equal to"
+        if params.strict_max:
+            at_most_str = cls._get_strict_max_string(renderer_configuration=renderer_configuration)
+
+        if not params.min_value:
+            return f"proportion of unique values must be {at_most_str} $max_value_pct."
+        elif not params.max_value:
+            return f"proportion of unique values must be {at_least_str} $min_value_pct."
+        elif params.min_value.value != params.max_value.value:
+            return f"proportion of unique values must be {at_least_str} $min_value_pct and {at_most_str} $max_value_pct."  # noqa: E501
+        else:
+            return "proportion of unique values must be exactly $min_value_pct."
+
+    @classmethod
+    def _prescriptive_template(
         cls,
         renderer_configuration: RendererConfiguration,
     ) -> RendererConfiguration:
         add_param_args: AddParamArgs = (
             ("column", RendererValueType.STRING),
-            ("min_value", [RendererValueType.NUMBER, RendererValueType.DATETIME]),
-            ("max_value", [RendererValueType.NUMBER, RendererValueType.DATETIME]),
+            ("min_value", RendererValueType.NUMBER),
+            ("max_value", RendererValueType.NUMBER),
             ("strict_min", RendererValueType.BOOLEAN),
             ("strict_max", RendererValueType.BOOLEAN),
         )
         for name, param_type in add_param_args:
             renderer_configuration.add_param(name=name, param_type=param_type)
 
-        params = renderer_configuration.params
-
-        if not params.min_value and not params.max_value:
-            template_str = "may have any proportion of unique values."
-        else:
-            at_least_str = "greater than or equal to"
-            if params.strict_min:
-                at_least_str = cls._get_strict_min_string(
-                    renderer_configuration=renderer_configuration
-                )
-            at_most_str = "less than or equal to"
-            if params.strict_max:
-                at_most_str = cls._get_strict_max_string(
-                    renderer_configuration=renderer_configuration
-                )
-            if not params.min_value:
-                template_str = f"proportion of unique values must be {at_most_str} $max_value."
-            elif not params.max_value:
-                template_str = f"proportion of unique values must be {at_least_str} $min_value."
-            else:  # noqa: PLR5501 # FIXME CoP
-                if params.min_value.value != params.max_value.value:
-                    template_str = f"proportion of unique values must be {at_least_str} $min_value and {at_most_str} $max_value."  # noqa: E501 # FIXME CoP
-                else:
-                    template_str = "proportion of unique values must be exactly $min_value."
+        cls._convert_renderer_params_to_percentages(renderer_configuration)
+        template_str = cls._get_unique_template_string(renderer_configuration)
 
         if renderer_configuration.include_column_name:
             template_str = f"$column {template_str}"
 
         renderer_configuration.template_str = template_str
-
         return renderer_configuration
+
+    @classmethod
+    def _convert_params_to_percentages(cls, params: dict) -> None:
+        """Convert min_value and max_value from decimal to percentage strings."""
+        if params.get("min_value") is not None:
+            params["min_value_pct"] = (
+                num_to_str(params["min_value"] * 100, precision=5, use_locale=True) + "%"
+            )
+        if params.get("max_value") is not None:
+            params["max_value_pct"] = (
+                num_to_str(params["max_value"] * 100, precision=5, use_locale=True) + "%"
+            )
+
+    @classmethod
+    def _get_unique_template_string_from_params(cls, params: dict) -> str:
+        """Generate the template string for unique values proportion from params dict."""
+        if params["min_value"] is None and params["max_value"] is None:
+            return "may have any proportion of unique values."
+
+        at_least_str, at_most_str = handle_strict_min_max(params)
+        if params["min_value"] is None:
+            return f"proportion of unique values must be {at_most_str} $max_value_pct."
+        elif params["max_value"] is None:
+            return f"proportion of unique values must be {at_least_str} $min_value_pct."
+        elif params["min_value"] != params["max_value"]:
+            return f"proportion of unique values must be {at_least_str} $min_value_pct and {at_most_str} $max_value_pct."  # noqa: E501
+        else:
+            return "proportion of unique values must be exactly $min_value_pct."
 
     @classmethod
     @renderer(renderer_type=LegacyRendererType.PRESCRIPTIVE)
@@ -332,19 +404,8 @@ class ExpectColumnProportionOfUniqueValuesToBeBetween(ColumnAggregateExpectation
             ],
         )
 
-        if params["min_value"] is None and params["max_value"] is None:
-            template_str = "may have any proportion of unique values."
-        else:
-            at_least_str, at_most_str = handle_strict_min_max(params)
-            if params["min_value"] is None:
-                template_str = f"proportion of unique values must be {at_most_str} $max_value."
-            elif params["max_value"] is None:
-                template_str = f"proportion of unique values must be {at_least_str} $min_value."
-            else:  # noqa: PLR5501 # FIXME CoP
-                if params["min_value"] != params["max_value"]:
-                    template_str = f"proportion of unique values must be {at_least_str} $min_value and {at_most_str} $max_value."  # noqa: E501 # FIXME CoP
-                else:
-                    template_str = "proportion of unique values must be exactly $min_value."
+        cls._convert_params_to_percentages(params)
+        template_str = cls._get_unique_template_string_from_params(params)
 
         if include_column_name:
             template_str = f"$column {template_str}"

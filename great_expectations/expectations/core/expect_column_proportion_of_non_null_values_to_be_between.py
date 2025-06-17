@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Type, Union
 
 from great_expectations.compatibility import pydantic
 from great_expectations.compatibility.typing_extensions import override
-from great_expectations.core.types import (
-    Comparable,  # noqa: TC001 # pydantic instantiates this type at runtime
+from great_expectations.core.suite_parameters import (
+    SuiteParameterDict,  # noqa: TC001 # pydantic isinstance
 )
 from great_expectations.expectations.expectation import (
     COLUMN_DESCRIPTION,
@@ -25,6 +25,7 @@ from great_expectations.render.renderer_configuration import (
 )
 from great_expectations.render.util import (
     handle_strict_min_max,
+    num_to_str,
     parse_row_condition_string_pandas_engine,
     substitute_none_for_missing,
 )
@@ -192,10 +193,10 @@ class ExpectColumnProportionOfNonNullValuesToBeBetween(ColumnAggregateExpectatio
                 }}
     """
 
-    min_value: Optional[Comparable] = pydantic.Field(
+    min_value: Optional[Union[float, SuiteParameterDict]] = pydantic.Field(
         default=None, description=MIN_VALUE_DESCRIPTION
     )
-    max_value: Optional[Comparable] = pydantic.Field(
+    max_value: Optional[Union[float, SuiteParameterDict]] = pydantic.Field(
         default=None, description=MAX_VALUE_DESCRIPTION
     )
     strict_min: bool = pydantic.Field(default=False, description=STRICT_MIN_DESCRIPTION)
@@ -279,16 +280,54 @@ class ExpectColumnProportionOfNonNullValuesToBeBetween(ColumnAggregateExpectatio
                     renderer_configuration=renderer_configuration
                 )
             if not params.min_value:
-                return f"proportion of non-null values must be {at_most_str} $max_value."
+                return f"proportion of non-null values must be {at_most_str} $max_value_pct."
             elif not params.max_value:
-                return f"proportion of non-null values must be {at_least_str} $min_value."
+                return f"proportion of non-null values must be {at_least_str} $min_value_pct."
             elif params.min_value.value != params.max_value.value:
                 return (
-                    f"proportion of non-null values must be {at_least_str} $min_value "
-                    f"and {at_most_str} $max_value."
+                    f"proportion of non-null values must be {at_least_str} $min_value_pct "
+                    f"and {at_most_str} $max_value_pct."
                 )
             else:
-                return "proportion of non-null values must be exactly $min_value."
+                return "proportion of non-null values must be exactly $min_value_pct."
+
+    @classmethod
+    def _convert_params_to_percentages(cls, renderer_configuration: RendererConfiguration) -> None:
+        """Convert min_value and max_value from decimal to percentage strings."""
+        if (
+            renderer_configuration.params.min_value
+            and renderer_configuration.params.min_value.value is not None
+        ):
+            percentage_value = (
+                num_to_str(
+                    renderer_configuration.params.min_value.value * 100,
+                    precision=5,
+                    use_locale=True,
+                )
+                + "%"
+            )
+            renderer_configuration.add_param(
+                name="min_value_pct",
+                param_type=RendererValueType.STRING,
+                value=percentage_value,
+            )
+        if (
+            renderer_configuration.params.max_value
+            and renderer_configuration.params.max_value.value is not None
+        ):
+            percentage_value = (
+                num_to_str(
+                    renderer_configuration.params.max_value.value * 100,
+                    precision=5,
+                    use_locale=True,
+                )
+                + "%"
+            )
+            renderer_configuration.add_param(
+                name="max_value_pct",
+                param_type=RendererValueType.STRING,
+                value=percentage_value,
+            )
 
     @classmethod
     @override
@@ -298,14 +337,15 @@ class ExpectColumnProportionOfNonNullValuesToBeBetween(ColumnAggregateExpectatio
     ) -> RendererConfiguration:
         add_param_args: AddParamArgs = (
             ("column", RendererValueType.STRING),
-            ("min_value", [RendererValueType.NUMBER, RendererValueType.DATETIME]),
-            ("max_value", [RendererValueType.NUMBER, RendererValueType.DATETIME]),
+            ("min_value", RendererValueType.NUMBER),
+            ("max_value", RendererValueType.NUMBER),
             ("strict_min", RendererValueType.BOOLEAN),
             ("strict_max", RendererValueType.BOOLEAN),
         )
         for name, param_type in add_param_args:
             renderer_configuration.add_param(name=name, param_type=param_type)
 
+        cls._convert_params_to_percentages(renderer_configuration)
         template_str = cls._get_min_max_string(renderer_configuration)
 
         if renderer_configuration.include_column_name:
@@ -314,6 +354,37 @@ class ExpectColumnProportionOfNonNullValuesToBeBetween(ColumnAggregateExpectatio
         renderer_configuration.template_str = template_str
 
         return renderer_configuration
+
+    @classmethod
+    def _convert_legacy_params_to_percentages(cls, params: dict) -> None:
+        """Convert min_value and max_value from decimal to percentage strings."""
+        if params.get("min_value") is not None:
+            params["min_value_pct"] = (
+                num_to_str(params["min_value"] * 100, precision=5, use_locale=True) + "%"
+            )
+        if params.get("max_value") is not None:
+            params["max_value_pct"] = (
+                num_to_str(params["max_value"] * 100, precision=5, use_locale=True) + "%"
+            )
+
+    @classmethod
+    def _get_template_string(cls, params: dict) -> str:
+        """Generate the template string based on min/max values."""
+        if params["min_value"] is None and params["max_value"] is None:
+            return "may have any proportion of non-null values."
+
+        at_least_str, at_most_str = handle_strict_min_max(params)
+        if params["min_value"] is None:
+            return f"proportion of non-null values must be {at_most_str} $max_value_pct."
+        elif params["max_value"] is None:
+            return f"proportion of non-null values must be {at_least_str} $min_value_pct."
+        elif params["min_value"] != params["max_value"]:
+            return (
+                f"proportion of non-null values must be {at_least_str} $min_value_pct "
+                f"and {at_most_str} $max_value_pct."
+            )
+        else:
+            return "proportion of non-null values must be exactly $min_value_pct."
 
     @classmethod
     @override
@@ -346,21 +417,8 @@ class ExpectColumnProportionOfNonNullValuesToBeBetween(ColumnAggregateExpectatio
             else {}
         )
 
-        if params["min_value"] is None and params["max_value"] is None:
-            template_str = "may have any proportion of non-null values."
-        else:
-            at_least_str, at_most_str = handle_strict_min_max(params)
-            if params["min_value"] is None:
-                template_str = f"proportion of non-null values must be {at_most_str} $max_value."
-            elif params["max_value"] is None:
-                template_str = f"proportion of non-null values must be {at_least_str} $min_value."
-            elif params["min_value"] != params["max_value"]:
-                template_str = (
-                    f"proportion of non-null values must be {at_least_str} $min_value "
-                    f"and {at_most_str} $max_value."
-                )
-            else:
-                template_str = "proportion of non-null values must be exactly $min_value."
+        cls._convert_legacy_params_to_percentages(params)
+        template_str = cls._get_template_string(params)
 
         if include_column_name:
             template_str = f"$column {template_str}"

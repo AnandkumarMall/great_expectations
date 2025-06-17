@@ -45,7 +45,8 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                     value=RenderedAtomicValue(
                         template=(
                             "$column proportion of non-null values must be greater "
-                            "than or equal to $min_value and less than or equal to $max_value."
+                            "than or equal to $min_value_pct and less than or equal to "
+                            "$max_value_pct."
                         ),
                         params={
                             "column": {
@@ -56,9 +57,17 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "schema": {"type": "number"},
                                 "value": 0.5,
                             },
+                            "min_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "50%",
+                            },
                             "max_value": {
                                 "schema": {"type": "number"},
                                 "value": 0.8,
+                            },
+                            "max_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "80%",
                             },
                         },
                         schema={"type": "com.superconductive.rendered.string"},
@@ -79,7 +88,7 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                     value=RenderedAtomicValue(
                         template=(
                             "$column proportion of non-null values must be less than or equal to "
-                            "$max_value."
+                            "$max_value_pct."
                         ),
                         params={
                             "column": {
@@ -89,6 +98,10 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                             "max_value": {
                                 "schema": {"type": "number"},
                                 "value": 0.8,
+                            },
+                            "max_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "80%",
                             },
                         },
                         schema={"type": "com.superconductive.rendered.string"},
@@ -109,7 +122,7 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                     value=RenderedAtomicValue(
                         template=(
                             "$column proportion of non-null values must be greater "
-                            "than or equal to $min_value."
+                            "than or equal to $min_value_pct."
                         ),
                         params={
                             "column": {
@@ -119,6 +132,10 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                             "min_value": {
                                 "schema": {"type": "number"},
                                 "value": 0.5,
+                            },
+                            "min_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "50%",
                             },
                         },
                         schema={"type": "com.superconductive.rendered.string"},
@@ -139,7 +156,7 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                     name="atomic.prescriptive.summary",
                     value=RenderedAtomicValue(
                         template="$column proportion of non-null values "
-                        "must be exactly $min_value.",
+                        "must be exactly $min_value_pct.",
                         params={
                             "column": {
                                 "schema": {"type": "string"},
@@ -149,9 +166,17 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "schema": {"type": "number"},
                                 "value": 0.7,
                             },
+                            "min_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "70%",
+                            },
                             "max_value": {
                                 "schema": {"type": "number"},
                                 "value": 0.7,
+                            },
+                            "max_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "70%",
                             },
                         },
                         schema={"type": "com.superconductive.rendered.string"},
@@ -173,8 +198,8 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                     name="atomic.prescriptive.summary",
                     value=RenderedAtomicValue(
                         template=(
-                            "$column proportion of non-null values must be greater than $min_value "
-                            "and less than or equal to $max_value."
+                            "$column proportion of non-null values must be greater than "
+                            "$min_value_pct and less than or equal to $max_value_pct."
                         ),
                         params={
                             "column": {
@@ -185,9 +210,17 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "schema": {"type": "number"},
                                 "value": 0.5,
                             },
+                            "min_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "50%",
+                            },
                             "max_value": {
                                 "schema": {"type": "number"},
                                 "value": 0.8,
+                            },
+                            "max_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "80%",
                             },
                             "strict_min": {
                                 "schema": {"type": "boolean"},
@@ -214,7 +247,7 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                     value=RenderedAtomicValue(
                         template=(
                             "$column proportion of non-null values must be greater "
-                            "than or equal to $min_value and less than $max_value."
+                            "than or equal to $min_value_pct and less than $max_value_pct."
                         ),
                         params={
                             "column": {
@@ -225,9 +258,17 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "schema": {"type": "number"},
                                 "value": 0.5,
                             },
+                            "min_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "50%",
+                            },
                             "max_value": {
                                 "schema": {"type": "number"},
                                 "value": 0.8,
+                            },
+                            "max_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "80%",
                             },
                             "strict_max": {
                                 "schema": {"type": "boolean"},
@@ -254,8 +295,8 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                     name="atomic.prescriptive.summary",
                     value=RenderedAtomicValue(
                         template=(
-                            "$column proportion of non-null values must be greater than $min_value "
-                            "and less than $max_value."
+                            "$column proportion of non-null values must be greater than "
+                            "$min_value_pct and less than $max_value_pct."
                         ),
                         params={
                             "column": {
@@ -266,9 +307,17 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "schema": {"type": "number"},
                                 "value": 0.5,
                             },
+                            "min_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "50%",
+                            },
                             "max_value": {
                                 "schema": {"type": "number"},
                                 "value": 0.8,
+                            },
+                            "max_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "80%",
                             },
                             "strict_min": {
                                 "schema": {"type": "boolean"},
@@ -297,7 +346,8 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                     name="atomic.prescriptive.summary",
                     value=RenderedAtomicValue(
                         template=(
-                            "$column proportion of non-null values must be greater than $min_value."
+                            "$column proportion of non-null values must be greater than "
+                            "$min_value_pct."
                         ),
                         params={
                             "column": {
@@ -307,6 +357,10 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                             "min_value": {
                                 "schema": {"type": "number"},
                                 "value": 0.5,
+                            },
+                            "min_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "50%",
                             },
                             "strict_min": {
                                 "schema": {"type": "boolean"},
@@ -331,7 +385,8 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                     name="atomic.prescriptive.summary",
                     value=RenderedAtomicValue(
                         template=(
-                            "$column proportion of non-null values must be less than $max_value."
+                            "$column proportion of non-null values must be less than "
+                            "$max_value_pct."
                         ),
                         params={
                             "column": {
@@ -341,6 +396,10 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                             "max_value": {
                                 "schema": {"type": "number"},
                                 "value": 0.8,
+                            },
+                            "max_value_pct": {
+                                "schema": {"type": "string"},
+                                "value": "80%",
                             },
                             "strict_max": {
                                 "schema": {"type": "boolean"},
