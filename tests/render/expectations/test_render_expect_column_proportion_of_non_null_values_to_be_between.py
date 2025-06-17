@@ -53,12 +53,12 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "value": "test_column",
                             },
                             "min_value": {
-                                "schema": {"type": "string"},
-                                "value": "50%",
+                                "schema": {"type": "number"},
+                                "value": 0.5,
                             },
                             "max_value": {
-                                "schema": {"type": "string"},
-                                "value": "80%",
+                                "schema": {"type": "number"},
+                                "value": 0.8,
                             },
                         },
                         schema={"type": "com.superconductive.rendered.string"},
@@ -87,8 +87,8 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "value": "test_column",
                             },
                             "max_value": {
-                                "schema": {"type": "string"},
-                                "value": "80%",
+                                "schema": {"type": "number"},
+                                "value": 0.8,
                             },
                         },
                         schema={"type": "com.superconductive.rendered.string"},
@@ -117,8 +117,8 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "value": "test_column",
                             },
                             "min_value": {
-                                "schema": {"type": "string"},
-                                "value": "50%",
+                                "schema": {"type": "number"},
+                                "value": 0.5,
                             },
                         },
                         schema={"type": "com.superconductive.rendered.string"},
@@ -146,12 +146,12 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "value": "test_column",
                             },
                             "min_value": {
-                                "schema": {"type": "string"},
-                                "value": "70%",
+                                "schema": {"type": "number"},
+                                "value": 0.7,
                             },
                             "max_value": {
-                                "schema": {"type": "string"},
-                                "value": "70%",
+                                "schema": {"type": "number"},
+                                "value": 0.7,
                             },
                         },
                         schema={"type": "com.superconductive.rendered.string"},
@@ -182,12 +182,12 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "value": "test_column",
                             },
                             "min_value": {
-                                "schema": {"type": "string"},
-                                "value": "50%",
+                                "schema": {"type": "number"},
+                                "value": 0.5,
                             },
                             "max_value": {
-                                "schema": {"type": "string"},
-                                "value": "80%",
+                                "schema": {"type": "number"},
+                                "value": 0.8,
                             },
                             "strict_min": {
                                 "schema": {"type": "boolean"},
@@ -222,12 +222,12 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "value": "test_column",
                             },
                             "min_value": {
-                                "schema": {"type": "string"},
-                                "value": "50%",
+                                "schema": {"type": "number"},
+                                "value": 0.5,
                             },
                             "max_value": {
-                                "schema": {"type": "string"},
-                                "value": "80%",
+                                "schema": {"type": "number"},
+                                "value": 0.8,
                             },
                             "strict_max": {
                                 "schema": {"type": "boolean"},
@@ -263,12 +263,12 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "value": "test_column",
                             },
                             "min_value": {
-                                "schema": {"type": "string"},
-                                "value": "50%",
+                                "schema": {"type": "number"},
+                                "value": 0.5,
                             },
                             "max_value": {
-                                "schema": {"type": "string"},
-                                "value": "80%",
+                                "schema": {"type": "number"},
+                                "value": 0.8,
                             },
                             "strict_min": {
                                 "schema": {"type": "boolean"},
@@ -305,8 +305,8 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "value": "test_column",
                             },
                             "min_value": {
-                                "schema": {"type": "string"},
-                                "value": "50%",
+                                "schema": {"type": "number"},
+                                "value": 0.5,
                             },
                             "strict_min": {
                                 "schema": {"type": "boolean"},
@@ -339,8 +339,8 @@ from great_expectations.render.renderer.inline_renderer import InlineRenderer
                                 "value": "test_column",
                             },
                             "max_value": {
-                                "schema": {"type": "string"},
-                                "value": "80%",
+                                "schema": {"type": "number"},
+                                "value": 0.8,
                             },
                             "strict_max": {
                                 "schema": {"type": "boolean"},
@@ -361,8 +361,15 @@ def test_expectation_configuration_rendered_atomic_content(
     expectation: gxe.ExpectColumnProportionOfNonNullValuesToBeBetween,
     expected_expectation_configuration_rendered_atomic_content: list[RenderedAtomicContent],
 ):
-    inline_renderer = InlineRenderer(render_object=expectation)
-    rendered_atomic_content_list = inline_renderer.get_rendered_content()
+    inline_renderer: InlineRenderer = InlineRenderer(render_object=expectation.configuration)
+
+    actual_expectation_configuration_rendered_atomic_content: list[RenderedAtomicContent] = (
+        inline_renderer.get_rendered_content()
+    )
+
+    assert len(actual_expectation_configuration_rendered_atomic_content) == 1
+
     assert (
-        rendered_atomic_content_list == expected_expectation_configuration_rendered_atomic_content
+        expected_expectation_configuration_rendered_atomic_content
+        == actual_expectation_configuration_rendered_atomic_content
     )
