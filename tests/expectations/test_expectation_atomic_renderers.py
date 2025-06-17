@@ -731,8 +731,8 @@ def test_atomic_prescriptive_summary_expect_column_proportion_of_unique_values_t
         "type": "expect_column_proportion_of_unique_values_to_be_between",
         "kwargs": {
             "column": "my_column",
-            "min_value": 10,
-            "max_value": 20,
+            "min_value": 0.1,
+            "max_value": 0.2,
         },
     }
     rendered_content = get_prescriptive_rendered_content(update_dict)
@@ -744,8 +744,8 @@ def test_atomic_prescriptive_summary_expect_column_proportion_of_unique_values_t
         "value": {
             "params": {
                 "column": {"schema": {"type": "string"}, "value": "my_column"},
-                "max_value": {"schema": {"type": "number"}, "value": 20},
-                "min_value": {"schema": {"type": "number"}, "value": 10},
+                "max_value": {"schema": {"type": "string"}, "value": "20%"},
+                "min_value": {"schema": {"type": "string"}, "value": "10%"},
             },
             "schema": {"type": "com.superconductive.rendered.string"},
             "template": "$column proportion of unique values must be greater than or equal to $min_value and less than or equal to $max_value.",  # noqa: E501 # FIXME CoP
