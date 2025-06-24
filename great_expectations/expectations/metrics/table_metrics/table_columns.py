@@ -9,10 +9,12 @@ from great_expectations.execution_engine import (
     SparkDFExecutionEngine,
     SqlAlchemyExecutionEngine,
 )
+from great_expectations.execution_engine.sqlalchemy_dialect import GXSqlDialect
 from great_expectations.expectations.metrics.metric_provider import metric_value
 from great_expectations.expectations.metrics.table_metric_provider import (
     TableMetricProvider,
 )
+from great_expectations.expectations.metrics.util import CaseInsensitiveString
 from great_expectations.validator.metric_configuration import MetricConfiguration
 
 if TYPE_CHECKING:
@@ -46,6 +48,12 @@ class TableColumns(TableMetricProvider):
         runtime_configuration: dict,
     ):
         column_metadata = metrics["table.column_types"]
+        if execution_engine.dialect.name in [
+            GXSqlDialect.DATABRICKS,
+            GXSqlDialect.POSTGRESQL,
+            GXSqlDialect.SNOWFLAKE,
+        ]:
+            return [CaseInsensitiveString(col["name"]) for col in column_metadata]
         return [col["name"] for col in column_metadata]
 
     @metric_value(engine=SparkDFExecutionEngine)
