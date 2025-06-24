@@ -423,11 +423,9 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
     ):
-        breakpoint()
         expected_column_set = _make_column_set_with_execution_engine_type(
             self._get_success_kwargs().get("column_set"), execution_engine
         )
-        breakpoint()
         actual_column_list = metrics.get("table.columns")
         actual_column_set = set(actual_column_list)
         exact_match = self._get_success_kwargs().get("exact_match")
