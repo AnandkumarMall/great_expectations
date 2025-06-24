@@ -423,9 +423,11 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
     ):
+        breakpoint()
         expected_column_set = _make_column_set_with_execution_engine_type(
             self._get_success_kwargs().get("column_set"), execution_engine
         )
+        breakpoint()
         actual_column_list = metrics.get("table.columns")
         actual_column_set = set(actual_column_list)
         exact_match = self._get_success_kwargs().get("exact_match")
@@ -495,7 +497,11 @@ def _make_column_set_with_execution_engine_type(
     dialect = (
         execution_engine.dialect.name if execution_engine and execution_engine.dialect else None
     )
-    if dialect in [GXSqlDialect.DATABRICKS, GXSqlDialect.POSTGRESQL, GXSqlDialect.SNOWFLAKE]:
+    if dialect and dialect in [
+        GXSqlDialect.DATABRICKS,
+        GXSqlDialect.POSTGRESQL,
+        GXSqlDialect.SNOWFLAKE,
+    ]:
         # For these dialects, column_set we want to use
         # The metric column_set will return a set of strs but table.columns will return a list of
         # CaseInsensitiveStrings. CaseInsensitiveStrings and strs can be equal but have different
