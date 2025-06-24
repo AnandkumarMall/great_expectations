@@ -497,5 +497,5 @@ def _make_case_insensitive_set(strs: set[str]) -> set[CaseInsensitiveString]:
         if isinstance(s, str) and not isinstance(s, CaseInsensitiveString):
             case_insensitive_strs.add(CaseInsensitiveString(s))
         else:
-            raise InvalidSetTypeError("str", type(s))
+            raise InvalidSetTypeError("str", str(type(s)))
     return case_insensitive_strs

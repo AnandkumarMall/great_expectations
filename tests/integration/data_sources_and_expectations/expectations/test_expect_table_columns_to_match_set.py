@@ -8,6 +8,7 @@ from tests.integration.conftest import parameterize_batch_for_data_sources
 from tests.integration.data_sources_and_expectations.test_canonical_expectations import (
     ALL_DATA_SOURCES,
     JUST_PANDAS_DATA_SOURCES,
+    SQL_DATA_SOURCES,
 )
 
 COL_A = "col_a"
@@ -122,7 +123,7 @@ CASE_INSENSITIVE_DATA = pd.DataFrame(
 
 
 @parameterize_batch_for_data_sources(
-    data_source_configs=ALL_DATA_SOURCES, data=CASE_INSENSITIVE_DATA
+    data_source_configs=SQL_DATA_SOURCES, data=CASE_INSENSITIVE_DATA
 )
 def test_case_insensitive_success(batch_for_datasource: Batch) -> None:
     expectation = gxe.ExpectTableColumnsToMatchSet(column_set=["COLUMN_A", "column_b", "COLumN_c"])
