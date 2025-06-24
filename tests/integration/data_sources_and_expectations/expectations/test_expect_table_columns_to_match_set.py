@@ -109,3 +109,22 @@ def test_success_with_suite_param_exact_match_(
         expectation, expectation_parameters={suite_param_key: suite_param_value}
     )
     assert result.success == expected_result
+
+
+# Case insenstivity tests
+CASE_INSENSITIVE_DATA = pd.DataFrame(
+    {
+        "column_a": [1],
+        "COLUMN_B": [2],
+        "CoLuMn_C": [3],
+    }
+)
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=ALL_DATA_SOURCES, data=CASE_INSENSITIVE_DATA
+)
+def test_case_insensitive_success(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectTableColumnsToMatchSet(column_set=["COLUMN_A", "column_b", "COLumN_c"])
+    result = batch_for_datasource.validate(expectation)
+    assert result.success
