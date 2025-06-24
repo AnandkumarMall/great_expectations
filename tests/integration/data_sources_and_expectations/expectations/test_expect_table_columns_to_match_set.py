@@ -127,12 +127,7 @@ CASE_INSENSITIVE_DATA = pd.DataFrame(
 
 
 @parameterize_batch_for_data_sources(
-    data_source_configs=[
-        PostgreSQLDatasourceTestConfig(),
-        DatabricksDatasourceTestConfig(),
-        SnowflakeDatasourceTestConfig(),
-    ],
-    data=CASE_INSENSITIVE_DATA,
+    data_source_configs=ALL_DATA_SOURCES, data=CASE_INSENSITIVE_DATA
 )
 def test_case_insensitive_success(batch_for_datasource: Batch) -> None:
     expectation = gxe.ExpectTableColumnsToMatchSet(column_set=["COLUMN_A", "column_b", "COLumN_c"])
