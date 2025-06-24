@@ -7,6 +7,7 @@ from great_expectations.compatibility.typing_extensions import override
 from great_expectations.core.suite_parameters import (
     SuiteParameterDict,  # noqa: TC001 # FIXME CoP
 )
+from great_expectations.exceptions.exceptions import InvalidSetTypeError
 from great_expectations.expectations.expectation import (
     BatchExpectation,
     render_suite_parameter_string,
@@ -35,6 +36,7 @@ if TYPE_CHECKING:
     from great_expectations.expectations.expectation_configuration import (
         ExpectationConfiguration,
     )
+    from great_expectations.expectations.metrics.util import CaseInsensitiveString
     from great_expectations.render.renderer_configuration import AddParamArgs
 
 
@@ -420,9 +422,14 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
     ):
-        # Obtaining columns and ordered list for sake of comparison
-        expected_column_set = self._get_success_kwargs().get("column_set")
-        expected_column_set = set(expected_column_set) if expected_column_set is not None else set()
+        # The metric column_set will return a set of strs but table.columns will return a list of
+        # CaseInsensitiveStrings. CaseInsensitiveStrings and strs can be equal but have different
+        # hashes which breaks set operations. Since we want to do set operations in a case
+        # insensitive manner, we make the expect_column_set case insensitive.
+        expected_column_set = _make_case_insensitive_set(
+            self._get_success_kwargs().get("column_set")
+        )
+
         actual_column_list = metrics.get("table.columns")
         actual_column_set = set(actual_column_list)
         exact_match = self._get_success_kwargs().get("exact_match")
@@ -469,3 +476,26 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
                 # Passed if there are no items in the missing list
                 else:
                     return return_success
+
+
+def _make_case_insensitive_set(strs: set[str]) -> set[CaseInsensitiveString]:
+    """Creates a set of CaseInsensitiveStrings from a set of strs.
+
+    Args:
+        strs: A set of strs (not CaseInsensitiveStrings).
+
+    Returns:
+        A set of CaseInsensitiveStrings.
+    """
+    # Making a CaseInsentitiveSet data structure would be a more general solution and
+    # if we need to do this type transformation more than once we should make one in
+    # great_expectations/expectations/metrics/util.py.
+    from great_expectations.expectations.metrics.util import CaseInsensitiveString
+
+    case_insensitive_strs = set()
+    for s in strs:
+        if isinstance(s, str) and not isinstance(s, CaseInsensitiveString):
+            case_insensitive_strs.add(CaseInsensitiveString(s))
+        else:
+            raise InvalidSetTypeError("str", type(s))
+    return case_insensitive_strs
