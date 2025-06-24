@@ -492,7 +492,9 @@ def _make_column_set_with_execution_engine_type(
     if column_set is None:
         return set()
 
-    dialect = execution_engine.dialect.name if execution_engine else None
+    dialect = (
+        execution_engine.dialect.name if execution_engine and execution_engine.dialect else None
+    )
     if dialect in [GXSqlDialect.DATABRICKS, GXSqlDialect.POSTGRESQL, GXSqlDialect.SNOWFLAKE]:
         # For these dialects, column_set we want to use
         # The metric column_set will return a set of strs but table.columns will return a list of
