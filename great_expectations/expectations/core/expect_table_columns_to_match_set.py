@@ -8,7 +8,6 @@ from great_expectations.core.suite_parameters import (
     SuiteParameterDict,  # noqa: TC001 # FIXME CoP
 )
 from great_expectations.exceptions.exceptions import InvalidSetTypeError
-from great_expectations.execution_engine.sqlalchemy_dialect import GXSqlDialect
 from great_expectations.expectations.expectation import (
     BatchExpectation,
     render_suite_parameter_string,
@@ -423,9 +422,14 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
     ):
-        expected_column_set = _make_column_set_with_execution_engine_type(
-            self._get_success_kwargs().get("column_set"), execution_engine
+        # The metric column_set will return a set of strs but table.columns will return a list of
+        # CaseInsensitiveStrings. CaseInsensitiveStrings and strs can be equal but have different
+        # hashes which breaks set operations. Since we want to do set operations in a case
+        # insensitive manner, we make the expect_column_set case insensitive.
+        expected_column_set = _make_case_insensitive_set(
+            self._get_success_kwargs().get("column_set")
         )
+
         actual_column_list = metrics.get("table.columns")
         actual_column_set = set(actual_column_list)
         exact_match = self._get_success_kwargs().get("exact_match")
@@ -474,42 +478,6 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
                     return return_success
 
 
-def _make_column_set_with_execution_engine_type(
-    column_set: Optional[set[str]],
-    execution_engine: Optional[ExecutionEngine],
-) -> set[str]:
-    """
-    Transforms column names in column_set to the appropriate type for the execution_engine.
-
-    Args:
-        column_set: A set of column names.
-        execution_engine: An execution engine.
-
-    Returns:
-        A set of column names whose type matches the metric table.columns. This type varies
-        based on the execution engine.
-    """
-    if column_set is None:
-        return set()
-
-    dialect = (
-        execution_engine.dialect.name if execution_engine and execution_engine.dialect else None
-    )
-    if dialect and dialect in [
-        GXSqlDialect.DATABRICKS,
-        GXSqlDialect.POSTGRESQL,
-        GXSqlDialect.SNOWFLAKE,
-    ]:
-        # For these dialects, column_set we want to use
-        # The metric column_set will return a set of strs but table.columns will return a list of
-        # CaseInsensitiveStrings. CaseInsensitiveStrings and strs can be equal but have different
-        # hashes which breaks set operations. Since we want to do set operations in a case
-        # insensitive manner, we make the expect_column_set case insensitive.
-        return _make_case_insensitive_set(column_set)
-    else:
-        return set(column_set)
-
-
 def _make_case_insensitive_set(strs: set[str]) -> set[CaseInsensitiveString]:
     """Creates a set of CaseInsensitiveStrings from a set of strs.
 
@@ -529,5 +497,5 @@ def _make_case_insensitive_set(strs: set[str]) -> set[CaseInsensitiveString]:
         if isinstance(s, str) and not isinstance(s, CaseInsensitiveString):
             case_insensitive_strs.add(CaseInsensitiveString(s))
         else:
-            raise InvalidSetTypeError("str", str(type(s)))
+            raise InvalidSetTypeError("str", type(s))
     return case_insensitive_strs
