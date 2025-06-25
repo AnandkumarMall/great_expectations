@@ -8,7 +8,6 @@ from great_expectations.core.suite_parameters import (
     SuiteParameterDict,  # noqa: TC001 # FIXME CoP
 )
 from great_expectations.exceptions.exceptions import InvalidSetTypeError
-from great_expectations.execution_engine.sqlalchemy_dialect import GXSqlDialect
 from great_expectations.expectations.expectation import (
     BatchExpectation,
     render_suite_parameter_string,
@@ -427,7 +426,9 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
             self._get_success_kwargs().get("column_set"), execution_engine
         )
         actual_column_list = metrics.get("table.columns")
-        actual_column_set = set(actual_column_list)
+        actual_column_set = _make_column_set_with_execution_engine_type(
+            actual_column_list, execution_engine
+        )
         exact_match = self._get_success_kwargs().get("exact_match")
 
         if (
@@ -475,7 +476,7 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
 
 
 def _make_column_set_with_execution_engine_type(
-    column_set: Optional[set[str]],
+    column_set: Optional[set[str | CaseInsensitiveString]],
     execution_engine: Optional[ExecutionEngine],
 ) -> set[str]:
     """
@@ -495,11 +496,7 @@ def _make_column_set_with_execution_engine_type(
     dialect = (
         execution_engine.dialect.name if execution_engine and execution_engine.dialect else None
     )
-    if dialect and dialect in [
-        GXSqlDialect.DATABRICKS,
-        GXSqlDialect.POSTGRESQL,
-        GXSqlDialect.SNOWFLAKE,
-    ]:
+    if dialect:
         # For these dialects, column_set we want to use
         # The metric column_set will return a set of strs but table.columns will return a list of
         # CaseInsensitiveStrings. CaseInsensitiveStrings and strs can be equal but have different
@@ -510,7 +507,9 @@ def _make_column_set_with_execution_engine_type(
         return set(column_set)
 
 
-def _make_case_insensitive_set(strs: set[str]) -> set[CaseInsensitiveString]:
+def _make_case_insensitive_set(
+    strs: set[str | CaseInsensitiveString],
+) -> set[CaseInsensitiveString]:
     """Creates a set of CaseInsensitiveStrings from a set of strs.
 
     Args:
@@ -526,8 +525,12 @@ def _make_case_insensitive_set(strs: set[str]) -> set[CaseInsensitiveString]:
 
     case_insensitive_strs = set()
     for s in strs:
-        if isinstance(s, str) and not isinstance(s, CaseInsensitiveString):
+        if isinstance(s, CaseInsensitiveString):
+            case_insensitive_strs.add(s)
+        elif isinstance(s, str):
             case_insensitive_strs.add(CaseInsensitiveString(s))
         else:
-            raise InvalidSetTypeError("str", str(type(s)))
+            raise InvalidSetTypeError(
+                expected_type="str or CaseInsensitiveString", actual_type=str(type(s))
+            )
     return case_insensitive_strs
