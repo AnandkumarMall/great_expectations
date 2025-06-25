@@ -38,6 +38,7 @@ from great_expectations.execution_engine.sqlalchemy_batch_data import (
 )
 from great_expectations.execution_engine.sqlalchemy_dialect import (
     DIALECT_IDENTIFIER_QUOTE_STRINGS,
+    IDENTIFER_QUOTES,
     GXSqlDialect,
 )
 from great_expectations.execution_engine.util import check_sql_engine_dialect
@@ -314,12 +315,12 @@ def attempt_allowing_relative_error(dialect):
 
 def get_execution_engine_quote_strings(
     execution_engine: SqlAlchemyExecutionEngine,
-) -> Tuple[str, str]:
-    dialect_name = execution_engine.dialect.name
-    if dialect_name in DIALECT_IDENTIFIER_QUOTE_STRINGS:
-        return DIALECT_IDENTIFIER_QUOTE_STRINGS[dialect_name]
-    # Default to double quotes
-    return ("", "")
+) -> IDENTIFER_QUOTES:
+    try:
+        return DIALECT_IDENTIFIER_QUOTE_STRINGS[GXSqlDialect(execution_engine.dialect.name.lower())]
+    except (ValueError, KeyError):
+        # Default to double quotes
+        return ('"', '"')
 
 
 class CaseInsensitiveString(str):
@@ -328,7 +329,7 @@ class CaseInsensitiveString(str):
     unless it is quoted for a specific db dialect.
     """
 
-    def __init__(self, string: str, quote_strings: list[str]):
+    def __init__(self, string: str, quote_strings: IDENTIFER_QUOTES):
         # TODO: check if string is already a CaseInsensitiveString?
         self._original = string
         self._folded = (
@@ -372,7 +373,7 @@ class CaseInsensitiveString(str):
 class CaseInsensitiveNameDict(UserDict):
     """Normal dict except it returns a case-insensitive string for any `name` key values."""
 
-    def __init__(self, data: dict[str, Any], quote_strings: Tuple[str, str]):
+    def __init__(self, data: dict[str, Any], quote_strings: IDENTIFER_QUOTES):
         self.data = data
         self.quote_strings = quote_strings
 

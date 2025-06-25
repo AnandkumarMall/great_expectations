@@ -63,9 +63,9 @@ class GXSqlDialect(Enum):
         return [dialect for dialect in cls if dialect != GXSqlDialect.OTHER]
 
 
-DIALECT_IDENTIFIER_QUOTE_STRINGS: Final[
-    Mapping[GXSqlDialect, Tuple[Literal['"', "`", "["], Literal['"', "`", "]"]]]
-] = {
+IDENTIFER_QUOTES = Tuple[Literal['"', "`", "["], Literal['"', "`", "]"]]
+
+DIALECT_IDENTIFIER_QUOTE_STRINGS: Final[Mapping[GXSqlDialect, IDENTIFER_QUOTES]] = {
     # TODO: add other dialects
     GXSqlDialect.BIGQUERY: ("`", "`"),
     GXSqlDialect.DATABRICKS: ("`", "`"),
