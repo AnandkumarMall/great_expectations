@@ -51,6 +51,23 @@ SQL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     SqliteDatasourceTestConfig(),
 ]
 
+DOUBLE_QUOTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
+    PostgreSQLDatasourceTestConfig(),
+    RedshiftDatasourceTestConfig(),
+    SnowflakeDatasourceTestConfig(),
+    SqliteDatasourceTestConfig(),  # while sqlite supports "", ``, [] we only support ""
+]
+
+BACKTICK_QUOTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
+    BigQueryDatasourceTestConfig(),
+    DatabricksDatasourceTestConfig(),
+    MySQLDatasourceTestConfig(),  # `` is the default configuration
+]
+
+SQUARE_BRACKET_QUOTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
+    MSSQLDatasourceTestConfig(),  # [] is the default configuration
+]
+
 DATA_SOURCES_THAT_SUPPORT_DATE_COMPARISONS: Sequence[DataSourceTestConfig] = [
     BigQueryDatasourceTestConfig(),
     DatabricksDatasourceTestConfig(),

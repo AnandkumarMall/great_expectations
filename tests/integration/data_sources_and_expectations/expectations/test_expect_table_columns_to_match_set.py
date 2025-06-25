@@ -7,8 +7,11 @@ from great_expectations.datasource.fluent.interfaces import Batch
 from tests.integration.conftest import parameterize_batch_for_data_sources
 from tests.integration.data_sources_and_expectations.test_canonical_expectations import (
     ALL_DATA_SOURCES,
+    BACKTICK_QUOTED_DATA_SOURCES,
+    DOUBLE_QUOTED_DATA_SOURCES,
     JUST_PANDAS_DATA_SOURCES,
     SQL_DATA_SOURCES,
+    SQUARE_BRACKET_QUOTED_DATA_SOURCES,
 )
 
 COL_A = "col_a"
@@ -130,3 +133,134 @@ def test_case_insensitive_success(batch_for_datasource: Batch) -> None:
     expectation = gxe.ExpectTableColumnsToMatchSet(column_set=["COLUMN_A", "column_b", "COLumN_c"])
     result = batch_for_datasource.validate(expectation)
     assert result.success
+
+
+DOUBLE_QUOTED_DATA = pd.DataFrame(
+    {
+        '"column_a"': [1],
+        '"COLUMN_B"': [2],
+        '"CoLuMn_C"': [3],
+    }
+)
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=DOUBLE_QUOTED_DATA_SOURCES,
+    data=DOUBLE_QUOTED_DATA,
+)
+def test_double_quoted_success(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectTableColumnsToMatchSet(
+        column_set=['"column_a"', '"COLUMN_B"', '"CoLuMn_C"']
+    )
+    result = batch_for_datasource.validate(expectation)
+    assert result.success
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=DOUBLE_QUOTED_DATA_SOURCES,
+    data=DOUBLE_QUOTED_DATA,
+)
+def test_double_quoted_failure_for_quoted_unquoted_match(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectTableColumnsToMatchSet(column_set=["column_a", "COLUMN_B", "column_c"])
+    result = batch_for_datasource.validate(expectation)
+    assert not result.success
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=DOUBLE_QUOTED_DATA_SOURCES,
+    data=DOUBLE_QUOTED_DATA,
+)
+def test_double_quoted_failure_for_quoted_mismatch(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectTableColumnsToMatchSet(
+        column_set=["'coLumn_a'", "'COLUMN_B'", "'column_c'"]
+    )
+    result = batch_for_datasource.validate(expectation)
+    assert not result.success
+
+
+BACKTICK_QUOTED_DATA = pd.DataFrame(
+    {
+        "`column_a`": [1],
+        "`COLUMN_B`": [2],
+        "`CoLuMn_C`": [3],
+    }
+)
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=BACKTICK_QUOTED_DATA_SOURCES,
+    data=BACKTICK_QUOTED_DATA,
+)
+def test_backtick_quoted_success(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectTableColumnsToMatchSet(
+        column_set=["`column_a`", "`COLUMN_B`", "`CoLuMn_C`"]
+    )
+    result = batch_for_datasource.validate(expectation)
+    assert result.success
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=BACKTICK_QUOTED_DATA_SOURCES,
+    data=BACKTICK_QUOTED_DATA,
+)
+def test_backtick_quoted_failure_for_quoted_unquoted_match(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectTableColumnsToMatchSet(column_set=["column_a", "COLUMN_B", "column_c"])
+    result = batch_for_datasource.validate(expectation)
+    assert not result.success
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=BACKTICK_QUOTED_DATA_SOURCES,
+    data=BACKTICK_QUOTED_DATA,
+)
+def test_backtick_quoted_failure_for_quoted_mismatch(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectTableColumnsToMatchSet(
+        column_set=["`coLumn_a`", "`COLUMN_B`", "`column_c`"]
+    )
+    result = batch_for_datasource.validate(expectation)
+    assert not result.success
+
+
+SQUARE_BRACKET_QUOTED_DATA = pd.DataFrame(
+    {
+        "[column_a]": [1],
+        "[COLUMN_B]": [2],
+        "[CoLuMn_C]": [3],
+    }
+)
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=SQUARE_BRACKET_QUOTED_DATA_SOURCES,
+    data=SQUARE_BRACKET_QUOTED_DATA,
+)
+def test_square_bracket_quoted_success(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectTableColumnsToMatchSet(
+        column_set=["[column_a]", "[COLUMN_B]", "[CoLuMn_C]"]
+    )
+    result = batch_for_datasource.validate(expectation)
+    assert result.success
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=SQUARE_BRACKET_QUOTED_DATA_SOURCES,
+    data=SQUARE_BRACKET_QUOTED_DATA,
+)
+def test_square_bracket_quoted_failure_for_quoted_unquoted_match(
+    batch_for_datasource: Batch,
+) -> None:
+    expectation = gxe.ExpectTableColumnsToMatchSet(column_set=["column_a", "COLUMN_B", "column_c"])
+    result = batch_for_datasource.validate(expectation)
+    assert not result.success
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=SQUARE_BRACKET_QUOTED_DATA_SOURCES,
+    data=SQUARE_BRACKET_QUOTED_DATA,
+)
+def test_square_bracket_quoted_failure_for_quoted_mismatch(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectTableColumnsToMatchSet(
+        column_set=["[coLumn_a]", "[COLUMN_B]", "[column_c]"]
+    )
+    result = batch_for_datasource.validate(expectation)
+    assert not result.success
