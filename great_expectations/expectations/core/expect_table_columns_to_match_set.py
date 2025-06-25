@@ -493,22 +493,20 @@ def _make_column_set_with_execution_engine_type(
     if column_set is None:
         return set()
 
-    dialect = (
-        execution_engine.dialect.name if execution_engine and execution_engine.dialect else None
-    )
-    if dialect:
+    if execution_engine and execution_engine.dialect:
         # For these dialects, column_set we want to use
         # The metric column_set will return a set of strs but table.columns will return a list of
         # CaseInsensitiveStrings. CaseInsensitiveStrings and strs can be equal but have different
         # hashes which breaks set operations. Since we want to do set operations in a case
         # insensitive manner, we make the expect_column_set case insensitive.
-        return _make_case_insensitive_set(column_set)
+        return _make_case_insensitive_set(column_set, execution_engine)
     else:
         return set(column_set)
 
 
 def _make_case_insensitive_set(
     strs: set[str | CaseInsensitiveString],
+    execution_engine: ExecutionEngine,
 ) -> set[CaseInsensitiveString]:
     """Creates a set of CaseInsensitiveStrings from a set of strs.
 
@@ -521,14 +519,19 @@ def _make_case_insensitive_set(
     # Making a CaseInsentitiveSet data structure would be a more general solution and
     # if we need to do this type transformation more than once we should make one in
     # great_expectations/expectations/metrics/util.py.
-    from great_expectations.expectations.metrics.util import CaseInsensitiveString
+    from great_expectations.expectations.metrics.util import (
+        CaseInsensitiveString,
+        get_execution_engine_quote_strings,
+    )
 
     case_insensitive_strs = set()
     for s in strs:
         if isinstance(s, CaseInsensitiveString):
             case_insensitive_strs.add(s)
         elif isinstance(s, str):
-            case_insensitive_strs.add(CaseInsensitiveString(s))
+            case_insensitive_strs.add(
+                CaseInsensitiveString(s, get_execution_engine_quote_strings(execution_engine))
+            )
         else:
             raise InvalidSetTypeError(
                 expected_type="str or CaseInsensitiveString", actual_type=str(type(s))
