@@ -530,7 +530,9 @@ def _make_case_insensitive_set(
             case_insensitive_strs.add(s)
         elif isinstance(s, str):
             case_insensitive_strs.add(
-                CaseInsensitiveString(s, get_execution_engine_quote_strings(execution_engine))
+                CaseInsensitiveString(
+                    s, quote_strings=get_execution_engine_quote_strings(execution_engine)
+                )
             )
         else:
             raise InvalidSetTypeError(

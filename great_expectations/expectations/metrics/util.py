@@ -329,13 +329,16 @@ class CaseInsensitiveString(str):
     unless it is quoted for a specific db dialect.
     """
 
-    def __init__(self, string: str, quote_strings: IDENTIFER_QUOTES):
-        # TODO: check if string is already a CaseInsensitiveString?
-        self._original = string
-        self._folded = (
+    def __new__(cls, string: str, quote_strings: IDENTIFER_QUOTES):
+        # Create the string instance first
+        instance = super().__new__(cls, string)
+        # Store the additional attributes
+        instance._original = string
+        instance._folded = (
             string.casefold()
         )  # Using casefold instead of lower for better Unicode handling
-        self._quote_strings = quote_strings
+        instance._quote_strings = quote_strings
+        return instance
 
     @override
     def __eq__(self, other: CaseInsensitiveString | str | object):
@@ -382,7 +385,7 @@ class CaseInsensitiveNameDict(UserDict):
         item = self.data[key]
         if key == "name":
             logger.debug(f"CaseInsensitiveNameDict.__getitem__ - {key}:{item}")
-            return CaseInsensitiveString(item, self.quote_strings)
+            return CaseInsensitiveString(item, quote_strings=self.quote_strings)
         return item
 
 
@@ -454,7 +457,9 @@ def get_sqlalchemy_column_metadata(  # noqa: C901 # FIXME CoP
                     # extract the column type, and only have the column name
                     compiled_type = column["type"].compile(dialect=execution_engine.dialect)
                     # Make the type case-insensitive
-                    column["type"] = CaseInsensitiveString(str(compiled_type), quote_strings)
+                    column["type"] = CaseInsensitiveString(
+                        str(compiled_type), quote_strings=quote_strings
+                    )
 
             # Wrap all columns in CaseInsensitiveNameDict for all three dialects
             return [CaseInsensitiveNameDict(column, quote_strings) for column in columns_copy]
