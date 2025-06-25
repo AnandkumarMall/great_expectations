@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Final, List, Literal, Mapping, Union, overload
+from typing import Any, Final, List, Literal, Mapping, Tuple, Union, overload
 
 from great_expectations.compatibility.sqlalchemy import quoted_name
 from great_expectations.compatibility.typing_extensions import override
@@ -63,30 +63,37 @@ class GXSqlDialect(Enum):
         return [dialect for dialect in cls if dialect != GXSqlDialect.OTHER]
 
 
-DIALECT_IDENTIFIER_QUOTE_STRINGS: Final[Mapping[GXSqlDialect, Literal['"', "`"]]] = {
+DIALECT_IDENTIFIER_QUOTE_STRINGS: Final[
+    Mapping[GXSqlDialect, Tuple[Literal['"', "`", "["], Literal['"', "`", "]"]]]
+] = {
     # TODO: add other dialects
-    GXSqlDialect.DATABRICKS: "`",
-    GXSqlDialect.MYSQL: "`",
-    GXSqlDialect.POSTGRESQL: '"',
-    GXSqlDialect.SNOWFLAKE: '"',
-    GXSqlDialect.SQLITE: '"',
-    GXSqlDialect.TRINO: "`",
+    GXSqlDialect.BIGQUERY: ("`", "`"),
+    GXSqlDialect.DATABRICKS: ("`", "`"),
+    GXSqlDialect.MYSQL: ("`", "`"),
+    GXSqlDialect.MSSQL: ("[", "]"),
+    GXSqlDialect.POSTGRESQL: ('"', '"'),
+    GXSqlDialect.REDSHIFT: ('"', '"'),
+    GXSqlDialect.SNOWFLAKE: ('"', '"'),
+    GXSqlDialect.SQLITE: ('"', '"'),  # sqlite also supports `` and [] but we just support ""
+    GXSqlDialect.TRINO: ("`", "`"),
 }
 
 
 def quote_str(unquoted_identifier: str, dialect: GXSqlDialect) -> str:
     """Quote a string using the specified dialect's quote character."""
-    quote_char = DIALECT_IDENTIFIER_QUOTE_STRINGS[dialect]
-    if unquoted_identifier.startswith(quote_char) or unquoted_identifier.endswith(quote_char):
+    quote_chars = DIALECT_IDENTIFIER_QUOTE_STRINGS[dialect]
+    if unquoted_identifier.startswith(quote_chars[0]) or unquoted_identifier.endswith(
+        quote_chars[1]
+    ):
         raise ValueError(  # noqa: TRY003 # FIXME CoP
-            f"Identifier {unquoted_identifier} already uses quote character {quote_char}"
+            f"Identifier {unquoted_identifier} already uses quote character {quote_chars}"
         )
-    return f"{quote_char}{unquoted_identifier}{quote_char}"
+    return f"{quote_chars[0]}{unquoted_identifier}{quote_chars[1]}"
 
 
 def _strip_quotes(s: str, dialect: GXSqlDialect) -> str:
-    quote_str = DIALECT_IDENTIFIER_QUOTE_STRINGS[dialect]
-    if s.startswith(quote_str) and s.endswith(quote_str):
+    quote_chars = DIALECT_IDENTIFIER_QUOTE_STRINGS[dialect]
+    if s.startswith(quote_chars[0]) and s.endswith(quote_chars[1]):
         return s[1:-1]
     return s
 
