@@ -79,7 +79,7 @@ _BIGQUERY_MODULE_NAME = "sqlalchemy_bigquery"
 
 if TYPE_CHECKING:
     import pandas as pd
-    from typing_extensions import TypeAlias
+    from typing_extensions import Self, TypeAlias
 
 try:
     import teradatasqlalchemy.dialect
@@ -329,7 +329,12 @@ class CaseInsensitiveString(str):
     unless it is quoted for a specific db dialect.
     """
 
-    def __new__(cls, string: str, quote_strings: IDENTIFER_QUOTES):
+    _original: str
+    _folded: str
+    _quote_strings: IDENTIFER_QUOTES
+
+    def __new__(cls, string: str, quote_strings: IDENTIFER_QUOTES) -> Self:
+        # TODO: check if string is already a CaseInsensitiveString?
         # Create the string instance first
         instance = super().__new__(cls, string)
         # Store the additional attributes
