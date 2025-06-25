@@ -372,10 +372,14 @@ class CaseInsensitiveString(str):
     def __str__(self) -> str:
         return self._original
 
-    def is_quoted(self):
+    def is_quoted(self) -> bool:
         return self._original.startswith(self._quote_strings[0]) and self._original.endswith(
             self._quote_strings[1]
         )
+
+    @override
+    def __reduce__(self) -> tuple[Type[Self], tuple[str, IDENTIFER_QUOTES]]:
+        return (self.__class__, (self._original, self._quote_strings))
 
 
 class CaseInsensitiveNameDict(UserDict):
