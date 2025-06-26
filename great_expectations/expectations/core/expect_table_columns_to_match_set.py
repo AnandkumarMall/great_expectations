@@ -424,7 +424,6 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
         # We want to match the expected columns with the actual columns. We first break up the
         # expected columns into 2 sets, the quoted columns which must match exactly and the unquoted
         # columns, which we case insensitive match.
-        # The actual columns from the db will be unquoted and may be strs or CaseInsensitiveStrings.
         expected_column_set = set(self._get_success_kwargs().get("column_set"))
         quoted_expected_column_set = set()
         unquoted_expected_column_set = set()
@@ -434,6 +433,7 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
             else:
                 unquoted_expected_column_set.add(col)
 
+        # The actual columns from the db will be unquoted and may be strs or CaseInsensitiveStrings.
         # We normalize the actual_column_list CaseInsensitiveStrings.
         actual_column_list = metrics.get("table.columns")
         actual_column_set = _make_column_set_with_execution_engine_type(

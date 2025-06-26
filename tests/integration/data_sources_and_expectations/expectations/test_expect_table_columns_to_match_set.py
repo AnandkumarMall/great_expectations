@@ -1,3 +1,5 @@
+from typing import Sequence
+
 import pandas as pd
 import pytest
 
@@ -9,6 +11,15 @@ from tests.integration.data_sources_and_expectations.test_canonical_expectations
     ALL_DATA_SOURCES,
     JUST_PANDAS_DATA_SOURCES,
     SQL_DATA_SOURCES,
+    BigQueryDatasourceTestConfig,
+    DatabricksDatasourceTestConfig,
+    DataSourceTestConfig,
+    MSSQLDatasourceTestConfig,
+    MySQLDatasourceTestConfig,
+    PostgreSQLDatasourceTestConfig,
+    RedshiftDatasourceTestConfig,
+    SnowflakeDatasourceTestConfig,
+    SqliteDatasourceTestConfig,
 )
 
 COL_A = "col_a"
@@ -142,13 +153,65 @@ def test_case_insensitive_failure(batch_for_datasource: Batch) -> None:
     assert not result.success
 
 
+SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE: Sequence[DataSourceTestConfig] = [
+    BigQueryDatasourceTestConfig(),
+    DatabricksDatasourceTestConfig(),
+    MSSQLDatasourceTestConfig(),
+    MySQLDatasourceTestConfig(),
+    PostgreSQLDatasourceTestConfig(),
+    RedshiftDatasourceTestConfig(),
+    SqliteDatasourceTestConfig(),
+]
+
+
+def test_sql_data_sources_without_snowflake() -> None:
+    # Verify SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE is what is says it is
+    assert len(SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE) + 1 == len(SQL_DATA_SOURCES)
+    assert SnowflakeDatasourceTestConfig() not in SQL_DATA_SOURCES
+    for datasource in SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE:
+        assert datasource in SQL_DATA_SOURCES
+
+
+# In test setup, sqlalchemy's CREATE TABLE will not quote lowercase column names
+# passed in but will quote uppercase. Since snowflake stores case insensitive strings
+# as uppercase, while all the other databases we are testing stores them as lowercase
+# this creates different case insensitive columns. We break out the snowflake tests.
+@parameterize_batch_for_data_sources(
+    data_source_configs=SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE,
+    data=CASE_INSENSITIVE_DATA,
+)
+def test_quoted_success(batch_for_datasource: Batch) -> None:
+    # When we create the table in the testing fr
+    expectation = gxe.ExpectTableColumnsToMatchSet(
+        column_set=['"column_a"', '"COLUMN_B"', '"CoLuMn_C"']
+    )
+    result = batch_for_datasource.validate(expectation)
+    assert result.success
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=[SnowflakeDatasourceTestConfig()],
+    data=CASE_INSENSITIVE_DATA,
+)
+def test_quoted_success_snowflake(batch_for_datasource: Batch) -> None:
+    # When we create the table in the testing fr
+    expectation = gxe.ExpectTableColumnsToMatchSet(
+        column_set=['"column_a"', '"CoLuMn_C"'],
+        exact_match=False,
+    )
+    result = batch_for_datasource.validate(expectation)
+    assert result.success
+
+
 @parameterize_batch_for_data_sources(
     data_source_configs=SQL_DATA_SOURCES,
     data=CASE_INSENSITIVE_DATA,
 )
-def test_quoted_success(batch_for_datasource: Batch) -> None:
+def test_quoted_snowflake_success(batch_for_datasource: Batch) -> None:
+    # When we create the table in the testing fr
     expectation = gxe.ExpectTableColumnsToMatchSet(
-        column_set=['"column_a"', '"COLUMN_B"', '"CoLuMn_C"']
+        # column_set=['"column_a"', '"COLUMN_B"', '"CoLuMn_C"']
+        column_set=['"column_a"', "COLUMN_B", '"CoLuMn_C"']
     )
     result = batch_for_datasource.validate(expectation)
     assert result.success
@@ -167,13 +230,13 @@ def test_quoted_failure(batch_for_datasource: Batch) -> None:
 
 
 @parameterize_batch_for_data_sources(
-    data_source_configs=SQL_DATA_SOURCES,
+    data_source_configs=SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE,
     data=CASE_INSENSITIVE_DATA,
 )
 def test_unquoted_and_quoted_success(batch_for_datasource: Batch) -> None:
-    # Column C is case insensitve
+    # Column A and B are case insensitve
     expectation = gxe.ExpectTableColumnsToMatchSet(
-        column_set=['"column_a"', '"COLUMN_B"', "Column_c"]
+        column_set=["Column_a", "COLUMN_B", '"CoLuMn_C"']
     )
     result = batch_for_datasource.validate(expectation)
     assert result.success
@@ -184,9 +247,9 @@ def test_unquoted_and_quoted_success(batch_for_datasource: Batch) -> None:
     data=CASE_INSENSITIVE_DATA,
 )
 def test_unquoted_and_quoted_with_unquoted_failure(batch_for_datasource: Batch) -> None:
-    # Column C is case insensitve
+    # Column A and B are case insensitve
     expectation = gxe.ExpectTableColumnsToMatchSet(
-        column_set=['"column_a"', '"COLUMN_B"', "CoLuMn_Cz"]
+        column_set=["Column_az", "COLUMN_B", '"CoLuMn_C"']
     )
     result = batch_for_datasource.validate(expectation)
     assert not result.success
@@ -197,9 +260,9 @@ def test_unquoted_and_quoted_with_unquoted_failure(batch_for_datasource: Batch) 
     data=CASE_INSENSITIVE_DATA,
 )
 def test_unquoted_and_quoted_with_quoted_failure(batch_for_datasource: Batch) -> None:
-    # Column C is case insensitve
+    # Column C is case sensitve
     expectation = gxe.ExpectTableColumnsToMatchSet(
-        column_set=['"column_a"', '"COLUMN_B"', '"Column_c"']
+        column_set=["column_a", "COLUMN_B", '"Column_c"']
     )
     result = batch_for_datasource.validate(expectation)
     assert not result.success
