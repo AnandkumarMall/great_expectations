@@ -163,6 +163,7 @@ SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT: Sequence[DataSourceTestConfig] = [
 ]
 
 
+@pytest.mark.unit
 def test_sql_data_sources_without_snowflake() -> None:
     # Verify SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT is what is says it is
     assert len(SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT) + 2 == len(SQL_DATA_SOURCES)
