@@ -431,7 +431,7 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
         if isinstance(execution_engine, SqlAlchemyExecutionEngine):
             return self._validate_sqlalchemy(metrics, execution_engine)
 
-        # Obtaining columns and ordered list for sake of comparison
+        # Retrieve expected and observed column names
         expected_column_list = self._get_success_kwargs().get("column_set")
         expected_column_set = (
             set(expected_column_list) if expected_column_list is not None else set()
