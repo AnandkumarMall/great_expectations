@@ -153,6 +153,22 @@ def test_case_insensitive_failure(batch_for_datasource: Batch) -> None:
     assert not result.success
 
 
+# For most of our tests we use all sql datasources. However, for some of them we exclude
+# snowflake and redshift for the following reasons:
+##### Snowflake #####
+# In test setup, sqlalchemy's CREATE TABLE will not quote lowercase column names
+# but will quote uppercase. Since snowflake stores case insensitive strings
+# as uppercase, while all the other databases we are testing stores them as lowercase
+# this creates different case insensitive columns. We break out the snowflake tests
+# into their own tests.
+#
+#### Redshift ####
+# Redshift by default is case insensitive so trying to match case via quoted identifiers
+# fails. There is a global setting you can set on a redshift cluster,
+# enable_case_sensitive_identifier, one can apply to make it case sensitive. Our code
+# looks like it would handle this successfully but I haven't verified since I need to
+# change our redshift CI cluster. There is tracked in GX-1197.
+
 SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT: Sequence[DataSourceTestConfig] = [
     BigQueryDatasourceTestConfig(),
     DatabricksDatasourceTestConfig(),
@@ -173,18 +189,6 @@ def test_sql_data_sources_without_snowflake_redshift() -> None:
         assert datasource in SQL_DATA_SOURCES
 
 
-##### Snowflake Summary #####
-# In test setup, sqlalchemy's CREATE TABLE will not quote lowercase column names
-# passed in but will quote uppercase. Since snowflake stores case insensitive strings
-# as uppercase, while all the other databases we are testing stores them as lowercase
-# this creates different case insensitive columns. We break out the snowflake tests.
-#
-#### Redshift Summary ####
-# Redshift by default is case insensitive so trying to match case via quoted identifiers
-# fails. There is a global setting you can set on a redshift cluster,
-# enable_case_sensitive_identifier, one can apply to make it case sensitive. Our code
-# looks like it would handle this successfully but I haven't verified since I need to
-# change our redshift CI cluster. There is tracked in GX-1197.
 @parameterize_batch_for_data_sources(
     data_source_configs=SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT,
     data=CASE_INSENSITIVE_DATA,
@@ -203,7 +207,6 @@ def test_quoted_success(batch_for_datasource: Batch) -> None:
     data=CASE_INSENSITIVE_DATA,
 )
 def test_quoted_success_snowflake(batch_for_datasource: Batch) -> None:
-    # When we create the table in the testing fr
     expectation = gxe.ExpectTableColumnsToMatchSet(
         column_set=['"column_a"', '"CoLuMn_C"'],
         exact_match=False,

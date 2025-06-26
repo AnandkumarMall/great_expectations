@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from great_expectations.core import (
         ExpectationValidationResult,
     )
-    from great_expectations.execution_engine import ExecutionEngine, SqlAlchemyExecutionEngine
+    from great_expectations.execution_engine import ExecutionEngine
     from great_expectations.expectations.expectation_configuration import (
         ExpectationConfiguration,
     )
@@ -41,7 +41,11 @@ if TYPE_CHECKING:
 
 
 EXPECTATION_SHORT_DESCRIPTION = "Expect the columns in a table to match an unordered set."
-COLUMN_SET_DESCRIPTION = "The column names, in any order."
+COLUMN_SET_DESCRIPTION = (
+    "The column names, in any order. In SQL datasources, if the column names are "
+    "double quoted, for example '\"column_name\"', a case sensitive match is "
+    "done. Otherwise a case insensitive match is done."
+)
 EXACT_MATCH_DESCRIPTION = (
     "If True, the list of columns must exactly match the observed columns. "
     "If False, observed columns must include column_set but additional columns will pass."
@@ -416,11 +420,36 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
             value_type="StringValueType",
         )
 
-    def _validate_sqlalchemy(
+    def _validate(
         self,
         metrics: Dict,
-        execution_engine: SqlAlchemyExecutionEngine,
+        runtime_configuration: Optional[dict] = None,
+        execution_engine: Optional[ExecutionEngine] = None,
     ):
+        from great_expectations.execution_engine import SqlAlchemyExecutionEngine
+
+        if isinstance(execution_engine, SqlAlchemyExecutionEngine):
+            return self._validate_sqlalchemy(metrics, execution_engine)
+
+        # Obtaining columns and ordered list for sake of comparison
+        expected_column_list = self._get_success_kwargs().get("column_set")
+        expected_column_set = (
+            set(expected_column_list) if expected_column_list is not None else set()
+        )
+        actual_column_list = metrics.get("table.columns")
+        actual_column_set = set(actual_column_list)
+
+        unmatched_actual_column_set = actual_column_set - expected_column_set
+        unmatched_expected_column_set = expected_column_set - actual_column_set
+        return _validate_result(
+            actual_column_set,
+            expected_column_set,
+            unmatched_actual_column_set,
+            unmatched_expected_column_set,
+            self._get_success_kwargs().get("exact_match"),
+        )
+
+    def _validate_sqlalchemy(self, metrics: Dict):
         # We want to match the expected columns with the actual columns. We first break up the
         # expected columns into 2 sets, the quoted columns which must match exactly and the unquoted
         # columns, which we case insensitive match.
@@ -434,7 +463,8 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
                 unquoted_expected_column_set.add(col)
 
         # The actual columns from the db will be unquoted and may be strs or CaseInsensitiveStrings.
-        # We normalize the actual_column_list CaseInsensitiveStrings.
+        # We normalize the actual_column_list to CaseInsensitiveStrings so we can use set operations
+        # going forward.
         actual_column_list = metrics.get("table.columns")
         actual_column_set = _make_case_insensitive_set(actual_column_list)
 
@@ -469,41 +499,12 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
             self._get_success_kwargs().get("exact_match"),
         )
 
-    def _validate(
-        self,
-        metrics: Dict,
-        runtime_configuration: Optional[dict] = None,
-        execution_engine: Optional[ExecutionEngine] = None,
-    ):
-        from great_expectations.execution_engine import SqlAlchemyExecutionEngine
-
-        if isinstance(execution_engine, SqlAlchemyExecutionEngine):
-            return self._validate_sqlalchemy(metrics, execution_engine)
-
-        # Obtaining columns and ordered list for sake of comparison
-        expected_column_list = self._get_success_kwargs().get("column_set")
-        expected_column_set = (
-            set(expected_column_list) if expected_column_list is not None else set()
-        )
-        actual_column_list = metrics.get("table.columns")
-        actual_column_set = set(actual_column_list)
-
-        unmatched_actual_column_set = actual_column_set - expected_column_set
-        unmatched_expected_column_set = expected_column_set - actual_column_set
-        return _validate_result(
-            actual_column_set,
-            expected_column_set,
-            unmatched_actual_column_set,
-            unmatched_expected_column_set,
-            self._get_success_kwargs().get("exact_match"),
-        )
-
 
 def _make_case_insensitive_set(
     str_set: Optional[set[str | CaseInsensitiveString]],
 ) -> set[CaseInsensitiveString]:
     """
-    Transforms a set of strs to a case insensitive strs.
+    Transforms a set of strs to CaseInsensitiveStrings.
 
     Args:
         str_set: A set of strs.
