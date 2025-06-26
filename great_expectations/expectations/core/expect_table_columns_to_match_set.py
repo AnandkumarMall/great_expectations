@@ -436,9 +436,7 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
         # The actual columns from the db will be unquoted and may be strs or CaseInsensitiveStrings.
         # We normalize the actual_column_list CaseInsensitiveStrings.
         actual_column_list = metrics.get("table.columns")
-        actual_column_set = _make_column_set_with_execution_engine_type(
-            actual_column_list, execution_engine
-        )
+        actual_column_set = _make_case_insensitive_set(actual_column_list)
 
         # We make copies of the expected and actual column sets and remove items from them as we
         # find matches between the 2 sets.
@@ -453,14 +451,10 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
                 unmatched_actual_column_set.remove(col)
 
         # We normalize the unmatched_expected_column_set to CaseInsensitiveStrings
-        unmatched_expected_column_set = _make_case_insensitive_set(
-            unmatched_expected_column_set, execution_engine
-        )
+        unmatched_expected_column_set = _make_case_insensitive_set(unmatched_expected_column_set)
 
         # We now do the unquoted match
-        unquoted_expected_column_set = _make_column_set_with_execution_engine_type(
-            unquoted_expected_column_set, execution_engine
-        )
+        unquoted_expected_column_set = _make_case_insensitive_set(unquoted_expected_column_set)
         unquoted_matches = unquoted_expected_column_set.intersection(unmatched_actual_column_set)
 
         # We subtract the unquoted matches from the current unmatched sets to finalize them
@@ -505,56 +499,27 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
         )
 
 
-def _make_column_set_with_execution_engine_type(
-    column_set: Optional[set[str | CaseInsensitiveString]],
-    execution_engine: Optional[ExecutionEngine],
-) -> set[str]:
-    """
-    Transforms column names in column_set to the appropriate type for the execution_engine.
-
-    Args:
-        column_set: A set of column names.
-        execution_engine: An execution engine.
-
-    Returns:
-        A set of column names whose type matches the metric table.columns. This type varies
-        based on the execution engine.
-    """
-    if column_set is None:
-        return set()
-
-    if execution_engine and execution_engine.dialect:
-        # For these dialects, column_set we want to use
-        # The metric column_set will return a set of strs but table.columns will return a list of
-        # CaseInsensitiveStrings. CaseInsensitiveStrings and strs can be equal but have different
-        # hashes which breaks set operations. Since we want to do set operations in a case
-        # insensitive manner, we make the expect_column_set case insensitive.
-        return _make_case_insensitive_set(column_set, execution_engine)
-    else:
-        return set(column_set)
-
-
 def _make_case_insensitive_set(
-    strs: set[str | CaseInsensitiveString],
-    execution_engine: ExecutionEngine,
+    str_set: Optional[set[str | CaseInsensitiveString]],
 ) -> set[CaseInsensitiveString]:
-    """Creates a set of CaseInsensitiveStrings from a set of strs.
+    """
+    Transforms a set of strs to a case insensitive strs.
 
     Args:
-        strs: A set of strs (not CaseInsensitiveStrings).
+        str_set: A set of strs.
 
     Returns:
-        A set of CaseInsensitiveStrings.
+        A set of CaseInsensitiveString.
     """
-    # Making a CaseInsentitiveSet data structure would be a more general solution and
-    # if we need to do this type transformation more than once we should make one in
-    # great_expectations/expectations/metrics/util.py.
     from great_expectations.expectations.metrics.util import (
         CaseInsensitiveString,
     )
 
+    if str_set is None:
+        return set()
+
     case_insensitive_strs = set()
-    for s in strs:
+    for s in str_set:
         if isinstance(s, CaseInsensitiveString):
             case_insensitive_strs.add(s)
         elif isinstance(s, str):
