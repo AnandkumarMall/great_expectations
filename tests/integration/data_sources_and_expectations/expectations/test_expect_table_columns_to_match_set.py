@@ -164,7 +164,7 @@ SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT: Sequence[DataSourceTestConfig] = [
 
 
 @pytest.mark.unit
-def test_sql_data_sources_without_snowflake() -> None:
+def test_sql_data_sources_without_snowflake_redshift() -> None:
     # Verify SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT is what is says it is
     assert len(SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT) + 2 == len(SQL_DATA_SOURCES)
     assert SnowflakeDatasourceTestConfig() not in SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT
@@ -207,20 +207,6 @@ def test_quoted_success_snowflake(batch_for_datasource: Batch) -> None:
     expectation = gxe.ExpectTableColumnsToMatchSet(
         column_set=['"column_a"', '"CoLuMn_C"'],
         exact_match=False,
-    )
-    result = batch_for_datasource.validate(expectation)
-    assert result.success
-
-
-@parameterize_batch_for_data_sources(
-    data_source_configs=SQL_DATA_SOURCES,
-    data=CASE_INSENSITIVE_DATA,
-)
-def test_quoted_snowflake_success(batch_for_datasource: Batch) -> None:
-    # When we create the table in the testing fr
-    expectation = gxe.ExpectTableColumnsToMatchSet(
-        # column_set=['"column_a"', '"COLUMN_B"', '"CoLuMn_C"']
-        column_set=['"column_a"', "COLUMN_B", '"CoLuMn_C"']
     )
     result = batch_for_datasource.validate(expectation)
     assert result.success
