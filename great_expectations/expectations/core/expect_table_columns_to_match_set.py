@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from great_expectations.core import (
         ExpectationValidationResult,
     )
-    from great_expectations.execution_engine import ExecutionEngine
+    from great_expectations.execution_engine import ExecutionEngine, SqlAlchemyExecutionEngine
     from great_expectations.expectations.expectation_configuration import (
         ExpectationConfiguration,
     )
@@ -416,63 +416,93 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
             value_type="StringValueType",
         )
 
+    def _validate_sqlalchemy(
+        self,
+        metrics: Dict,
+        execution_engine: SqlAlchemyExecutionEngine,
+    ):
+        # We want to match the expected columns with the actual columns. We first break up the
+        # expected columns into 2 sets, the quoted columns which must match exactly and the unquoted
+        # columns, which we case insensitive match.
+        # The actual columns from the db will be unquoted and may be strs or CaseInsensitiveStrings.
+        expected_column_set = set(self._get_success_kwargs().get("column_set"))
+        quoted_expected_column_set = set()
+        unquoted_expected_column_set = set()
+        for col in expected_column_set:
+            if col.startswith('"') and col.endswith('"'):
+                quoted_expected_column_set.add(col[1:-1])
+            else:
+                unquoted_expected_column_set.add(col)
+
+        # We normalize the actual_column_list CaseInsensitiveStrings.
+        actual_column_list = metrics.get("table.columns")
+        actual_column_set = _make_column_set_with_execution_engine_type(
+            actual_column_list, execution_engine
+        )
+
+        # We make copies of the expected and actual column sets and remove items from them as we
+        # find matches between the 2 sets.
+        unmatched_expected_column_set = expected_column_set.copy()
+        unmatched_actual_column_set = actual_column_set.copy()
+
+        # We first match quoted strings. The expected set is a set of strs while the actual set
+        # is a set of CaseInsensitiveStrings so we can't use set operations.
+        for col in actual_column_set:
+            if str(col) in quoted_expected_column_set:
+                unmatched_expected_column_set.remove(f'"{col!s}"')
+                unmatched_actual_column_set.remove(col)
+
+        # We normalize the unmatched_expected_column_set to CaseInsensitiveStrings
+        unmatched_expected_column_set = _make_case_insensitive_set(
+            unmatched_expected_column_set, execution_engine
+        )
+
+        # We now do the unquoted match
+        unquoted_expected_column_set = _make_column_set_with_execution_engine_type(
+            unquoted_expected_column_set, execution_engine
+        )
+        unquoted_matches = unquoted_expected_column_set.intersection(unmatched_actual_column_set)
+
+        # We subtract the unquoted matches from the current unmatched sets to finalize them
+        unmatched_actual_column_set = unmatched_actual_column_set - unquoted_matches
+        unmatched_expected_column_set = unmatched_expected_column_set - unquoted_matches
+
+        return _validate_result(
+            actual_column_set,
+            expected_column_set,
+            unmatched_actual_column_set,
+            unmatched_expected_column_set,
+            self._get_success_kwargs().get("exact_match"),
+        )
+
     def _validate(
         self,
         metrics: Dict,
         runtime_configuration: Optional[dict] = None,
         execution_engine: Optional[ExecutionEngine] = None,
     ):
-        expected_column_set = _make_column_set_with_execution_engine_type(
-            self._get_success_kwargs().get("column_set"), execution_engine
+        from great_expectations.execution_engine import SqlAlchemyExecutionEngine
+
+        if isinstance(execution_engine, SqlAlchemyExecutionEngine):
+            return self._validate_sqlalchemy(metrics, execution_engine)
+
+        # Obtaining columns and ordered list for sake of comparison
+        expected_column_list = self._get_success_kwargs().get("column_set")
+        expected_column_set = (
+            set(expected_column_list) if expected_column_list is not None else set()
         )
         actual_column_list = metrics.get("table.columns")
-        actual_column_set = _make_column_set_with_execution_engine_type(
-            actual_column_list, execution_engine
+        actual_column_set = set(actual_column_list)
+
+        unmatched_actual_column_set = actual_column_set - expected_column_set
+        unmatched_expected_column_set = expected_column_set - actual_column_set
+        return _validate_result(
+            actual_column_set,
+            expected_column_set,
+            unmatched_actual_column_set,
+            unmatched_expected_column_set,
+            self._get_success_kwargs().get("exact_match"),
         )
-        exact_match = self._get_success_kwargs().get("exact_match")
-
-        if (
-            (expected_column_set is None) and (exact_match is not True)
-        ) or actual_column_set == expected_column_set:
-            return {"success": True, "result": {"observed_value": actual_column_list}}
-        else:
-            # Convert to lists and sort to lock order for testing and output rendering
-            # unexpected_list contains items from the dataset columns that are not in expected_column_set  # noqa: E501 # FIXME CoP
-            unexpected_list = sorted(list(actual_column_set - expected_column_set))
-            # missing_list contains items from expected_column_set that are not in the dataset columns  # noqa: E501 # FIXME CoP
-            missing_list = sorted(list(expected_column_set - actual_column_set))
-            # observed_value contains items that are in the dataset columns
-            observed_value = sorted(actual_column_list)
-
-            mismatched = {}
-            if len(unexpected_list) > 0:
-                mismatched["unexpected"] = unexpected_list
-            if len(missing_list) > 0:
-                mismatched["missing"] = missing_list
-
-            result = {
-                "observed_value": observed_value,
-                "details": {"mismatched": mismatched},
-            }
-
-            return_success = {
-                "success": True,
-                "result": result,
-            }
-            return_failed = {
-                "success": False,
-                "result": result,
-            }
-
-            if exact_match:
-                return return_failed
-            else:  # noqa: PLR5501 # FIXME CoP
-                # Failed if there are items in the missing list (but OK to have unexpected_list)
-                if len(missing_list) > 0:
-                    return return_failed
-                # Passed if there are no items in the missing list
-                else:
-                    return return_success
 
 
 def _make_column_set_with_execution_engine_type(
@@ -539,3 +569,51 @@ def _make_case_insensitive_set(
                 expected_type="str or CaseInsensitiveString", actual_type=str(type(s))
             )
     return case_insensitive_strs
+
+
+def _validate_result(
+    actual_column_list,
+    expected_column_set,
+    unmatched_actual_column_set,
+    unmatched_expected_column_set,
+    exact_match: bool,
+):
+    empty_set = set()
+    if ((expected_column_set is None) and (exact_match is not True)) or (
+        unmatched_expected_column_set == empty_set and unmatched_actual_column_set == empty_set
+    ):
+        return {"success": True, "result": {"observed_value": actual_column_list}}
+    else:
+        unexpected_list = sorted(unmatched_actual_column_set)
+        missing_list = sorted(unmatched_expected_column_set)
+        observed_value = sorted(actual_column_list)
+
+        mismatched = {}
+        if len(unexpected_list) > 0:
+            mismatched["unexpected"] = unexpected_list
+        if len(missing_list) > 0:
+            mismatched["missing"] = missing_list
+
+        result = {
+            "observed_value": observed_value,
+            "details": {"mismatched": mismatched},
+        }
+
+        return_success = {
+            "success": True,
+            "result": result,
+        }
+        return_failed = {
+            "success": False,
+            "result": result,
+        }
+
+        if exact_match:
+            return return_failed
+        else:  # noqa: PLR5501 # FIXME CoP
+            # Failed if there are items in the missing list (but OK to have unexpected_list)
+            if len(missing_list) > 0:
+                return return_failed
+            # Passed if there are no items in the missing list
+            else:
+                return return_success
