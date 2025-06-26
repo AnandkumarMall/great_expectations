@@ -429,7 +429,7 @@ class ExpectTableColumnsToMatchSet(BatchExpectation):
         from great_expectations.execution_engine import SqlAlchemyExecutionEngine
 
         if isinstance(execution_engine, SqlAlchemyExecutionEngine):
-            return self._validate_sqlalchemy(metrics, execution_engine)
+            return self._validate_sqlalchemy(metrics)
 
         # Retrieve expected and observed column names
         expected_column_list = self._get_success_kwargs().get("column_set")
