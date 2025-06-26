@@ -153,31 +153,39 @@ def test_case_insensitive_failure(batch_for_datasource: Batch) -> None:
     assert not result.success
 
 
-SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE: Sequence[DataSourceTestConfig] = [
+SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT: Sequence[DataSourceTestConfig] = [
     BigQueryDatasourceTestConfig(),
     DatabricksDatasourceTestConfig(),
     MSSQLDatasourceTestConfig(),
     MySQLDatasourceTestConfig(),
     PostgreSQLDatasourceTestConfig(),
-    RedshiftDatasourceTestConfig(),
     SqliteDatasourceTestConfig(),
 ]
 
 
 def test_sql_data_sources_without_snowflake() -> None:
-    # Verify SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE is what is says it is
-    assert len(SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE) + 1 == len(SQL_DATA_SOURCES)
-    assert SnowflakeDatasourceTestConfig() not in SQL_DATA_SOURCES
-    for datasource in SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE:
+    # Verify SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT is what is says it is
+    assert len(SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT) + 2 == len(SQL_DATA_SOURCES)
+    assert SnowflakeDatasourceTestConfig() not in SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT
+    assert RedshiftDatasourceTestConfig() not in SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT
+    for datasource in SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT:
         assert datasource in SQL_DATA_SOURCES
 
 
+##### Snowflake Summary #####
 # In test setup, sqlalchemy's CREATE TABLE will not quote lowercase column names
 # passed in but will quote uppercase. Since snowflake stores case insensitive strings
 # as uppercase, while all the other databases we are testing stores them as lowercase
 # this creates different case insensitive columns. We break out the snowflake tests.
+#
+#### Redshift Summary ####
+# Redshift by default is case insensitive so trying to match case via quoted identifiers
+# fails. There is a global setting you can set on a redshift cluster,
+# enable_case_sensitive_identifier, one can apply to make it case sensitive. Our code
+# looks like it would handle this successfully but I haven't verified since I need to
+# change our redshift CI cluster. There is tracked in GX-1197.
 @parameterize_batch_for_data_sources(
-    data_source_configs=SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE,
+    data_source_configs=SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT,
     data=CASE_INSENSITIVE_DATA,
 )
 def test_quoted_success(batch_for_datasource: Batch) -> None:
@@ -230,7 +238,7 @@ def test_quoted_failure(batch_for_datasource: Batch) -> None:
 
 
 @parameterize_batch_for_data_sources(
-    data_source_configs=SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE,
+    data_source_configs=SQL_DATA_SOURCES_WITHOUT_SNOWFLAKE_REDSHIFT,
     data=CASE_INSENSITIVE_DATA,
 )
 def test_unquoted_and_quoted_success(batch_for_datasource: Batch) -> None:
