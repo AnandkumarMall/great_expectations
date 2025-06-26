@@ -607,22 +607,18 @@ class TestCaseInsensitiveString:
         input_str: str,
         other: str,
     ):
-        other_case_insensitive = CaseInsensitiveString(other, quote_strings=("", ""))
-        input_case_insensitive = CaseInsensitiveString(input_str, quote_strings=("", ""))
+        other_case_insensitive = CaseInsensitiveString(other)
+        input_case_insensitive = CaseInsensitiveString(input_str)
 
         # if either string is quoted, they must be exact match
         if input_case_insensitive.is_quoted() or other_case_insensitive.is_quoted():
             if input == other:
                 assert input_case_insensitive == other
                 assert input_case_insensitive == other_case_insensitive
-            assert input_case_insensitive != CaseInsensitiveString(
-                other.swapcase(), quote_strings=("", "")
-            )
+            assert input_case_insensitive != CaseInsensitiveString(other.swapcase())
         elif input_str.lower() == other.lower():
             assert input_case_insensitive == other.swapcase()
-            assert input_case_insensitive == CaseInsensitiveString(
-                other.swapcase(), quote_strings=("", "")
-            )
+            assert input_case_insensitive == CaseInsensitiveString(other.swapcase())
         else:
             assert input_case_insensitive != other_case_insensitive
             assert input_case_insensitive != other

@@ -551,7 +551,6 @@ def _make_case_insensitive_set(
     # great_expectations/expectations/metrics/util.py.
     from great_expectations.expectations.metrics.util import (
         CaseInsensitiveString,
-        get_execution_engine_quote_strings,
     )
 
     case_insensitive_strs = set()
@@ -559,11 +558,7 @@ def _make_case_insensitive_set(
         if isinstance(s, CaseInsensitiveString):
             case_insensitive_strs.add(s)
         elif isinstance(s, str):
-            case_insensitive_strs.add(
-                CaseInsensitiveString(
-                    s, quote_strings=get_execution_engine_quote_strings(execution_engine)
-                )
-            )
+            case_insensitive_strs.add(CaseInsensitiveString(s))
         else:
             raise InvalidSetTypeError(
                 expected_type="str or CaseInsensitiveString", actual_type=str(type(s))

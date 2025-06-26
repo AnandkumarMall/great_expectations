@@ -37,8 +37,6 @@ from great_expectations.execution_engine.sqlalchemy_batch_data import (
     SqlAlchemyBatchData,
 )
 from great_expectations.execution_engine.sqlalchemy_dialect import (
-    DIALECT_IDENTIFIER_QUOTE_STRINGS,
-    IDENTIFER_QUOTES,
     GXSqlDialect,
 )
 from great_expectations.execution_engine.util import check_sql_engine_dialect
@@ -79,7 +77,7 @@ _BIGQUERY_MODULE_NAME = "sqlalchemy_bigquery"
 
 if TYPE_CHECKING:
     import pandas as pd
-    from typing_extensions import Self, TypeAlias
+    from typing_extensions import TypeAlias
 
 try:
     import teradatasqlalchemy.dialect
@@ -313,37 +311,19 @@ def attempt_allowing_relative_error(dialect):
     return detected_redshift or detected_psycopg2
 
 
-def get_execution_engine_quote_strings(
-    execution_engine: SqlAlchemyExecutionEngine,
-) -> IDENTIFER_QUOTES:
-    try:
-        return DIALECT_IDENTIFIER_QUOTE_STRINGS[GXSqlDialect(execution_engine.dialect.name.lower())]
-    except (ValueError, KeyError):
-        # Default to double quotes
-        return ('"', '"')
-
-
 class CaseInsensitiveString(str):
     """
     A string that compares equal to another string regardless of case,
-    unless it is quoted for a specific db dialect.
+    unless it is quoted.
     """
 
-    _original: str
-    _folded: str
-    _quote_strings: IDENTIFER_QUOTES
-
-    def __new__(cls, string: str, quote_strings: IDENTIFER_QUOTES) -> Self:
+    def __init__(self, string: str):
         # TODO: check if string is already a CaseInsensitiveString?
-        # Create the string instance first
-        instance = super().__new__(cls, string)
-        # Store the additional attributes
-        instance._original = string
-        instance._folded = (
+        self._original = string
+        self._folded = (
             string.casefold()
         )  # Using casefold instead of lower for better Unicode handling
-        instance._quote_strings = quote_strings
-        return instance
+        self._quote_string = '"'
 
     @override
     def __eq__(self, other: CaseInsensitiveString | str | object):
@@ -372,29 +352,22 @@ class CaseInsensitiveString(str):
     def __str__(self) -> str:
         return self._original
 
-    def is_quoted(self) -> bool:
-        return self._original.startswith(self._quote_strings[0]) and self._original.endswith(
-            self._quote_strings[1]
-        )
-
-    @override
-    def __reduce__(self) -> tuple[Type[Self], tuple[str, IDENTIFER_QUOTES]]:
-        return (self.__class__, (self._original, self._quote_strings))
+    def is_quoted(self):
+        return self._original.startswith(self._quote_string)
 
 
 class CaseInsensitiveNameDict(UserDict):
     """Normal dict except it returns a case-insensitive string for any `name` key values."""
 
-    def __init__(self, data: dict[str, Any], quote_strings: IDENTIFER_QUOTES):
+    def __init__(self, data: dict[str, Any]):
         self.data = data
-        self.quote_strings = quote_strings
 
     @override
     def __getitem__(self, key: Any) -> Any:
         item = self.data[key]
         if key == "name":
             logger.debug(f"CaseInsensitiveNameDict.__getitem__ - {key}:{item}")
-            return CaseInsensitiveString(item, quote_strings=self.quote_strings)
+            return CaseInsensitiveString(item)
         return item
 
 
@@ -459,19 +432,16 @@ def get_sqlalchemy_column_metadata(  # noqa: C901 # FIXME CoP
         ]:
             # WARNING: Do not alter columns in place, as they are cached on the inspector
             columns_copy = [column.copy() for column in columns]
-            quote_strings = get_execution_engine_quote_strings(execution_engine)
             for column in columns_copy:
                 if column.get("type"):
                     # When using column_reflection_fallback, we might not be able to
                     # extract the column type, and only have the column name
                     compiled_type = column["type"].compile(dialect=execution_engine.dialect)
                     # Make the type case-insensitive
-                    column["type"] = CaseInsensitiveString(
-                        str(compiled_type), quote_strings=quote_strings
-                    )
+                    column["type"] = CaseInsensitiveString(str(compiled_type))
 
             # Wrap all columns in CaseInsensitiveNameDict for all three dialects
-            return [CaseInsensitiveNameDict(column, quote_strings) for column in columns_copy]
+            return [CaseInsensitiveNameDict(column) for column in columns_copy]
 
         return columns
     except AttributeError as e:
