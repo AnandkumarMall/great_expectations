@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional, Set, Type, Union
 
 from great_expectations.compatibility import pydantic
 from great_expectations.compatibility.typing_extensions import override
@@ -533,21 +533,22 @@ def _make_case_insensitive_set(
 
 
 def _validate_result(
-    actual_column_list,
-    expected_column_set,
-    unmatched_actual_column_set,
-    unmatched_expected_column_set,
+    actual_column_set: Set[Union[str, CaseInsensitiveString]],
+    expected_column_set: Set[str],
+    unmatched_actual_column_set: Set[Union[str, CaseInsensitiveString]],
+    unmatched_expected_column_set: Set[Union[str, CaseInsensitiveString]],
     exact_match: bool,
-):
+) -> Dict[str, Any]:
     empty_set = set()
+    observed_value = sorted(list(actual_column_set))
+
     if ((expected_column_set is None) and (exact_match is not True)) or (
         unmatched_expected_column_set == empty_set and unmatched_actual_column_set == empty_set
     ):
-        return {"success": True, "result": {"observed_value": actual_column_list}}
+        return {"success": True, "result": {"observed_value": observed_value}}
     else:
-        unexpected_list = sorted(unmatched_actual_column_set)
-        missing_list = sorted(unmatched_expected_column_set)
-        observed_value = sorted(actual_column_list)
+        unexpected_list = sorted(list(unmatched_actual_column_set))
+        missing_list = sorted(list(unmatched_expected_column_set))
 
         mismatched = {}
         if len(unexpected_list) > 0:
