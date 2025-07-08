@@ -25,8 +25,8 @@ print(context.list_datasources())
 # </snippet>
 
 # <snippet name="docs/docusaurus/docs/cloud/connect/connect_python.py - retrieve a data asset">
-data_source_name = "my_data_source"
-asset_name = "my_data_asset"
+data_source_name = "my_pg_ds"
+asset_name = "my_table_asset_wo_partitioners"
 batch_definition_name = "my_batch_definition"
 batch = (
     context.data_sources.get(data_source_name)
