@@ -4,13 +4,270 @@ import logging
 import warnings
 from typing import Callable, Iterator, Sequence
 
+import numpy as np
 import pandas as pd
 
 from great_expectations.compatibility import sqlalchemy
 from great_expectations.compatibility.not_imported import is_version_less_than
+
+# Additional imports for SQLite-specific implementation
+from great_expectations.compatibility.sqlalchemy import (
+    Column,
+    MetaData,
+    Table,
+    insert,
+    sqltypes,
+)
 from great_expectations.execution_engine.sqlalchemy_dialect import GXSqlDialect
 
 logger = logging.getLogger(__name__)
+
+# Constants
+_BATCH_INSERT_THRESHOLD = 100
+_TABLE_ALREADY_EXISTS_MSG = "Table '{name}' already exists."
+
+
+def _raise_table_exists_error(name: str) -> None:
+    """Raise ValueError for table already exists."""
+    msg = _TABLE_ALREADY_EXISTS_MSG.format(name=name)
+    raise ValueError(msg)
+
+
+def _is_sqlite_connection(con) -> bool:  # noqa: C901, PLR0911
+    """Detect if the connection is to a SQLite database."""
+    try:
+        # SQLAlchemy 2.0+ engine detection
+        if hasattr(con, "url") and hasattr(con.url, "drivername"):
+            return con.url.drivername.lower().startswith("sqlite")
+
+        # SQLAlchemy 2.0+ connection detection
+        if hasattr(con, "dialect") and hasattr(con.dialect, "name"):
+            return con.dialect.name.lower() == "sqlite"
+
+        # Check if it's a connection with an engine
+        if hasattr(con, "engine"):
+            if hasattr(con.engine, "url") and hasattr(con.engine.url, "drivername"):
+                return con.engine.url.drivername.lower().startswith("sqlite")
+            elif hasattr(con.engine, "dialect") and hasattr(con.engine.dialect, "name"):
+                return con.engine.dialect.name.lower() == "sqlite"
+
+        # Fallback: try to get dialect
+        if hasattr(con, "get_dialect") and callable(con.get_dialect):
+            dialect = con.get_dialect()
+            if hasattr(dialect, "name"):
+                return dialect.name.lower() == "sqlite"
+
+        return False
+    except (AttributeError, Exception):
+        # If we can't determine, fall back to non-SQLite logic
+        return False
+
+
+def _get_sqlite_inferrable_types_lookup():
+    """Get type mapping for SQLite columns."""
+    return {
+        str: sqltypes.VARCHAR,
+        int: sqltypes.INTEGER,
+        float: sqltypes.REAL,  # SQLite uses REAL for floating point
+        bool: sqltypes.BOOLEAN,
+        pd.Timestamp: sqltypes.DATETIME,
+        object: sqltypes.TEXT,  # Default for mixed types
+    }
+
+
+def _infer_sqlite_column_types(  # noqa: C901, PLR0912
+    df: pd.DataFrame, explicit_dtype: dict | None = None
+) -> dict[str, sqltypes.TypeEngine]:
+    """Infer SQLite column types from DataFrame."""
+    type_lookup = _get_sqlite_inferrable_types_lookup()
+    column_types = {}
+
+    for col_name in df.columns:
+        # Use explicit dtype if provided
+        if explicit_dtype and col_name in explicit_dtype:
+            if isinstance(explicit_dtype[col_name], str):
+                # Handle string type names
+                if explicit_dtype[col_name].upper() == "VARCHAR":
+                    column_types[col_name] = sqltypes.VARCHAR()
+                elif explicit_dtype[col_name].upper() == "INTEGER":
+                    column_types[col_name] = sqltypes.INTEGER()
+                elif explicit_dtype[col_name].upper() == "REAL":
+                    column_types[col_name] = sqltypes.REAL()
+                else:
+                    column_types[col_name] = sqltypes.TEXT()
+            else:
+                # Assume it's already a SQLAlchemy type
+                column_types[col_name] = explicit_dtype[col_name]
+        else:
+            # Infer from DataFrame
+            col_series = df[col_name]
+            if col_series.dtype == "object":
+                # Try to infer based on first non-null value
+                first_non_null = (
+                    col_series.dropna().iloc[0] if not col_series.dropna().empty else None
+                )
+                if first_non_null is not None:
+                    python_type = type(first_non_null)
+                    column_types[col_name] = type_lookup.get(python_type, sqltypes.TEXT())
+                else:
+                    column_types[col_name] = sqltypes.TEXT()
+            elif "int" in str(col_series.dtype):
+                column_types[col_name] = sqltypes.INTEGER()
+            elif "float" in str(col_series.dtype):
+                column_types[col_name] = sqltypes.REAL()
+            elif "bool" in str(col_series.dtype):
+                column_types[col_name] = sqltypes.BOOLEAN()
+            elif "datetime" in str(col_series.dtype):
+                column_types[col_name] = sqltypes.DATETIME()
+            else:
+                column_types[col_name] = sqltypes.TEXT()
+
+    return column_types
+
+
+def _create_sqlite_table(  # noqa: PLR0913
+    name: str,
+    df: pd.DataFrame,
+    metadata: MetaData,
+    schema: str | None = None,
+    dtype: dict | None = None,
+    index: bool = True,
+) -> Table:
+    """Create SQLite table with appropriate columns."""
+    columns = []
+
+    # Handle index column if needed
+    if index:
+        if df.index.name:
+            index_name = df.index.name
+        else:
+            index_name = "index"
+        columns.append(Column(index_name, sqltypes.INTEGER))
+
+    # Infer column types
+    column_types = _infer_sqlite_column_types(df, dtype)
+
+    # Add data columns
+    for col_name, col_type in column_types.items():
+        columns.append(Column(col_name, col_type))
+
+    return Table(name, metadata, *columns, schema=schema)
+
+
+def _add_dataframe_to_sqlite_db(  # noqa: PLR0913
+    df: pd.DataFrame,
+    name: str,
+    con,
+    schema: str | None = None,
+    if_exists: str = "fail",
+    index: bool = True,
+    dtype: dict | None = None,
+    method: str | Callable | None = None,
+) -> None:
+    """SQLite-specific implementation using SqlAlchemy core patterns."""
+    metadata = MetaData()
+
+    # Create table
+    table = _create_sqlite_table(name, df, metadata, schema, dtype, index)
+
+    # Handle SQLAlchemy 2.0 transaction management
+    # Use a simplified approach that works with both engines and connections
+    try:
+        if hasattr(con, "begin"):
+            # This could be an engine or connection - try the engine pattern first
+            try:
+                with con.begin() as trans_con:
+                    _execute_sqlite_operations(
+                        df, table, trans_con, if_exists, index, method, name, schema
+                    )
+                return
+            except Exception:
+                # If engine pattern fails, try as a connection
+                pass
+
+        # Try as a direct connection without explicit transaction management
+        # SQLAlchemy 2.0 connections often handle autocommit appropriately
+        _execute_sqlite_operations(df, table, con, if_exists, index, method, name, schema)
+
+    except Exception:
+        # If all else fails, try to get a connection from the engine
+        if hasattr(con, "connect"):
+            with con.connect() as conn:
+                _execute_sqlite_operations(df, table, conn, if_exists, index, method, name, schema)
+        else:
+            # Final fallback - direct execution
+            _execute_sqlite_operations(df, table, con, if_exists, index, method, name, schema)
+
+
+def _execute_sqlite_operations(df, table, con, if_exists, index, method, name, schema):  # noqa: C901, PLR0912, PLR0913
+    """Execute the actual SQLite operations within a transaction."""
+    # Get the appropriate engine for operations
+    engine = con if hasattr(con, "dialect") else getattr(con, "engine", con)
+
+    if if_exists == "replace":
+        # Drop table if it exists - SQLAlchemy 2.0 compatible
+        try:
+            table.drop(engine, checkfirst=True)
+        except Exception:
+            pass  # Table doesn't exist, which is fine
+    elif if_exists == "fail":
+        # Check if table exists - SQLAlchemy 2.0 compatible
+        try:
+            from great_expectations.compatibility.sqlalchemy import inspect
+
+            inspector = inspect(engine)
+            if inspector.has_table(name, schema=schema):
+                _raise_table_exists_error(name)
+        except Exception:
+            # Fallback - if we can't inspect, let create_all handle it
+            pass
+    # For "append", we don't need to do anything special
+
+    # Create table if it doesn't exist or we're replacing - SQLAlchemy 2.0 compatible
+    if if_exists in ["replace", "fail"]:
+        table.metadata.create_all(engine)
+
+    # Prepare data for insertion
+    df_copy = df.replace(np.nan, None)  # Replace NaN with None for SQLite
+
+    # Handle datetime columns for Python 3.12+ and SQLAlchemy compatibility
+    for col_name in df_copy.columns:
+        if pd.api.types.is_datetime64_any_dtype(df_copy[col_name]):
+            # Convert pandas Timestamp to Python datetime for SQLAlchemy compatibility
+            # Use apply to avoid future deprecation warning
+            df_copy[col_name] = df_copy[col_name].apply(
+                lambda x: x.to_pydatetime() if pd.notna(x) else None
+            )
+
+    if index:
+        # Include index in the data
+        df_with_index = df_copy.reset_index()
+        values = list(df_with_index.to_dict("index").values())
+    else:
+        values = list(df_copy.to_dict("index").values())
+
+    # Insert data - SQLAlchemy 2.0 compatible
+    if values:  # Only insert if we have data
+        if method == "multi":
+            # Bulk insert - SQLAlchemy 2.0 handles autocommit
+            con.execute(insert(table), values)
+        # Insert row by row (default behavior)
+        # For better performance with many rows, we'll still batch them
+        elif len(values) > _BATCH_INSERT_THRESHOLD:
+            # Batch insert for better performance
+            con.execute(insert(table), values)
+        else:
+            # Row by row for smaller datasets
+            for value_dict in values:
+                con.execute(insert(table).values(**value_dict))
+
+        # Ensure changes are committed in SQLAlchemy 2.0
+        try:
+            if hasattr(con, "commit") and not hasattr(con, "in_transaction"):
+                con.commit()
+        except Exception:
+            # If commit fails or isn't needed, that's fine
+            pass
 
 
 def read_sql_table_as_df(  # noqa: PLR0913 # FIXME CoP
@@ -188,6 +445,46 @@ def add_dataframe_to_db(  # noqa: PLR0913 # FIXME CoP
                 * 'multi': Pass multiple values in a single ``INSERT`` clause.
                 * callable with signature ``(pd_table, conn, keys, data_iter)``.
     """  # noqa: E501 # FIXME CoP
+
+    # Check if this is a SQLite connection and use SQLite-specific implementation
+    # This is especially important for SQLAlchemy 2.0+ where pandas.to_sql has compatibility issues
+    # Skip unsupported parameters for SQLite implementation (index_label, chunksize)
+    # Also prioritize for certain if_exists values where pandas.to_sql commonly fails
+    is_sqlite = _is_sqlite_connection(con)
+    use_sqlite_impl = (
+        is_sqlite
+        and index_label is None
+        and chunksize is None
+        and (
+            if_exists != "fail"
+            or (
+                sqlalchemy.sqlalchemy
+                and not is_version_less_than(sqlalchemy.sqlalchemy.__version__, "2.0.0")
+            )
+        )
+    )
+
+    if use_sqlite_impl:
+        try:
+            _add_dataframe_to_sqlite_db(
+                df=df,
+                name=name,
+                con=con,
+                schema=schema,
+                if_exists=if_exists,
+                index=index,
+                dtype=dtype,
+                method=method,
+            )
+            return
+        except Exception as e:
+            # If SQLite-specific implementation fails, fall back to pandas.to_sql
+            # Note: This fallback may fail with SQLAlchemy 2.0+ and pandas 2.2+
+            logger.warning(
+                f"SQLite-specific implementation failed: {e}. Falling back to pandas.to_sql."
+            )
+
+    # Fall back to original pandas.to_sql implementation for non-SQLite or unsupported parameters
     if sqlalchemy.sqlalchemy and is_version_less_than(sqlalchemy.sqlalchemy.__version__, "2.0.0"):
         with warnings.catch_warnings():
             # Note that RemovedIn20Warning is the warning class that we see from sqlalchemy
