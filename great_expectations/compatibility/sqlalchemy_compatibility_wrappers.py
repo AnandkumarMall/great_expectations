@@ -63,15 +63,15 @@ def _is_sqlite_connection(con) -> bool:  # noqa: C901, PLR0911
         return False
 
 
-def _get_sqlite_inferrable_types_lookup():
+def _get_sqlite_inferrable_types_lookup() -> dict[type, sqltypes.TypeEngine]:
     """Get type mapping for SQLite columns."""
     return {
-        str: sqltypes.VARCHAR,
-        int: sqltypes.INTEGER,
-        float: sqltypes.REAL,  # SQLite uses REAL for floating point
-        bool: sqltypes.BOOLEAN,
-        pd.Timestamp: sqltypes.DATETIME,
-        object: sqltypes.TEXT,  # Default for mixed types
+        str: sqltypes.VARCHAR(),
+        int: sqltypes.INTEGER(),
+        float: sqltypes.REAL(),  # SQLite uses REAL for floating point
+        bool: sqltypes.BOOLEAN(),
+        pd.Timestamp: sqltypes.DATETIME(),
+        object: sqltypes.TEXT(),  # Default for mixed types
     }
 
 
@@ -80,7 +80,7 @@ def _infer_sqlite_column_types(  # noqa: C901, PLR0912
 ) -> dict[str, sqltypes.TypeEngine]:
     """Infer SQLite column types from DataFrame."""
     type_lookup = _get_sqlite_inferrable_types_lookup()
-    column_types = {}
+    column_types: dict[str, sqltypes.TypeEngine] = {}
 
     for col_name in df.columns:
         # Use explicit dtype if provided
@@ -96,8 +96,8 @@ def _infer_sqlite_column_types(  # noqa: C901, PLR0912
                 else:
                     column_types[col_name] = sqltypes.TEXT()
             else:
-                # Assume it's already a SQLAlchemy type
-                column_types[col_name] = explicit_dtype[col_name]
+                # Assume it's already a SQLAlchemy type instance
+                column_types[col_name] = explicit_dtype[col_name]  # type: ignore[assignment]
         else:
             # Infer from DataFrame
             col_series = df[col_name]
