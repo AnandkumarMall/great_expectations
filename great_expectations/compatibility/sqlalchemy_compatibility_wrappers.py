@@ -97,7 +97,7 @@ def _infer_sqlite_column_types(  # noqa: C901, PLR0912
                     column_types[col_name] = sqltypes.TEXT()
             else:
                 # Assume it's already a SQLAlchemy type instance
-                column_types[col_name] = explicit_dtype[col_name]  # type: ignore[assignment]
+                column_types[col_name] = explicit_dtype[col_name]
         else:
             # Infer from DataFrame
             col_series = df[col_name]
