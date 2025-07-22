@@ -249,12 +249,12 @@ jobs:
         if: ${{ matrix.start_services }}
         run: |
           pip install $(grep -E '^(invoke)' reqs/requirements-dev-contrib.txt)
-          invoke deps --gx-install -m 'cloud' -r test
+          invoke deps --gx-install -m 'cloud' -r test --sqlalchemy-version auto
 
       - name: Install test matrix dependencies
         run: |
           pip install $(grep -E '^(invoke)' reqs/requirements-dev-contrib.txt)
-          invoke deps --gx-install -m '${{ matrix.doc-step }}'
+          invoke deps --gx-install -m '${{ matrix.doc-step }}' --sqlalchemy-version auto
 
       - name: Run docs_snippet_checker
         run: |
@@ -490,7 +490,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install $(grep -E '^(invoke)' reqs/requirements-dev-contrib.txt)
-          invoke deps --gx-install -m 'cloud' -r test
+          invoke deps --gx-install -m 'cloud' -r test --sqlalchemy-version auto
 
       - name: Configure ECR AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -569,7 +569,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install $(grep -E '^(invoke)' reqs/requirements-dev-contrib.txt)
-          invoke deps --gx-install -r test
+          invoke deps --gx-install -r test --sqlalchemy-version auto
 
       - name: Run the tests
         run:
@@ -683,7 +683,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install $(grep -E '^(invoke)' reqs/requirements-dev-contrib.txt)
-          invoke deps --gx-install -m '${{ matrix.markers }}' -r test
+          invoke deps --gx-install -m '${{ matrix.markers }}' -r test --sqlalchemy-version auto
 
       - name: Install mssql odbc driver
         run: ./scripts/install_mssql_odbc_driver.sh
@@ -762,7 +762,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install $(grep -E '^(invoke)' reqs/requirements-dev-contrib.txt)
-          invoke deps --gx-install -m '${{ matrix.markers }}' -r test
+          invoke deps --gx-install -m '${{ matrix.markers }}' -r test --sqlalchemy-version auto
 
       - name: Configure ECR AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4

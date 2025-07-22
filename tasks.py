@@ -978,6 +978,7 @@ def _get_marker_dependencies(markers: str | Sequence[str]) -> list[TestDependenc
         "markers": "Optional marker to install dependencies for. Can be specified multiple times.",
         "requirements_dev": "Short name of `requirements-dev-*.txt` file to install, e.g. test, spark, cloud, etc. Can be specified multiple times.",  # noqa: E501
         "constraints": "Optional flag to install dependencies with constraints, default True",
+        "sqlalchemy_version": "SQLAlchemy version constraints to use: '1' for 1.4.x (athena compatibility), '2' for 2.0+ (default: auto-detect based on markers)",
         "gx_install": "Install the local version of Great Expectations.",
         "editable_install": "Install an editable local version of Great Expectations.",
         "force_reinstall": "Force re-installation of dependencies.",
@@ -988,6 +989,7 @@ def deps(  # noqa: C901 - too complex
     markers: list[str],
     requirements_dev: list[str],
     constraints: bool = True,
+    sqlalchemy_version: str = "auto",
     gx_install: bool = False,
     editable_install: bool = False,
     force_reinstall: bool = False,
@@ -1033,7 +1035,23 @@ def deps(  # noqa: C901 - too complex
         cmds.append(f"-r {req_file}")
 
     if constraints:
-        cmds.append("-c constraints-dev.txt")
+        # Determine which constraints file to use based on sqlalchemy_version parameter
+        constraints_file = "constraints-dev.txt"
+        
+        if sqlalchemy_version == "auto":
+            # Auto-detect based on markers - use SQLAlchemy 1.4 for athena, 2.0+ for others
+            athena_markers = ["athena"]
+            if any(marker for marker in markers if any(athena_marker in marker for athena_marker in athena_markers)):
+                constraints_file = "constraints-dev-sqlalchemy1.txt"
+            else:
+                constraints_file = "constraints-dev-sqlalchemy2.txt"
+        elif sqlalchemy_version == "1":
+            constraints_file = "constraints-dev-sqlalchemy1.txt"
+        elif sqlalchemy_version == "2":
+            constraints_file = "constraints-dev-sqlalchemy2.txt"
+        # else use default constraints-dev.txt
+        
+        cmds.append(f"-c {constraints_file}")
 
     ctx.run(" ".join(cmds), echo=True, pty=True)
 

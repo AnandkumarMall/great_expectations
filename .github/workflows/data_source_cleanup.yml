@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install $(grep -E '^(invoke)' reqs/requirements-dev-contrib.txt)
-          invoke deps --gx-install -m bigquery
+          invoke deps --gx-install -m bigquery --sqlalchemy-version 2
           pip install -e .
       - name: Run BigQuery cleanup script
         run: |
@@ -66,7 +66,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install $(grep -E '^(invoke)' reqs/requirements-dev-contrib.txt)
-          invoke deps --gx-install -m gx-redshift
+          invoke deps --gx-install -m gx-redshift --sqlalchemy-version 2
           pip install -e .
       - name: Run Redshift cleanup script
         run: |
@@ -93,7 +93,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install $(grep -E '^(invoke)' reqs/requirements-dev-contrib.txt)
-          invoke deps --gx-install -m databricks
+          invoke deps --gx-install -m databricks --sqlalchemy-version 2
           pip install -e .
       - name: Run Databricks cleanup script
         run: |
@@ -119,7 +119,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install $(grep -E '^(invoke)' reqs/requirements-dev-contrib.txt)
-          invoke deps --gx-install -m snowflake
+          invoke deps --gx-install -m snowflake --sqlalchemy-version 2
           pip install -e .
       - name: Run Snowflake cleanup script
         run: |
