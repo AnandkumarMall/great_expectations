@@ -76,7 +76,7 @@ class TableHead(TableMetricProvider):
             limit = None
 
         # Create a select statement with limit applied
-        limited_selectable = sa.select("*").select_from(selectable).limit(limit)
+        limited_selectable = sa.select("*").select_from(selectable).limit(limit)  # type: ignore[arg-type]  # fixme
 
         try:
             with execution_engine.get_connection() as con:
