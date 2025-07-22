@@ -45,6 +45,19 @@ def execute_pandas_reader_fn(
     return reader_fn_result
 
 
+def _is_sqlalchemy_connectable(con) -> bool:
+    """Check if the connection is a SQLAlchemy engine or connection."""
+    if not sa:
+        return False
+
+    # Check for SQLAlchemy engine or connection types
+    return (
+        isinstance(con, (sa.engine.Engine, sa.engine.Connection))
+        if hasattr(sa, "engine")
+        else False
+    )
+
+
 def pandas_read_sql(sql, con, **kwargs) -> pd.DataFrame | Iterator[pd.DataFrame]:
     """Suppress deprecation warnings while executing the pandas read_sql function.
 
@@ -76,7 +89,24 @@ def pandas_read_sql(sql, con, **kwargs) -> pd.DataFrame | Iterator[pd.DataFrame]
             warnings.filterwarnings(action="ignore", category=DeprecationWarning)
             return_value = pd.read_sql(sql=sql, con=con, **kwargs)
     else:
-        if not sql.supports_execution:
+        # pandas >= 2.0.0
+        # In pandas 2.x, when using non-SQLAlchemy connections, the SQL parameter must be a string
+        if not _is_sqlalchemy_connectable(con) and not isinstance(sql, str):
+            # Convert SQLAlchemy object to string for non-SQLAlchemy connections
+            if hasattr(sql, "__str__"):
+                sql = str(sql)
+            elif sa and hasattr(sql, "compile"):
+                # Fallback: compile the SQL statement if it's a SQLAlchemy object
+                sql = str(sql.compile(compile_kwargs={"literal_binds": True}))
+            else:
+                sql = str(sql)
+        elif (
+            not isinstance(sql, str)
+            and hasattr(sql, "supports_execution")
+            and not sql.supports_execution
+        ):
+            # Handle SQLAlchemy selectables that don't support execution
             sql = sa.select(sa.text("*")).select_from(sql)
+
         return_value = pd.read_sql(sql=sql, con=con, **kwargs)
     return return_value
