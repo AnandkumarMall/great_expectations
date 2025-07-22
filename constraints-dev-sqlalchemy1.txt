@@ -14,6 +14,6 @@ greenlet!=0.4.17
 
 # Pandas compatibility with SQLAlchemy 1.4
 # Note: pandas 2.x requires some careful handling with SQLAlchemy 1.4
-pandas>=1.3.0
+pandas>=1.3.0,<2.2
 # Pin SQLAlchemy to 1.4.x series for compatibility with pyathena
 sqlalchemy>=1.4.0,<2.0.0
