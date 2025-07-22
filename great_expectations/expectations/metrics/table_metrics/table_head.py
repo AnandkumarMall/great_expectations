@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
+from great_expectations.compatibility.not_imported import is_version_less_than
 from great_expectations.compatibility.sqlalchemy import sqlalchemy as sa
 from great_expectations.compatibility.sqlalchemy_and_pandas import (
     pandas_read_sql,
@@ -76,7 +77,10 @@ class TableHead(TableMetricProvider):
             limit = None
 
         # Create a select statement with limit applied
+
         limited_selectable = sa.select("*").select_from(selectable).limit(limit)  # type: ignore[arg-type]  # fixme
+        if is_version_less_than(sa.__version__, "2.0.0"):
+            limited_selectable = limited_selectable.selectable
 
         try:
             with execution_engine.get_connection() as con:
