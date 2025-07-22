@@ -978,13 +978,13 @@ def _get_marker_dependencies(markers: str | Sequence[str]) -> list[TestDependenc
         "markers": "Optional marker to install dependencies for. Can be specified multiple times.",
         "requirements_dev": "Short name of `requirements-dev-*.txt` file to install, e.g. test, spark, cloud, etc. Can be specified multiple times.",  # noqa: E501
         "constraints": "Optional flag to install dependencies with constraints, default True",
-        "sqlalchemy_version": "SQLAlchemy version constraints to use: '1' for 1.4.x (athena compatibility), '2' for 2.0+ (default: auto-detect based on markers)",
+        "sqlalchemy_version": "SQLAlchemy version constraints to use: '1' for 1.4.x (athena compatibility), '2' for 2.0+ (default: auto-detect based on markers)",  # noqa: E501
         "gx_install": "Install the local version of Great Expectations.",
         "editable_install": "Install an editable local version of Great Expectations.",
         "force_reinstall": "Force re-installation of dependencies.",
     },
 )
-def deps(  # noqa: C901 - too complex
+def deps(  # noqa: C901, PLR0912 - too complex
     ctx: Context,
     markers: list[str],
     requirements_dev: list[str],
