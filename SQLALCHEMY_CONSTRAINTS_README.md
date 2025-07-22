@@ -16,11 +16,11 @@ We've implemented three constraint files to handle different scenarios:
 
 ### 1. `constraints-dev-sqlalchemy1.txt`
 **Use for**: Athena tests, pyathena compatibility
-- SQLAlchemy 1.4.x series  
+- SQLAlchemy 1.4.x series
 - Compatible with pyathena requirements
 - Older pandas/greenlet versions
 
-### 2. `constraints-dev-sqlalchemy2.txt`  
+### 2. `constraints-dev-sqlalchemy2.txt`
 **Use for**: Modern databases, type checking, general development
 - SQLAlchemy 2.0+ series
 - Modern pandas (2.0+)
@@ -74,7 +74,7 @@ When using `--sqlalchemy-version auto`, the system automatically selects:
 The CI/CD pipeline automatically uses the appropriate constraints:
 
 - **Athena tests**: Use SQLAlchemy 1.4 constraints
-- **All other database tests**: Use SQLAlchemy 2.0 constraints  
+- **All other database tests**: Use SQLAlchemy 2.0 constraints
 - **Type checking**: Uses SQLAlchemy 2.0 constraints
 - **Integration tests**: Auto-detect based on markers
 
@@ -115,7 +115,7 @@ If you encounter dependency conflicts:
 2. Reinstall with appropriate constraints
 3. Check that pyathena and SQLAlchemy 2.0 aren't being installed together
 
-### Test Failures  
+### Test Failures
 If tests fail due to SQLAlchemy version issues:
 
 1. Check which constraint file was used in the logs
@@ -136,4 +136,4 @@ When pyathena adds SQLAlchemy 2.0 support:
 1. Update `constraints-dev-sqlalchemy1.txt` to allow newer versions
 2. Eventually deprecate SQLAlchemy 1.4 constraints
 3. Migrate all tests to SQLAlchemy 2.0
-4. Simplify constraint system 
+4. Simplify constraint system

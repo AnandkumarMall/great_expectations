@@ -1037,11 +1037,15 @@ def deps(  # noqa: C901 - too complex
     if constraints:
         # Determine which constraints file to use based on sqlalchemy_version parameter
         constraints_file = "constraints-dev.txt"
-        
+
         if sqlalchemy_version == "auto":
             # Auto-detect based on markers - use SQLAlchemy 1.4 for athena, 2.0+ for others
             athena_markers = ["athena"]
-            if any(marker for marker in markers if any(athena_marker in marker for athena_marker in athena_markers)):
+            if any(
+                marker
+                for marker in markers
+                if any(athena_marker in marker for athena_marker in athena_markers)
+            ):
                 constraints_file = "constraints-dev-sqlalchemy1.txt"
             else:
                 constraints_file = "constraints-dev-sqlalchemy2.txt"
@@ -1050,7 +1054,7 @@ def deps(  # noqa: C901 - too complex
         elif sqlalchemy_version == "2":
             constraints_file = "constraints-dev-sqlalchemy2.txt"
         # else use default constraints-dev.txt
-        
+
         cmds.append(f"-c {constraints_file}")
 
     ctx.run(" ".join(cmds), echo=True, pty=True)

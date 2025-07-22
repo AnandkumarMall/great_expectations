@@ -1,4 +1,4 @@
-# SQLAlchemy 2.0+ constraints file  
+# SQLAlchemy 2.0+ constraints file
 # Use this when testing with modern database dependencies that support SQLAlchemy 2.0+
 #
 # Usage:
@@ -9,8 +9,6 @@
 # - type checking and static analysis
 # - general development and testing
 
-# Pin SQLAlchemy to 2.0+ series for modern database compatibility
-sqlalchemy>=2.0.0
 
 # Required for SQLAlchemy 2.0
 greenlet>=3.0.0
@@ -20,4 +18,6 @@ pandas>=2.0.0
 
 # Database-specific packages that support SQLAlchemy 2.0
 snowflake-sqlalchemy>=1.6,!=1.7.0
-sqlalchemy-bigquery>=1.11.0 
+# Pin SQLAlchemy to 2.0+ series for modern database compatibility
+sqlalchemy>=2.0.0
+sqlalchemy-bigquery>=1.11.0
