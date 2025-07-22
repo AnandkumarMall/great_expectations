@@ -75,12 +75,13 @@ class TableHead(TableMetricProvider):
         if metric_value_kwargs["fetch_all"]:
             limit = None
 
-        selectable = sa.select("*").select_from(selectable).limit(limit).selectable  # type: ignore[assignment,arg-type] # FIXME CoP
+        # Create a select statement with limit applied
+        limited_selectable = sa.select("*").select_from(selectable).limit(limit)
 
         try:
             with execution_engine.get_connection() as con:
                 df = pandas_read_sql(
-                    sql=selectable,
+                    sql=limited_selectable,
                     con=con,
                 )
         except StopIteration:

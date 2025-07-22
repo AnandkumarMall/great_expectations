@@ -76,7 +76,20 @@ def pandas_read_sql(sql, con, **kwargs) -> pd.DataFrame | Iterator[pd.DataFrame]
             warnings.filterwarnings(action="ignore", category=DeprecationWarning)
             return_value = pd.read_sql(sql=sql, con=con, **kwargs)
     else:
-        if not sql.supports_execution:
-            sql = sa.select(sa.text("*")).select_from(sql)
+        # For pandas 2.0+, we need to handle SQLAlchemy objects more carefully
+        if sa and hasattr(sql, '__class__') and hasattr(sql.__class__, '__module__'):
+            # Check if this is a SQLAlchemy object
+            if 'sqlalchemy' in sql.__class__.__module__:
+                # For SQLAlchemy objects, we need to compile them to string
+                if hasattr(sql, 'compile'):
+                    # Compile the SQL statement to a string
+                    compiled = sql.compile(compile_kwargs={"literal_binds": True})
+                    sql = str(compiled)
+                elif hasattr(sql, '__str__'):
+                    # Fallback to string conversion
+                    sql = str(sql)
+        
+        # For pandas 2.0+, pass objects as-is and let pandas handle them
+        # The main fix is ensuring SQL objects are compiled to strings
         return_value = pd.read_sql(sql=sql, con=con, **kwargs)
     return return_value
