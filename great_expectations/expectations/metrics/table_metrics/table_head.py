@@ -80,7 +80,7 @@ class TableHead(TableMetricProvider):
 
         limited_selectable = sa.select("*").select_from(selectable).limit(limit)  # type: ignore[arg-type]  # fixme
         if is_version_less_than(sa.__version__, "2.0.0"):
-            limited_selectable = limited_selectable.selectable
+            limited_selectable = limited_selectable.selectable  # type: ignore[assignment]  # fixme
 
         try:
             with execution_engine.get_connection() as con:
