@@ -18,4 +18,4 @@ pytest-xdist>=3.6.1
 requirements-parser>=0.9.0
 responses>=0.23.1,!=0.25.5 # requests mocking - pinning due to https://github.com/getsentry/responses/issues/751
 setuptools>=70.0.0 # required for python 3.12
-sqlalchemy>=2.0
+sqlalchemy>=1.4.0
