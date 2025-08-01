@@ -572,8 +572,7 @@ jobs:
           invoke deps --gx-install -r test
 
       - name: Run the tests
-        run:
-          invoke ci-tests 'integration' --verbose
+        run: invoke ci-tests 'integration' --verbose
 
         # upload coverage report to codecov
       - name: Upload coverage reports to Codecov
