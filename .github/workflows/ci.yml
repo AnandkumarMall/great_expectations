@@ -575,7 +575,7 @@ jobs:
         run:
           invoke ci-tests 'integration' --verbose
 
-          # upload coverage report to codecov
+        # upload coverage report to codecov
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.1.0
         with:
@@ -1060,3 +1060,124 @@ jobs:
         uses: slackapi/slack-github-action@v1.24.0
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RELEASE_WEBHOOK_URL }}
+
+  re-run-cloud-tests:
+    needs: cloud-tests
+    if: failure() && fromJSON(github.run_attempt) < 3
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GH_DEBUG: api
+        run: gh workflow run rerun.yml -F run_id=${{ github.run_id }}
+
+  re-run-doc-checks:
+    needs: doc-checks
+    if: failure() && fromJSON(github.run_attempt) < 3
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GH_DEBUG: api
+        run: gh workflow run rerun.yml -F run_id=${{ github.run_id }}
+
+  re-run-py39-min-versions:
+    needs: py39-min-versions
+    if: failure() && fromJSON(github.run_attempt) < 3
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GH_DEBUG: api
+        run: gh workflow run rerun.yml -F run_id=${{ github.run_id }}
+
+  re-run-py310-min-versions:
+    needs: py310-min-versions
+    if: failure() && fromJSON(github.run_attempt) < 3
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GH_DEBUG: api
+        run: gh workflow run rerun.yml -F run_id=${{ github.run_id }}
+
+  re-run-py311-min-versions:
+    needs: py311-min-versions
+    if: failure() && fromJSON(github.run_attempt) < 3
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GH_DEBUG: api
+        run: gh workflow run rerun.yml -F run_id=${{ github.run_id }}
+
+  re-run-py312-min-versions:
+    needs: py312-min-versions
+    if: failure() && fromJSON(github.run_attempt) < 3
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GH_DEBUG: api
+        run: gh workflow run rerun.yml -F run_id=${{ github.run_id }}
+
+  re-run-airflow-min-versions:
+    needs: airflow-min-versions
+    if: failure() && fromJSON(github.run_attempt) < 3
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GH_DEBUG: api
+        run: gh workflow run rerun.yml -F run_id=${{ github.run_id }}
+
+  re-run-docs-build:
+    needs: docs-build
+    if: failure() && fromJSON(github.run_attempt) < 3
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GH_DEBUG: api
+        run: gh workflow run rerun.yml -F run_id=${{ github.run_id }}
+
+  re-run-unit-tests:
+    needs: unit-tests
+    if: failure() && fromJSON(github.run_attempt) < 3
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GH_DEBUG: api
+        run: gh workflow run rerun.yml -F run_id=${{ github.run_id }}
+
+  re-run-marker-tests:
+    needs: marker-tests
+    if: failure() && fromJSON(github.run_attempt) < 3
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GH_DEBUG: api
+        run: gh workflow run rerun.yml -F run_id=${{ github.run_id }}
+
+  re-run-integration-tests:
+    needs: integration-tests
+    if: failure() && fromJSON(github.run_attempt) < 3
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GH_DEBUG: api
+        run: gh workflow run rerun.yml -F run_id=${{ github.run_id }}
