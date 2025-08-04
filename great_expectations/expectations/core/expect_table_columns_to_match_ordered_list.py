@@ -182,8 +182,7 @@ class ExpectTableColumnsToMatchOrderedList(BatchExpectation):
     """  # noqa: E501 # FIXME CoP
 
     column_list: Union[list, set, SuiteParameterDict, None] = pydantic.Field(
-        description=COLUMN_LIST_DESCRIPTION,
-        alias="ordered_list"
+        description=COLUMN_LIST_DESCRIPTION, alias="ordered_list"
     )
 
     library_metadata: ClassVar[Dict[str, Union[str, list, bool]]] = {
