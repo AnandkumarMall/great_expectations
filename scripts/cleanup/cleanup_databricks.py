@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
-SCHEMA_PATTERN = "test_\w{8}"
+SCHEMA_PATTERN = r"test_\w{8}"
 CATALOG_NAME = "ci"
 
 
