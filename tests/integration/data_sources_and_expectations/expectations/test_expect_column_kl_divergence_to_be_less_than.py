@@ -1,3 +1,5 @@
+from typing import Any, Dict, cast
+
 import pandas as pd
 import pytest
 
@@ -177,3 +179,20 @@ def test_success_with_suite_param_bucketize_data_(
         expectation, expectation_parameters={suite_param_key: suite_param_value}
     )
     assert result.success == expected_result
+
+
+@parameterize_batch_for_data_sources(data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA)
+def test_include_unexpected_rows(batch_for_datasource: Batch) -> None:
+    """Test include_unexpected_rows for ExpectColumnKlDivergenceToBeLessThan."""
+    expectation = gxe.ExpectColumnKLDivergenceToBeLessThan(
+        column=COL_NAME,
+        partition_object={"weights": [0.5, 0.3, 0.2], "values": ["A", "B", "C"]},
+        threshold=0.1,
+    )
+    result = batch_for_datasource.validate(
+        expectation, result_format={"result_format": "BASIC", "include_unexpected_rows": True}
+    )
+
+    result_dict = cast("Dict[str, Any]", result.to_json_dict()["result"])
+
+    assert "unexpected_rows" in result_dict

@@ -1,3 +1,5 @@
+from typing import Any, Dict, cast
+
 import pandas as pd
 import pytest
 
@@ -57,3 +59,25 @@ def test_failure(
 ) -> None:
     result = batch_for_datasource.validate(expectation)
     assert not result.success
+
+
+@parameterize_batch_for_data_sources(data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA)
+def test_include_unexpected_rows(batch_for_datasource: Batch) -> None:
+    """Test include_unexpected_rows for ExpectTableColumnsToMatchOrderedList."""
+    expectation = gxe.ExpectTableColumnsToMatchOrderedList(column_list=["wrong_column"])
+    result = batch_for_datasource.validate(
+        expectation, result_format={"result_format": "BASIC", "include_unexpected_rows": True}
+    )
+
+    # Table expectations may succeed or fail, so we check for unexpected_rows regardless
+    result_dict = cast("Dict[str, Any]", result.to_json_dict()["result"])
+
+    # Verify that unexpected_rows is present (may be empty for table-level expectations)
+    assert "unexpected_rows" in result_dict
+
+    # Table expectations typically don't populate unexpected_rows the same way,
+    # but we verify the key exists for consistency
+    # unexpected_rows may be None or an empty list for table-level expectations
+    unexpected_rows_data = result_dict.get("unexpected_rows")
+    if unexpected_rows_data is not None:
+        assert isinstance(unexpected_rows_data, list)

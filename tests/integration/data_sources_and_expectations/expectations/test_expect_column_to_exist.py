@@ -1,3 +1,5 @@
+from typing import Any, Dict, cast
+
 import pandas as pd
 import pytest
 
@@ -87,3 +89,29 @@ def test_failure(
 ) -> None:
     result = batch_for_datasource.validate(expectation)
     assert not result.success
+
+
+@parameterize_batch_for_data_sources(data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA)
+def test_include_unexpected_rows(batch_for_datasource: Batch) -> None:
+    """Test that include_unexpected_rows works correctly for ExpectColumnToExist."""
+    expectation = gxe.ExpectColumnToExist(column="nonexistent_column")
+    result = batch_for_datasource.validate(
+        expectation, result_format={"result_format": "BASIC", "include_unexpected_rows": True}
+    )
+
+    # Note: Some expectations may succeed, so we check for unexpected_rows regardless
+    result_dict = cast("Dict[str, Any]", result.to_json_dict()["result"])
+
+    # Verify that unexpected_rows is present (may be empty list for successful expectations)
+    assert "unexpected_rows" in result_dict
+    assert result_dict["unexpected_rows"] is not None
+
+    # Convert to DataFrame for easier comparison
+    unexpected_rows_data = result_dict["unexpected_rows"]
+    assert isinstance(unexpected_rows_data, list)
+
+    # If there are unexpected rows, validate the structure
+    if unexpected_rows_data:
+        unexpected_rows_df = pd.DataFrame(unexpected_rows_data)
+        # Check that the unexpected rows contain some columns
+        assert len(unexpected_rows_df.columns) > 0

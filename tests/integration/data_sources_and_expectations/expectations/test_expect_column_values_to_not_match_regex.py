@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Any, Dict, Sequence, cast
 
 import pandas as pd
 import pytest
@@ -6,6 +6,9 @@ import pytest
 import great_expectations.expectations as gxe
 from great_expectations.datasource.fluent.interfaces import Batch
 from tests.integration.conftest import parameterize_batch_for_data_sources
+from tests.integration.data_sources_and_expectations.test_canonical_expectations import (
+    JUST_PANDAS_DATA_SOURCES,
+)
 from tests.integration.test_utils.data_source_config import (
     DatabricksDatasourceTestConfig,
     DataSourceTestConfig,
@@ -90,3 +93,30 @@ class TestNormalSql:
     ) -> None:
         result = batch_for_datasource.validate(expectation)
         assert not result.success
+
+
+@parameterize_batch_for_data_sources(data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA)
+def test_include_unexpected_rows(batch_for_datasource: Batch) -> None:
+    """Test that include_unexpected_rows works correctly for ExpectColumnValuesToNotMatchRegex."""
+    expectation = gxe.ExpectColumnValuesToNotMatchRegex(column=COL_A, regex=r"^[d-z]$")
+    result = batch_for_datasource.validate(
+        expectation, result_format={"result_format": "BASIC", "include_unexpected_rows": True}
+    )
+
+    assert not result.success
+    result_dict = cast("Dict[str, Any]", result.to_json_dict()["result"])
+
+    # Verify that unexpected_rows is present and contains the expected data
+    assert "unexpected_rows" in result_dict
+    assert result_dict["unexpected_rows"] is not None
+
+    # Convert to DataFrame for easier comparison
+    unexpected_rows_data = result_dict["unexpected_rows"]
+    assert isinstance(unexpected_rows_data, list)
+    unexpected_rows_df = pd.DataFrame(unexpected_rows_data)
+
+    # Should contain rows that don't meet the expectation
+    assert len(unexpected_rows_df) > 0
+
+    # Check that the unexpected rows contain the expected columns
+    assert COL_A in unexpected_rows_df.columns

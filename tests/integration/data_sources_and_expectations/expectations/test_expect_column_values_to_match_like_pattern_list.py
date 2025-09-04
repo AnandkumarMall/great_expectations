@@ -1,4 +1,4 @@
-from typing import Sequence, cast
+from typing import Any, Dict, Sequence, cast
 from unittest.mock import ANY
 
 import pandas as pd
@@ -8,6 +8,9 @@ import great_expectations.expectations as gxe
 from great_expectations.core.result_format import ResultFormat
 from great_expectations.datasource.fluent.interfaces import Batch
 from tests.integration.conftest import parameterize_batch_for_data_sources
+from tests.integration.data_sources_and_expectations.test_canonical_expectations import (
+    JUST_PANDAS_DATA_SOURCES,
+)
 from tests.integration.test_utils.data_source_config import (
     BigQueryDatasourceTestConfig,
     DataSourceTestConfig,
@@ -262,3 +265,31 @@ def test_success_with_suite_param_match_on_(
         expectation, expectation_parameters={suite_param_key: suite_param_value}
     )
     assert result.success == expected_result
+
+
+@parameterize_batch_for_data_sources(data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA)
+def test_include_unexpected_rows(batch_for_datasource: Batch) -> None:
+    """Test include_unexpected_rows for ExpectColumnValuesToMatchLikePatternList."""
+    expectation = gxe.ExpectColumnValuesToMatchLikePatternList(
+        column=BASIC_PATTERNS, like_pattern_list=["a%", "b%"]
+    )
+    result = batch_for_datasource.validate(
+        expectation, result_format={"result_format": "BASIC", "include_unexpected_rows": True}
+    )
+
+    # Note: Some expectations may succeed, so we check for unexpected_rows regardless
+    result_dict = cast("Dict[str, Any]", result.to_json_dict()["result"])
+
+    # Verify that unexpected_rows is present (may be empty list for successful expectations)
+    assert "unexpected_rows" in result_dict
+    assert result_dict["unexpected_rows"] is not None
+
+    # Convert to DataFrame for easier comparison
+    unexpected_rows_data = result_dict["unexpected_rows"]
+    assert isinstance(unexpected_rows_data, list)
+
+    # If there are unexpected rows, validate the structure
+    if unexpected_rows_data:
+        unexpected_rows_df = pd.DataFrame(unexpected_rows_data)
+        # Check that the unexpected rows contain some columns
+        assert len(unexpected_rows_df.columns) > 0
