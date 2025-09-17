@@ -19,6 +19,7 @@ from tests.integration.test_utils.data_source_config import (
     RedshiftDatasourceTestConfig,
     SparkFilesystemCsvDatasourceTestConfig,
     SqliteDatasourceTestConfig,
+    TrinoDatasourceTestConfig,
 )
 
 COL_A = "col_a"
@@ -41,6 +42,7 @@ SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     RedshiftDatasourceTestConfig(),
     SparkFilesystemCsvDatasourceTestConfig(),
     SqliteDatasourceTestConfig(),
+    TrinoDatasourceTestConfig(),
 ]
 
 

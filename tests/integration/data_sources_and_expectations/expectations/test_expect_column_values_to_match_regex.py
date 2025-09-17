@@ -17,6 +17,7 @@ from tests.integration.test_utils.data_source_config import (
     PostgreSQLDatasourceTestConfig,
     RedshiftDatasourceTestConfig,
     SparkFilesystemCsvDatasourceTestConfig,
+    TrinoDatasourceTestConfig,
 )
 from tests.integration.test_utils.data_source_config.base import DataSourceTestConfig
 from tests.integration.test_utils.data_source_config.sqlite import SqliteDatasourceTestConfig
@@ -27,6 +28,7 @@ SUPPORTED_SQL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     PostgreSQLDatasourceTestConfig(),
     RedshiftDatasourceTestConfig(),
     SqliteDatasourceTestConfig(),
+    TrinoDatasourceTestConfig(),
 ]
 SUPPORTED_NON_SQL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     SparkFilesystemCsvDatasourceTestConfig()

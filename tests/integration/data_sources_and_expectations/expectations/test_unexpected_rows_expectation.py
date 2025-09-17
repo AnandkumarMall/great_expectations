@@ -20,6 +20,7 @@ from tests.integration.test_utils.data_source_config import (
     SnowflakeDatasourceTestConfig,
     SparkFilesystemCsvDatasourceTestConfig,
     # SqliteDatasourceTestConfig,
+    TrinoDatasourceTestConfig,
 )
 
 # pandas not currently supported by this Expecatation
@@ -33,6 +34,7 @@ ALL_SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     SnowflakeDatasourceTestConfig(),
     SparkFilesystemCsvDatasourceTestConfig(),
     # SqliteDatasourceTestConfig(),  # fix me
+    TrinoDatasourceTestConfig(),
 ]
 
 # spark and big query not currently supported with extra_data, so we can't test JOIN
@@ -45,6 +47,7 @@ EXTRA_DATA_SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     RedshiftDatasourceTestConfig(),
     SnowflakeDatasourceTestConfig(),
     # SqliteDatasourceTestConfig(),  # fix me
+    TrinoDatasourceTestConfig(),
 ]
 
 # pandas and spark not currently supporting partitioners
@@ -57,6 +60,7 @@ PARTITIONER_SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     RedshiftDatasourceTestConfig(),
     SnowflakeDatasourceTestConfig(),
     # SqliteDatasourceTestConfig(),  # fix me
+    TrinoDatasourceTestConfig(),
 ]
 
 # spark and big query not currently supported with extra_data, so we can't test JOIN
@@ -69,6 +73,7 @@ PARTITIONER_AND_EXTRA_DATA_SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig
     RedshiftDatasourceTestConfig(),
     SnowflakeDatasourceTestConfig(),
     # SqliteDatasourceTestConfig(),  # fix me
+    TrinoDatasourceTestConfig(),
 ]
 
 TABLE_1 = pd.DataFrame(

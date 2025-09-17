@@ -15,6 +15,7 @@ from tests.integration.test_utils.data_source_config import (
     RedshiftDatasourceTestConfig,
     SnowflakeDatasourceTestConfig,
     SqliteDatasourceTestConfig,
+    TrinoDatasourceTestConfig,
 )
 
 COL_A = "col_a"
@@ -36,6 +37,7 @@ SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     RedshiftDatasourceTestConfig(),
     SnowflakeDatasourceTestConfig(),
     SqliteDatasourceTestConfig(),
+    TrinoDatasourceTestConfig(),
 ]
 
 

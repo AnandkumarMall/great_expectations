@@ -10,3 +10,4 @@ from .redshift import RedshiftDatasourceTestConfig
 from .snowflake import SnowflakeDatasourceTestConfig
 from .spark_filesystem_csv import SparkFilesystemCsvDatasourceTestConfig
 from .sqlite import SqliteDatasourceTestConfig
+from .trino import TrinoDatasourceTestConfig

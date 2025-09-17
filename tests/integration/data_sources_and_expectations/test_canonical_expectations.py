@@ -18,6 +18,7 @@ from tests.integration.test_utils.data_source_config import (
     SnowflakeDatasourceTestConfig,
     SparkFilesystemCsvDatasourceTestConfig,
     SqliteDatasourceTestConfig,
+    TrinoDatasourceTestConfig,
 )
 
 ALL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
@@ -32,6 +33,7 @@ ALL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     SnowflakeDatasourceTestConfig(),
     SparkFilesystemCsvDatasourceTestConfig(),
     SqliteDatasourceTestConfig(),
+    TrinoDatasourceTestConfig(),
 ]
 
 NON_SQL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
@@ -49,6 +51,7 @@ SQL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     RedshiftDatasourceTestConfig(),
     SnowflakeDatasourceTestConfig(),
     SqliteDatasourceTestConfig(),
+    TrinoDatasourceTestConfig(),
 ]
 
 DATA_SOURCES_THAT_SUPPORT_DATE_COMPARISONS: Sequence[DataSourceTestConfig] = [
@@ -61,6 +64,7 @@ DATA_SOURCES_THAT_SUPPORT_DATE_COMPARISONS: Sequence[DataSourceTestConfig] = [
     RedshiftDatasourceTestConfig(),
     SnowflakeDatasourceTestConfig(),
     SparkFilesystemCsvDatasourceTestConfig(),
+    TrinoDatasourceTestConfig(),
 ]
 
 JUST_PANDAS_DATA_SOURCES: Sequence[DataSourceTestConfig] = [PandasDataFrameDatasourceTestConfig()]
