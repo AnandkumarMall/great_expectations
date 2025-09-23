@@ -251,5 +251,4 @@ def test_polish_and_ratchet_pins_and_upper_bounds():
         ("requirements-dev.txt", "xlrd", (("<", "2.0.0"), (">=", "1.1.0"))),
         ("requirements.txt", "altair", (("<", "5.0.0"), (">=", "4.2.1"))),
         ("requirements.txt", "marshmallow", (("<", "4.0.0"), (">=", "3.7.1"))),
-        ("requirements.txt", "pandas", (("<", "2.2"),)),
     }
