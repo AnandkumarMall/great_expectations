@@ -228,6 +228,10 @@ jobs:
         run: |
           echo "$GE_TEST_GCP_CREDENTIALS" > gcp-credentials.json
 
+      - name: Create credentials path file
+        run: |
+          echo "TEST_GCP_CREDS_PATH=$PWD/gcp-credentials.json" >> $GITHUB_ENV
+
       - name: Install and setup Google Cloud SDK
         run: |
           # this is recommended by the Google documentation for CI/CD https://cloud.google.com/sdk/docs/install#other_installation_options

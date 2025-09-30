@@ -2279,7 +2279,14 @@ def _check_if_valid_dataset_name(dataset_name: str) -> str:
 
 
 def _create_bigquery_engine() -> sqlalchemy.Engine:
-    return sa.create_engine(_get_bigquery_connection_string())
+    credentials_path = os.getenv("TEST_GCP_CREDS_PATH")
+    if not credentials_path:
+        msg = (
+            "Environment Variable GOOGLE_GHA_CREDS_PATH is required "
+            "to run BigQuery expectation tests"
+        )
+        raise ValueError(msg)
+    return sa.create_engine(_get_bigquery_connection_string(), credentials_path=credentials_path)
 
 
 def _get_bigquery_connection_string() -> str:
