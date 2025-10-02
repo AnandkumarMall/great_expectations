@@ -53,11 +53,6 @@ def get_extras_require():
         "gcp": "bigquery",
         "s3": "boto",
     }
-    sqla1x_only_keys = (
-        "clickhouse",  # https://github.com/xzkostyan/clickhouse-sqlalchemy/blob/master/setup.py
-        "redshift",  # https://github.com/sqlalchemy-redshift/sqlalchemy-redshift/blob/main/setup.py
-        "teradata",  # https://pypi.org/project/teradatasqlalchemy   https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=a5a869149729251ced863fe3f153af27
-    )
     sqla_keys = (
         "athena",  # https://github.com/laughingman7743/PyAthena/blob/master/pyproject.toml
         "bigquery",  # https://github.com/googleapis/python-bigquery-sqlalchemy/blob/main/setup.py
@@ -74,7 +69,6 @@ def get_extras_require():
     )
     ignore_keys = (
         "sqlalchemy",
-        "sqlalchemy2",
         "test",
         "tools",
         "all-contrib-expectations",
@@ -104,19 +98,16 @@ def get_extras_require():
     docs_test = results.pop("api-docs-test")
     arrow = results["arrow"]
     results["boto"] = [req for req in lite if req.startswith("boto")]
-    results["sqlalchemy2"] = [req for req in lite if req.startswith("sqlalchemy")]
+    sqlalchemy_reqs = [req for req in lite if req.startswith("sqlalchemy")]
     results["test"] = lite + contrib + docs_test + arrow
 
     for new_key, existing_key in extra_key_mapping.items():
         results[new_key] = results[existing_key]
-    for key in sqla1x_only_keys:
-        results[key] += results["sqlalchemy1"]
+    # Add SQLAlchemy 2.x requirements to all database dialect extras
     for key in sqla_keys:
-        results[key] += results["sqlalchemy2"]
+        results[key] += sqlalchemy_reqs
 
     results.pop("boto")
-    results.pop("sqlalchemy1")
-    results.pop("sqlalchemy2")
     # all_requirements_set = set()
     # [all_requirements_set.update(vals) for vals in results.values()]
     # results["dev"] = sorted(all_requirements_set)

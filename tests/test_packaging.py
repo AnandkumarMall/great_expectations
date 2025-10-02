@@ -117,7 +117,6 @@ def test_requirements_files():
         | req_set_dict["requirements-dev-trino.txt"]
         | req_set_dict["requirements-dev-hive.txt"]
         | req_set_dict["requirements-dev-vertica.txt"]
-        | req_set_dict["requirements-dev-sqlalchemy1.txt"]
     ) == req_set_dict["requirements-dev-sqlalchemy.txt"]
 
     assert (
@@ -138,7 +137,6 @@ def test_requirements_files():
         | req_set_dict["requirements-dev-contrib.txt"]
         | req_set_dict["requirements-dev-test.txt"]
         | req_set_dict["requirements-dev-spark.txt"]
-        | req_set_dict["requirements-dev-sqlalchemy1.txt"]
         | req_set_dict["requirements-dev-sqlalchemy.txt"]
         | req_set_dict["requirements-dev-arrow.txt"]
         | req_set_dict["requirements-dev-athena.txt"]

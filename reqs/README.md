@@ -3,9 +3,8 @@ Requirements
 
 - **requirements.txt**: All requirements that are included when you `pip install great_expectations` or `pip install .`
 - **reqs/requirements-dev-lite.txt**: The least amount of extra requirements needed to run all the basic pytest tests
-    - the sqlalchemy version specified in here is included in the requirements for each sqlalchemy dialect's `extras_require` key, if the dialect is compatible with sqlalchemy 2.x
+    - the sqlalchemy version specified in here (`sqlalchemy>=2.0`) is included in the requirements for each sqlalchemy dialect's `extras_require` key
     - the boto3 version specified in this file is used in the `extras_require` keys `aws_secrets` and `s3` (`pip install ".[aws_secrets]"` or `pip install ".[s3]"`)
-- **reqs/requirements-dev-sqlalchemy1.txt**: A sqlalchemy 1.x version to be included in the requirements for each sqlalchemy dialect's `extras_require` key, if the dialect is not yet compatible with 2.x
 - **reqs/requirements-dev-contrib.txt**: Mostly linting tools like `black`, `mypy`, and `ruff`
 - **reqs/requirements-dev-all-contrib-expectations.txt**: The requirements for all of the contrib Expectations; only used in CI when building the Expectation Gallery
 - **reqs/requirements-dev-api-docs-test.txt**: Just `docstring-parser` package needed for generating API docs
@@ -26,7 +25,6 @@ Requirements
     - reqs/requirements-dev-api-docs-test.txt
 - **reqs/requirements-dev-sqlalchemy.txt**: Includes every requirements file for every sqlalchemy dialect; should not do `pip install -r reqs/requirements-dev-sqlalchemy.txt`
     - reqs/requirements-dev-lite.txt
-    - reqs/requirements-dev-sqlalchemy1.txt
     - reqs/requirements-dev-athena.txt: `pip install ".[athena]"`
     - reqs/requirements-dev-bigquery.txt: `pip install ".[bigquery]"` and `pip install ".[gcp]"`
     - reqs/requirements-dev-clickhouse.txt: `pip install ".[clickhouse]"`

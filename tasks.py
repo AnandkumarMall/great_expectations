@@ -830,7 +830,6 @@ MARKER_DEPENDENCY_MAP: Final[Mapping[str, TestDependencies]] = {
             "reqs/requirements-dev-mssql.txt",
             "reqs/requirements-dev-mysql.txt",
             "reqs/requirements-dev-postgresql.txt",
-            # "Deprecated API features detected" warning/error for test_docs[split_data_on_whole_table_bigquery] when pandas>=2.0  # noqa: E501
             "reqs/requirements-dev-trino.txt",
         ),
         services=("postgresql", "mssql", "mysql", "trino"),
@@ -851,7 +850,6 @@ MARKER_DEPENDENCY_MAP: Final[Mapping[str, TestDependencies]] = {
             "reqs/requirements-dev-cloud.txt",
             "reqs/requirements-dev-gx-redshift.txt",
             "reqs/requirements-dev-snowflake.txt",
-            # "Deprecated API features detected" warning/error for test_docs[split_data_on_whole_table_bigquery] when pandas>=2.0  # noqa: E501
         ),
         services=("mercury",),
         extra_pytest_args=(
