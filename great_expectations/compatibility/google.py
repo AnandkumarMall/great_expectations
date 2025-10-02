@@ -7,9 +7,9 @@ GOOGLE_CLOUD_STORAGE_NOT_IMPORTED = NotImported(
 )
 
 try:
-    from google.cloud import secretmanager  # type: ignore[attr-defined] # FIXME CoP
+    from google.cloud import secretmanager
 except (ImportError, AttributeError):
-    secretmanager = GOOGLE_CLOUD_STORAGE_NOT_IMPORTED
+    secretmanager = GOOGLE_CLOUD_STORAGE_NOT_IMPORTED  # type: ignore[assignment] # FIXME
 
 try:
     from google.api_core.exceptions import GoogleAPIError

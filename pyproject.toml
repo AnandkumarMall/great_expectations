@@ -225,7 +225,6 @@ module = [
     "sqlalchemy_bigquery.*",
     "sqlalchemy_dremio.*",
     "sqlalchemy_redshift.*",
-    "sqlalchemy.*",  # remove once we are using sqlalchemy 2 in type-checking step
     "teradatasqlalchemy.*",
     "trino.*",
 ]

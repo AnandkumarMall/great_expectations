@@ -103,9 +103,9 @@ except (ImportError, AttributeError):
     SUPER = REDSHIFT_NOT_IMPORTED
 
 try:
-    import pyathena  # type: ignore[import-not-found] # FIXME CoP
+    import pyathena
 except ImportError:
-    pyathena = ATHENA_NOT_IMPORTED
+    pyathena = ATHENA_NOT_IMPORTED  # type: ignore[assignment] # FIXME
 
 try:
     from pyathena import sqlalchemy_athena
