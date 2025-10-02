@@ -3,10 +3,8 @@
 # The pipeline is run under the following conditions:
 #   - On the develop branch whenever a commit is made to an open PR
 #
-# In this pipeline we run tests against several databases using the latest patch
-# version of currently supported sqlalchemy versions. E.g 1.3.x, 1.4.x, 2.0.x
-# where x is the latest patch. This will help ensure we are compatible with all
-# previously supported versions as we make changes to support later versions.
+# In this pipeline we run tests against several databases using SQLAlchemy 2.0+.
+# This ensures we maintain compatibility with SQLAlchemy 2.x as we make changes.
 
 trigger:
   branches:
@@ -112,15 +110,6 @@ stages:
       - job: compatibility_postgres
         timeoutInMinutes: 90
         condition: eq(stageDependencies.scope_check.changes.outputs['CheckChanges.GXChanged'], true)
-        strategy:
-          # This matrix is intended to run against the latest patch versions of
-          # sqlalchemy and pandas minor versions that we support.
-          # (versions as semver major.minor.patch)
-          matrix:
-            less_than_2:
-              comparison: "<"
-            greater_than_2:
-              comparison: ">="
 
         services:
           postgres: postgres
@@ -136,14 +125,14 @@ stages:
 
           - script: |
               cp constraints-dev.txt constraints-dev-temp.txt
-              echo "SQLAlchemy$(comparison)2.0.0" >> constraints-dev-temp.txt
-              echo "pandas$(comparison)2.0.0" >> constraints-dev-temp.txt
+              echo "SQLAlchemy>=2.0.0" >> constraints-dev-temp.txt
+              echo "pandas>=2.0.0" >> constraints-dev-temp.txt
 
               # Constrain numpy to prevent running into a number of DeprecationWarnings
               echo "numpy<1.25" >> constraints-dev-temp.txt
 
               pip install --constraint constraints-dev-temp.txt ".[test, postgresql]" pytest-azurepipelines
-            displayName: "Install dependencies using SQLAlchemy base version $(sqlalchemy_base_version)"
+            displayName: "Install dependencies using SQLAlchemy 2.0+"
 
           - script: |
               # Run pytest
@@ -169,15 +158,6 @@ stages:
       - job: compatibility_mssql
         timeoutInMinutes: 90
         condition: eq(stageDependencies.scope_check.changes.outputs['CheckChanges.GXChanged'], true)
-        strategy:
-          # This matrix is intended to run against the latest patch versions of
-          # sqlalchemy and pandas minor versions that we support.
-          # (versions as semver major.minor.patch)
-          matrix:
-            less_than_2:
-              comparison: "<"
-            greater_than_2:
-              comparison: ">="
 
         services:
           mssql: mssql
@@ -200,14 +180,14 @@ stages:
 
           - script: |
               cp constraints-dev.txt constraints-dev-temp.txt
-              echo "SQLAlchemy$(comparison)2.0.0" >> constraints-dev-temp.txt
-              echo "pandas$(comparison)2.0.0" >> constraints-dev-temp.txt
+              echo "SQLAlchemy>=2.0.0" >> constraints-dev-temp.txt
+              echo "pandas>=2.0.0" >> constraints-dev-temp.txt
 
               # Constrain numpy to prevent running into a number of DeprecationWarnings
               echo "numpy<1.25" >> constraints-dev-temp.txt
 
               pip install --constraint constraints-dev-temp.txt ".[test, mssql]" pytest-azurepipelines
-            displayName: "Install dependencies using SQLAlchemy base version $(sqlalchemy_base_version)"
+            displayName: "Install dependencies using SQLAlchemy 2.0+"
 
           - script: |
               # Run pytest
