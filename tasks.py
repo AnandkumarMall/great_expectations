@@ -849,7 +849,7 @@ MARKER_DEPENDENCY_MAP: Final[Mapping[str, TestDependencies]] = {
             "reqs/requirements-dev-azure.txt",
             "reqs/requirements-dev-bigquery.txt",
             "reqs/requirements-dev-cloud.txt",
-            "reqs/requirements-dev-redshift.txt",
+            "reqs/requirements-dev-gx-redshift.txt",
             "reqs/requirements-dev-snowflake.txt",
             # "Deprecated API features detected" warning/error for test_docs[split_data_on_whole_table_bigquery] when pandas>=2.0  # noqa: E501
         ),
@@ -892,7 +892,7 @@ MARKER_DEPENDENCY_MAP: Final[Mapping[str, TestDependencies]] = {
         extra_pytest_args=("--postgresql",),
     ),
     "redshift": TestDependencies(
-        requirement_files=("reqs/requirements-dev-redshift.txt",),
+        requirement_files=("reqs/requirements-dev-gx-redshift.txt",),
     ),
     "snowflake": TestDependencies(
         requirement_files=("reqs/requirements-dev-snowflake.txt",),

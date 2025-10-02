@@ -35,7 +35,7 @@ Requirements
     - reqs/requirements-dev-mssql.txt: `pip install ".[mssql]"`
     - reqs/requirements-dev-mysql.txt: `pip install ".[mysql]"`
     - reqs/requirements-dev-postgresql.txt: `pip install ".[postgresql]"`
-    - reqs/requirements-dev-redshift.txt: `pip install ".[redshift]"`
+    - reqs/requirements-dev-gx-redshift.txt: `pip install ".[redshift]"`
     - reqs/requirements-dev-snowflake.txt: `pip install ".[snowflake]"`
     - reqs/requirements-dev-teradata.txt: `pip install ".[teradata]"`
     - reqs/requirements-dev-trino.txt: `pip install ".[trino]"`
