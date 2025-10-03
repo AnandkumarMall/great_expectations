@@ -52,6 +52,7 @@ def get_extras_require():
         "azure_secrets": "azure",
         "gcp": "bigquery",
         "s3": "boto",
+        "redshift": "gx-redshift",
     }
     sqla_keys = (
         "athena",  # https://github.com/laughingman7743/PyAthena/blob/master/pyproject.toml
