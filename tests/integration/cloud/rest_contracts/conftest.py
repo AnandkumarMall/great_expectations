@@ -11,6 +11,13 @@ import pact
 import pytest
 from typing_extensions import Annotated, TypeAlias
 
+try:
+    # pact version 3
+    from pact.match import AbstractMatcher as Matcher
+except ImportError:
+    # pact version 2
+    from pact.matchers import Matcher
+
 from great_expectations.compatibility import pydantic
 from great_expectations.core.http import create_session
 from great_expectations.data_context import CloudDataContext
@@ -32,9 +39,7 @@ PACT_MOCK_SERVICE_URL: Final[str] = f"http://{PACT_MOCK_HOST}:{PACT_MOCK_PORT}"
 
 JsonData: TypeAlias = Union[None, int, str, bool, List[Any], Dict[str, Any]]
 
-PactBody: TypeAlias = Union[
-    Dict[str, Union[JsonData, pact.matchers.Matcher]], pact.matchers.Matcher, None
-]
+PactBody: TypeAlias = Union[Dict[str, Union[JsonData, Matcher]], Matcher, None]
 
 
 EXISTING_ORGANIZATION_ID: Final[str] = os.environ.get("GX_CLOUD_ORGANIZATION_ID", "")
