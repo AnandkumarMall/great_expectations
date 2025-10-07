@@ -193,7 +193,7 @@ def test_polish_and_ratchet_pins_and_upper_bounds():
     )
 
     # Polish and ratchet this number down as low as possible
-    assert len(sorted_packages_with_pins_or_upper_bounds) == 33
+    assert len(sorted_packages_with_pins_or_upper_bounds) == 29
     assert set(sorted_packages_with_pins_or_upper_bounds) == {
         (
             "requirements-dev-api-docs-test.txt",
@@ -204,7 +204,6 @@ def test_polish_and_ratchet_pins_and_upper_bounds():
         ("requirements-dev-dremio.txt", "sqlalchemy-dremio", (("==", "1.2.1"),)),
         ("requirements-dev-excel.txt", "xlrd", (("<", "2.0.0"), (">=", "1.1.0"))),
         ("requirements-dev-lite.txt", "moto", (("<", "5.0"), (">=", "4.2.13"))),
-        ("requirements-dev-lite.txt", "pact-python", (("<", "3"), (">=", "2.0.1"))),
         ("requirements-dev-pagerduty.txt", "pypd", (("==", "1.1.0"),)),
         (
             "requirements-dev-spark.txt",
@@ -212,7 +211,6 @@ def test_polish_and_ratchet_pins_and_upper_bounds():
             (("<", "4.0"), (">=", "2.3.2")),
         ),
         ("requirements-dev-sqlalchemy.txt", "moto", (("<", "5.0"), (">=", "4.2.13"))),
-        ("requirements-dev-sqlalchemy.txt", "pact-python", (("<", "3"), (">=", "2.0.1"))),
         ("requirements-dev-sqlalchemy.txt", "sqlalchemy", (("<", "2.0.0"),)),
         (
             "requirements-dev-sqlalchemy.txt",
@@ -233,13 +231,11 @@ def test_polish_and_ratchet_pins_and_upper_bounds():
         ("requirements-dev-test.txt", "adr-tools-python", (("==", "1.0.3"),)),
         ("requirements-dev-test.txt", "docstring-parser", (("==", "0.16"),)),
         ("requirements-dev-test.txt", "moto", (("<", "5.0"), (">=", "4.2.13"))),
-        ("requirements-dev-test.txt", "pact-python", (("<", "3"), (">=", "2.0.1"))),
         ("requirements-dev.txt", "adr-tools-python", (("==", "1.0.3"),)),
         ("requirements-dev.txt", "altair", (("<", "5.0.0"), (">=", "4.2.1"))),
         ("requirements-dev.txt", "docstring-parser", (("==", "0.16"),)),
         ("requirements-dev.txt", "marshmallow", (("<", "4.0.0"), (">=", "3.7.1"))),
         ("requirements-dev.txt", "moto", (("<", "5.0"), (">=", "4.2.13"))),
-        ("requirements-dev.txt", "pact-python", (("<", "3"), (">=", "2.0.1"))),
         (
             "requirements-dev.txt",
             "pyspark",
