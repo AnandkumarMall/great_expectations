@@ -16,7 +16,9 @@ context = gx.get_context()
 from tests.test_utils import load_data_into_test_database
 
 # The following load & config blocks up until the batch requests are only to support testing.
-PG_CONNECTION_STRING = "postgresql+psycopg2://postgres:@localhost/test_ci?options=-csearch_path%3Dpublic"
+PG_CONNECTION_STRING = (
+    "postgresql+psycopg2://postgres:@localhost/test_ci?options=-csearch_path%3Dpublic"
+)
 
 load_data_into_test_database(
     table_name="postgres_taxi_data",
