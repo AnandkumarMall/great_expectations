@@ -3,7 +3,7 @@ import GxData from '../../_core_components/_data.jsx';
 Securely stored credentials are implemented via string substitution.  You can reference your credentials in a Python string by wrapping the variable name they are assigned to in `${` and `}`.  Using individual credentials for a connection string would look like:
 
 ```python title="Python"
-connection_string="postgresql+psycopg2://${MY_POSTGRES_USERNAME}:${MY_POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}",
+connection_string="postgresql+psycopg2://${MY_POSTGRES_USERNAME}:${MY_POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}?options=-csearch_path%3D${MY_POSTGRES_SCHEMA}",
 ```
 
 Or you could reference a configured variable that contains the full connection string by providing a Python string that contains just a reference to that variable:

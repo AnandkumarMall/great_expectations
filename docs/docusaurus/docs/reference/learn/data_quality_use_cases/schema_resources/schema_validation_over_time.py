@@ -17,7 +17,7 @@ import psycopg2
 import great_expectations as gx
 from tests.test_utils import load_data_into_test_database
 
-CONNECTION_STRING = "postgresql+psycopg2://postgres:@localhost/test_ci"
+CONNECTION_STRING = "postgresql+psycopg2://postgres:@localhost/test_ci?options=-csearch_path%3Dpublic"
 
 GX_ROOT_DIR = pathlib.Path(gx.__file__).parent.parent
 

@@ -719,7 +719,7 @@ def bad_connection_string_config() -> tuple[str, str, str]:
 
 
 def bad_table_name_config() -> tuple[str, str, str]:
-    connection_string = "postgresql+psycopg2://postgres:@localhost/test_ci"
+    connection_string = "postgresql+psycopg2://postgres:@localhost/test_ci?options=-csearch_path%3Dpublic"
     table_name = "bad_table"
     schema_name = "good_schema"
     return (
@@ -730,7 +730,7 @@ def bad_table_name_config() -> tuple[str, str, str]:
 
 
 def bad_schema_name_config() -> tuple[str, str, str]:
-    connection_string = "postgresql+psycopg2://postgres:@localhost/test_ci"
+    connection_string = "postgresql+psycopg2://postgres:@localhost/test_ci?options=-csearch_path%3Dpublic"
     table_name = "good_table"
     schema_name = "bad_schema"
     return (

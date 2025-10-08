@@ -21,7 +21,7 @@ context = gx.get_context()
 
 # Connect to data and create Data Source.
 CONNECTION_STRING = """
-postgresql+psycopg2://try_gx:try_gx@postgres.workshops.greatexpectations.io/gx_learn_data_quality
+postgresql+psycopg2://try_gx:try_gx@postgres.workshops.greatexpectations.io/gx_learn_data_quality?options=-csearch_path%3Dpublic
 """
 
 data_source = context.data_sources.add_postgres(
@@ -79,7 +79,7 @@ context = gx.get_context()
 
 # Connect to data and create Data Source.
 CONNECTION_STRING = """
-postgresql+psycopg2://try_gx:try_gx@postgres.workshops.greatexpectations.io/gx_learn_data_quality
+postgresql+psycopg2://try_gx:try_gx@postgres.workshops.greatexpectations.io/gx_learn_data_quality?options=-csearch_path%3Dpublic
 """
 
 data_source = context.data_sources.add_postgres(

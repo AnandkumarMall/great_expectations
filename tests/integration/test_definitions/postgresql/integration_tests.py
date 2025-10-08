@@ -50,15 +50,6 @@ partition_data = [
 sample_data: List[IntegrationTestFixture] = []
 
 
-fluent_datasources = [
-    IntegrationTestFixture(
-        name="how_to_connect_to_postgresql_data",
-        user_flow_script="docs/docusaurus/docs/oss/guides/connecting_to_your_data/fluent/database/how_to_connect_to_postgresql_data.py",
-        data_context_dir="tests/integration/fixtures/no_datasources/great_expectations",
-        backend_dependencies=[BackendDependencies.POSTGRESQL],
-    ),
-]
-
 getting_started = []
 
 unexpected_row_expectation = [

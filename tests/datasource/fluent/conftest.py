@@ -448,7 +448,7 @@ def pandas_filesystem_datasource(empty_data_context) -> PandasFilesystemDatasour
 def _source(
     validate_batch_spec: Callable[[SqlAlchemyDatasourceBatchSpec], None],
     dialect: str,
-    connection_string: str = "postgresql+psycopg2://postgres:@localhost/test_ci",
+    connection_string: str = "postgresql+psycopg2://postgres:@localhost/test_ci?options=-csearch_path%3Dpublic",
     data_context: Optional[AbstractDataContext] = None,
     partitioner_query_response: Optional[List[Dict[str, Any]]] = None,
     create_temp_table: bool = True,

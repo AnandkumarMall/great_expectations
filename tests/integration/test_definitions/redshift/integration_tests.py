@@ -56,15 +56,6 @@ partition_data = [
 
 sample_data = []
 
-deployment_patterns = [
-    IntegrationTestFixture(
-        name="deployment_patterns_redshift",
-        user_flow_script="docs/docusaurus/docs/snippets/aws_redshift_deployment_patterns.py",
-        data_context_dir="tests/integration/fixtures/no_datasources/great_expectations",
-        data_dir="tests/test_sets/taxi_yellow_tripdata_samples/",
-        backend_dependencies=[BackendDependencies.REDSHIFT],
-    ),
-]
 
 redshift_integration_tests += connecting_to_your_data
 redshift_integration_tests += partition_data

@@ -23,5 +23,5 @@ def setup():
         table_name="postgres_taxi_data",
         csv_path="./data/yellow_tripdata_sample_2020-01.csv",
         convert_colnames_to_datetime=["pickup_datetime"],
-        connection_string="postgresql+psycopg2://postgres:@localhost/test_ci",
+        connection_string="postgresql+psycopg2://postgres:@localhost/test_ci?options=-csearch_path%3Dpublic",
     )

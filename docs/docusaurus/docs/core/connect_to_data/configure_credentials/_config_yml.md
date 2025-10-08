@@ -12,7 +12,7 @@ MY_POSTGRES_PASSWORD: <PASSWORD>
 or:
 
 ```bash title="config_variables.yml"
-POSTGRES_CONNECTION_STRING: postgresql+psycopg2://<USERNAME>:<PASSWORD>@<HOST>:<PORT>/<DATABASE>
+POSTGRES_CONNECTION_STRING: postgresql+psycopg2://<username>:<password>@<host>:<port>/<database>?options=-csearch_path%3D<schema>
 ```
 
 You can also reference your stored credentials within a stored connection string by wrapping their corresponding variable in `${` and `}`. For example:
@@ -20,7 +20,7 @@ You can also reference your stored credentials within a stored connection string
 ```bash title="config_variables.yml"
 MY_POSTGRES_USERNAME: <USERNAME>
 MY_POSTGRES_PASSWORD: <PASSWORD>
-POSTGRES_CONNECTION_STRING: postgresql+psycopg2://${MY_POSTGRES_USERNAME}:${MY_POSTGRES_PASSWORD}@<HOST>:<PORT>/<DATABASE>
+POSTGRES_CONNECTION_STRING: postgresql+psycopg2://${MY_POSTGRES_USERNAME}:${MY_POSTGRES_PASSWORD}@<host>:<port>/<database>?options=-csearch_path%3D<schema>
 ```
 
 Because the dollar sign character `$` is used to indicate the start of a string substitution they should be escaped using a backslash `\` if they are part of your credentials. For example, if your password is `pa$$word` then in the previous examples you would use the command:

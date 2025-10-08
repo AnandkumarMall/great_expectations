@@ -860,7 +860,7 @@ def get_default_postgres_url() -> str:
     Returns:
         String of default connection to Docker container
     """
-    return "postgresql+psycopg2://postgres:@localhost/test_ci"
+    return "postgresql+psycopg2://postgres:@localhost/test_ci?options=-csearch_path%3Dpublic"
 
 
 def get_default_mysql_url() -> str:

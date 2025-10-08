@@ -44,7 +44,7 @@ To validate data stored on SQL databases with GX Core, you create your GX Python
    You can reference environment variables in GX Core by including them in strings using the format `${ENV_VARIABLE_NAME}`.  For instance, to insert the password stored as `MY_DB_PASSWORD` into a PostgreSql connection string you would provide the string:
 
    ```python title="Example PostgreSql Connection String"
-   "postgresql+psycopg2://<username>:${MY_DB_PW}@<host>:<port>/<database>"
+   "postgresql+psycopg2://<username>:${MY_DB_PW}@<host>:<port>/<database>?options=-csearch_path%3D<schema>"
    ```
 
    As an alternative to environment variables, you can also [store credentials in the file `config_variables.yml`](/core/configure_project_settings/configure_credentials/configure_credentials.md?storage_type=config_yml) after you have [created a File Data Context](/core/set_up_a_gx_environment/create_a_data_context.md?context_type=file).

@@ -238,7 +238,7 @@ A Data Source is the GX representation of a data store. In this tutorial, you ar
 ```python title="Python"
 ## Connect to your data
 
-PG_CONNECTION_STRING = "postgresql+psycopg2://postgres:postgres@database/postgres"
+PG_CONNECTION_STRING = "postgresql+psycopg2://<username>:<password>@<host>:<port>/<database>?options=-csearch_path%3D<schema>"
 pg_datasource = context.data_sources.add_postgres(name="pg_datasource", connection_string=PG_CONNECTION_STRING)
 asset = pg_datasource.add_table_asset(name="customer_data", table_name="customers")
 bd = asset.add_batch_definition_whole_table("BD")
