@@ -15,10 +15,31 @@ When we deprecate public functionality, we will
 
 Before we completely remove the functionality in a new major release, there will be at least one minor release that contains the deprecation so that you can smoothly transition.
 
+### 1.6.4
+* [DOCS] Typo fix, tense update ([#11404](https://github.com/great-expectations/great_expectations/pull/11404))
+* [DOCS] make schedules opt-in ([#11408](https://github.com/great-expectations/great_expectations/pull/11408))
+* [MAINTENANCE] Run Athena tests as a separate step ([#11401](https://github.com/great-expectations/great_expectations/pull/11401))
+* [MAINTENANCE] Remove PyAthena upper pin ([#11402](https://github.com/great-expectations/great_expectations/pull/11402))
+
+### 1.6.3
+* [DOCS] severity tagging ([#11354](https://github.com/great-expectations/great_expectations/pull/11354))
+* [DOCS] severity screenshots ([#11394](https://github.com/great-expectations/great_expectations/pull/11394))
+* [DOCS] integration point diagrams ([#11391](https://github.com/great-expectations/great_expectations/pull/11391))
+* [DOCS] Create a tutorial for how to validate unstructured data in GX Cloud ([#11380](https://github.com/great-expectations/great_expectations/pull/11380))
+* [MAINTENANCE] Update databricks cleanup to clean more ([#11398](https://github.com/great-expectations/great_expectations/pull/11398))
+* [MAINTENANCE] add column.non_null_count to MetricTypes ([#11397](https://github.com/great-expectations/great_expectations/pull/11397))
+
 ### 1.6.2
 * [BUGFIX] Fix ExpectColumnValuesToBeInTypeList for Trino ([#11386](https://github.com/great-expectations/great_expectations/pull/11386))
 * [DOCS] workspaces ([#11366](https://github.com/great-expectations/great_expectations/pull/11366))
 * [MAINTENANCE] Ensure pyarrow wheel on Python 3.12 Snowflake marker tests ([#11388](https://github.com/great-expectations/great_expectations/pull/11388))
+
+### 1.6.2
+* [BUGFIX] Fix ExpectColumnValuesToBeInTypeList for Trino ([#11386](https://github.com/great-expectations/great_expectations/pull/11386))
+* [DOCS] workspaces ([#11366](https://github.com/great-expectations/great_expectations/pull/11366))
+* [DOCS] Add severity description to Other Parameters for all Expectation types ([#11387](https://github.com/great-expectations/great_expectations/pull/11387))
+* [MAINTENANCE] Ensure pyarrow wheel on Python 3.12 Snowflake marker tests ([#11388](https://github.com/great-expectations/great_expectations/pull/11388))
+* [MAINTENANCE] fix snowlake dependency resolution in 3.10 ([#11390](https://github.com/great-expectations/great_expectations/pull/11390))
 
 ### 1.6.1
 * [BUGFIX] Make workspaces optional for cloud_user_info ([#11378](https://github.com/great-expectations/great_expectations/pull/11378))
