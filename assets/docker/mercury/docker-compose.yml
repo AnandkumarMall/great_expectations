@@ -72,10 +72,11 @@ services:
         python -m tests.utils.dev_db_seed_script
         gunicorn mercury.api:get_app\(\) --config ./gunicorn.conf.py --workers=1
     healthcheck:
-      test: bash -c ':> /dev/tcp/0.0.0.0/6001' || exit 1
+      test: ["CMD", "curl", "-f", "--max-time", "2", "http://localhost:6001/"]
       interval: 5s
-      timeout: 2s
-      retries: 20
+      timeout: 3s
+      retries: 30
+      start_period: 90s
     depends_on:
       db-provisioner:
         condition: service_completed_successfully
