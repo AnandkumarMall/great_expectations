@@ -72,8 +72,7 @@ services:
         python -m tests.utils.dev_db_seed_script
         gunicorn mercury.api:get_app\(\) --config ./gunicorn.conf.py --workers=1
     healthcheck:
-      test:
-        ["CMD", "curl", "-f", "--max-time", "2", "http://localhost:6001/status"]
+      test: ["CMD", "curl", "-f", "--max-time", "2", "http://localhost:6001/"]
       interval: 5s
       timeout: 3s
       retries: 30
