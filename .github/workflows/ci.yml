@@ -282,6 +282,7 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.1.0
         with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: great-expectations/great_expectations
           flags: ${{ matrix.doc-step }}
@@ -291,6 +292,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.doc-step }}
 
@@ -330,6 +332,7 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.1.0
         with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: great-expectations/great_expectations
           flags: ${{ matrix.python-version }}
@@ -339,6 +342,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.python-version }}
 
@@ -544,6 +548,7 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.1.0
         with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: great-expectations/great_expectations
           flags: cloud
@@ -553,6 +558,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: cloud
 
@@ -599,6 +605,7 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.1.0
         with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: great-expectations/great_expectations
           flags: integration
@@ -608,6 +615,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration
 
@@ -726,6 +734,7 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.1.0
         with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: great-expectations/great_expectations
           flags: "${{ matrix.python-version }} ${{ matrix.markers }}"
@@ -735,6 +744,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: "${{ matrix.python-version }} ${{ matrix.markers }}"
 
@@ -802,6 +812,7 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.1.0
         with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: great-expectations/great_expectations
           flags: "${{ matrix.python-version }} ${{ matrix.markers }}"
@@ -811,6 +822,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: "${{ matrix.python-version }} ${{ matrix.markers }}"
 
