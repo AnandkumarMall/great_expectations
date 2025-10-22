@@ -81,7 +81,6 @@ def sqlite_table_for_unexpected_rows_with_index(
                 pass
 
             yield sqlite_engine
-
             sqlite_engine.dispose()
         except ImportError:
             sa = None
