@@ -287,7 +287,7 @@
         },
         "Operator": {
             "title": "Operator",
-            "description": "An enumeration.",
+            "description": "--Public API--Operators for comparison conditions.",
             "enum": [
                 "==",
                 "!=",

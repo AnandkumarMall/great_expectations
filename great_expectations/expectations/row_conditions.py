@@ -58,7 +58,10 @@ class InvalidParameterTypeError(TypeError):
         super().__init__(message)
 
 
+@public_api
 class Operator(str, Enum):
+    """Operators for comparison conditions."""
+
     EQUAL = "=="
     NOT_EQUAL = "!="
     LESS_THAN = "<"
