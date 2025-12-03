@@ -6,13 +6,18 @@ from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Type, Uni
 import numpy as np
 
 from great_expectations.compatibility import pydantic
+from great_expectations.core.suite_parameters import (
+    SuiteParameterDict,  # noqa: TC001 # FIXME CoP
+)
 from great_expectations.exceptions import InvalidExpectationConfigurationError
 from great_expectations.expectations.expectation import (
     COLUMN_DESCRIPTION,
     ColumnAggregateExpectation,
+    _style_row_condition,
     render_suite_parameter_string,
 )
 from great_expectations.expectations.metadata_types import DataQualityIssues, SupportedDataSources
+from great_expectations.expectations.model_field_descriptions import FAILURE_SEVERITY_DESCRIPTION
 from great_expectations.render import (
     AtomicDiagnosticRendererType,
     AtomicPrescriptiveRendererType,
@@ -32,7 +37,7 @@ from great_expectations.render.renderer_configuration import (
     RendererValueType,
 )
 from great_expectations.render.util import (
-    parse_row_condition_string_pandas_engine,
+    parse_row_condition_string,
     substitute_none_for_missing,
 )
 from great_expectations.util import isclose
@@ -75,6 +80,10 @@ SUPPORTED_DATA_SOURCES = [
     SupportedDataSources.SPARK.value,
     SupportedDataSources.SQLITE.value,
     SupportedDataSources.POSTGRESQL.value,
+    SupportedDataSources.AURORA.value,
+    SupportedDataSources.CITUS.value,
+    SupportedDataSources.ALLOY.value,
+    SupportedDataSources.NEON.value,
     SupportedDataSources.MYSQL.value,
     SupportedDataSources.MSSQL.value,
     SupportedDataSources.BIGQUERY.value,
@@ -114,6 +123,10 @@ class ExpectColumnQuantileValuesToBeBetween(ColumnAggregateExpectation):
         meta (dict or None): \
             A JSON-serializable dictionary (nesting allowed) that will be included in the output without \
             modification. For more detail, see [meta](https://docs.greatexpectations.io/docs/reference/expectations/standard_arguments/#meta).
+        severity (str or None): \
+            {FAILURE_SEVERITY_DESCRIPTION} \
+            For more detail, see [failure severity](https://docs.greatexpectations.io/docs/cloud/expectations/expectations_overview/#failure-severity).
+
 
     Returns:
         An [ExpectationSuiteValidationResult](https://docs.greatexpectations.io/docs/terms/validation_result)
@@ -140,6 +153,10 @@ class ExpectColumnQuantileValuesToBeBetween(ColumnAggregateExpectation):
         [{SUPPORTED_DATA_SOURCES[5]}](https://docs.greatexpectations.io/docs/application_integration_support/)
         [{SUPPORTED_DATA_SOURCES[6]}](https://docs.greatexpectations.io/docs/application_integration_support/)
         [{SUPPORTED_DATA_SOURCES[7]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[8]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[9]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[10]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[11]}](https://docs.greatexpectations.io/docs/application_integration_support/)
 
     Data Quality Issues:
         {DATA_QUALITY_ISSUES[0]}
@@ -246,8 +263,10 @@ class ExpectColumnQuantileValuesToBeBetween(ColumnAggregateExpectation):
                 }}
     """  # noqa: E501 # FIXME CoP
 
-    quantile_ranges: QuantileRange = pydantic.Field(description=QUANTILE_RANGES_DESCRIPTION)
-    allow_relative_error: Union[bool, str] = pydantic.Field(
+    quantile_ranges: Union[QuantileRange, SuiteParameterDict] = pydantic.Field(
+        description=QUANTILE_RANGES_DESCRIPTION
+    )
+    allow_relative_error: Union[bool, str, SuiteParameterDict] = pydantic.Field(
         default=False,
         description=ALLOW_RELATIVE_ERROR_DESCRIPTION,
     )
@@ -310,17 +329,22 @@ class ExpectColumnQuantileValuesToBeBetween(ColumnAggregateExpectation):
             )
 
     @pydantic.validator("quantile_ranges")
-    def validate_quantile_ranges(cls, quantile_ranges: QuantileRange) -> Optional[QuantileRange]:
-        try:
-            assert all(
-                True if None in x else x == sorted([val for val in x if val is not None])
-                for x in quantile_ranges.value_ranges
-            ), "quantile_ranges must consist of ordered pairs"
-        except AssertionError as e:
-            raise InvalidExpectationConfigurationError(str(e))
+    def validate_quantile_ranges(
+        cls, quantile_ranges: QuantileRange | SuiteParameterDict
+    ) -> Optional[QuantileRange | SuiteParameterDict]:
+        if isinstance(quantile_ranges, QuantileRange):
+            try:
+                assert all(
+                    True if None in x else x == sorted([val for val in x if val is not None])
+                    for x in quantile_ranges.value_ranges
+                ), "quantile_ranges must consist of ordered pairs"
+            except AssertionError as e:
+                raise InvalidExpectationConfigurationError(str(e))
 
-        if len(quantile_ranges.quantiles) != len(quantile_ranges.value_ranges):
-            raise ValueError("quantile_values and quantiles must have the same number of elements")  # noqa: TRY003 # FIXME CoP
+            if len(quantile_ranges.quantiles) != len(quantile_ranges.value_ranges):
+                raise ValueError(  # noqa: TRY003
+                    "quantile_values and quantiles must have the same number of elements"
+                )  # FIXME CoP
 
         return quantile_ranges
 
@@ -366,7 +390,7 @@ class ExpectColumnQuantileValuesToBeBetween(ColumnAggregateExpectation):
 
         table = []
         quantile_strings = {0.25: "Q1", 0.75: "Q3", 0.50: "Median"}
-        for quantile, value_range in zip(quantiles, value_ranges):
+        for quantile, value_range in zip(quantiles, value_ranges, strict=False):
             quantile_string = quantile_strings.get(quantile, f"{quantile:3.2f}")
             value_range_lower: Union[Number, str] = value_range[0] if value_range[0] else "Any"
             value_rage_lower_type = (
@@ -461,30 +485,32 @@ class ExpectColumnQuantileValuesToBeBetween(ColumnAggregateExpectation):
         if include_column_name:
             template_str = f"$column {template_str}"
 
+        styling = runtime_configuration.get("styling") if runtime_configuration else None
+
         if params["row_condition"] is not None:
-            (
+            conditional_template_str = parse_row_condition_string(params["row_condition"])
+
+            template_str, styling = _style_row_condition(
                 conditional_template_str,
-                conditional_params,
-            ) = parse_row_condition_string_pandas_engine(params["row_condition"])
-            template_str = (
-                conditional_template_str + ", then " + template_str[0].lower() + template_str[1:]
+                template_str,
+                params,
+                styling,
             )
-            params.update(conditional_params)
 
         expectation_string_obj = {
             "content_block_type": "string_template",
             "string_template": {"template": template_str, "params": params},
         }
 
-        quantiles = params["quantile_ranges"]["quantiles"]
-        value_ranges = params["quantile_ranges"]["value_ranges"]
+        quantiles = params["quantile_ranges"].get("quantiles", [])
+        value_ranges = params["quantile_ranges"].get("value_ranges", [])
 
         table_header_row = ["Quantile", "Min Value", "Max Value"]
         table_rows = []
 
         quantile_strings = {0.25: "Q1", 0.75: "Q3", 0.50: "Median"}
 
-        for quantile, value_range in zip(quantiles, value_ranges):
+        for quantile, value_range in zip(quantiles, value_ranges, strict=False):
             quantile_string = quantile_strings.get(quantile, f"{quantile:3.2f}")
             table_rows.append(
                 [

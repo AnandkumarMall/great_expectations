@@ -57,6 +57,10 @@ from great_expectations.expectations.expectation_configuration import (
     ExpectationConfiguration,
     parse_result_format,
 )
+from great_expectations.expectations.legacy_row_conditions import (
+    parse_great_expectations_condition,
+)
+from great_expectations.expectations.metadata_types import FailureSeverity
 from great_expectations.expectations.model_field_descriptions import (
     COLUMN_A_DESCRIPTION,
     COLUMN_B_DESCRIPTION,
@@ -65,6 +69,8 @@ from great_expectations.expectations.model_field_descriptions import (
     WINDOWS_DESCRIPTION,
 )
 from great_expectations.expectations.model_field_types import (
+    CONDITION_PARSER_GREAT_EXPECTATIONS,
+    CONDITION_PARSER_GREAT_EXPECTATIONS_DEPRECATED,
     ConditionParser,
     MostlyField,
 )
@@ -72,6 +78,16 @@ from great_expectations.expectations.registry import (
     get_metric_kwargs,
     register_expectation,
     register_renderer,
+)
+from great_expectations.expectations.row_conditions import (
+    Column,
+    ComparisonCondition,
+    Condition,
+    NullityCondition,
+    Operator,
+    PassThroughCondition,
+    RowConditionType,  # Required for RowConditionType runtime validation
+    validate_row_condition,
 )
 from great_expectations.expectations.sql_tokens_and_types import (
     valid_sql_tokens_and_types,
@@ -242,6 +258,80 @@ def param_method(param_name: str) -> Callable:
     return _param_method
 
 
+def _map_operator_string_to_enum(op_str: str) -> Operator:
+    mapping = {
+        "==": Operator.EQUAL,
+        "!=": Operator.NOT_EQUAL,
+        "<": Operator.LESS_THAN,
+        "<=": Operator.LESS_THAN_OR_EQUAL,
+        ">": Operator.GREATER_THAN,
+        ">=": Operator.GREATER_THAN_OR_EQUAL,
+    }
+    return mapping[op_str]
+
+
+def _convert_string_to_condition(row_condition: str) -> Condition:
+    """Convert legacy string row_condition to new Condition object.
+
+    This function parses the legacy `great_expectations` row_condition string syntax
+    and transforms it into the new object-based Condition API.
+
+    Parsing Flow:
+        1. Parse the row_condition string using pyparsing grammar
+        2. Extract column name from parsed result
+        3. Determine condition type based on parsed fields:
+           - If "notnull" present → NullityCondition (is_null=False)
+           - If "condition_value" present → ComparisonCondition (string comparison)
+           - Otherwise → ComparisonCondition (numeric comparison)
+
+    Supported Syntax:
+        Nullity checks:
+            col("email").notnull()  → NullityCondition(column="email", is_null=False)
+
+        String comparisons (parsed["condition_value"] present):
+            col("id") == "ok" → ComparisonCondition(column="id", operator="==", parameter="ok")
+            col("id") != "a" → ComparisonCondition(column="id", operator="!=", parameter="a")
+
+        Numeric comparisons (parsed["fnumber"] present):
+            col("age") > 18 → ComparisonCondition(column="age", operator=">", parameter=18)
+            col("amt") <= 99.9 → ComparisonCondition(column="amt", operator="<=", parameter=99.9)
+            col("temp") < -10 → ComparisonCondition(column="temp", operator="<", parameter=-10)
+
+    Args:
+        row_condition: Legacy string syntax row condition (e.g., 'col("age") > 18')
+
+    Returns:
+        Condition object (NullityCondition or ComparisonCondition)
+
+    Note:
+        The grammar uses different parsing rules for each condition type:
+        - Nullity: Only `.notnull()` supported (is_null=True not available)
+        - String comparisons: Matches quoted strings as "condition_value"
+        - Numeric comparisons: Matches numbers as "fnumber"
+    """
+    parsed = parse_great_expectations_condition(row_condition)
+    col = Column(str(parsed["column"]))
+
+    if "notnull" in parsed and parsed["notnull"] is True:
+        return NullityCondition(
+            column=col, is_null=False
+        )  # The legacy syntax doesn't account for is_null=True
+
+    op_str = str(parsed["op"])
+    op = _map_operator_string_to_enum(op_str)
+
+    if "condition_value" in parsed:
+        return ComparisonCondition(column=col, operator=op, parameter=parsed["condition_value"])
+
+    fnumber_str = str(parsed["fnumber"])
+    value: Union[int, float]
+    try:
+        value = int(fnumber_str)
+    except ValueError:
+        value = float(fnumber_str)
+    return ComparisonCondition(column=col, operator=op, parameter=value)
+
+
 # noinspection PyMethodParameters
 @dataclass_transform(kw_only_default=True, field_specifiers=(Field,))
 class MetaExpectation(ModelMetaclass):
@@ -339,6 +429,13 @@ class Expectation(pydantic.BaseModel, metaclass=MetaExpectation):
 
     catch_exceptions: bool = False
     rendered_content: Optional[List[RenderedAtomicContent]] = None
+    severity: FailureSeverity = pydantic.Field(
+        default=FailureSeverity.CRITICAL,
+        description=(
+            "Indicate the impact of this Expectation failing. Severity levels can be "
+            "used to trigger different alerting patterns and actions."
+        ),
+    )
 
     version: ClassVar[str] = ge_version
     domain_keys: ClassVar[Tuple[str, ...]] = ()
@@ -370,26 +467,49 @@ class Expectation(pydantic.BaseModel, metaclass=MetaExpectation):
 
         return False
 
-    @override
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Expectation):
-            return False
+    def _to_normalized_self_dict(self) -> dict:
+        """Helper method to get normalized dictionary representation for equality and hashing.
 
+        This method:
+        1. Excludes rendered_content (derived property)
+        2. Normalizes notes and meta (falsiness is equivalent)
+        3. Returns a consistent dictionary representation
+        """
         # rendered_content is derived from the rest of the expectation, and can/should
         # be excluded from equality checks
         exclude: set[str] = {"rendered_content"}
 
         self_dict = self.dict(exclude=exclude)
-        other_dict = other.dict(exclude=exclude)
 
         # Simplify notes and meta equality - falsiness is equivalent
         for attr in ("notes", "meta"):
             self_val = self_dict.pop(attr, None) or None
-            other_val = other_dict.pop(attr, None) or None
-            if self_val != other_val:
-                return False
+            self_dict[attr] = self_val
 
-        return self_dict == other_dict
+        return self_dict
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Expectation):
+            return False
+
+        return self._to_normalized_self_dict() == other._to_normalized_self_dict()
+
+    @override
+    def __hash__(self) -> int:
+        def make_hashable(obj):
+            """Convert unhashable types to hashable ones recursively."""
+            if isinstance(obj, (str, int, float, bool, type(None))):
+                return obj
+            elif isinstance(obj, list):
+                return tuple(make_hashable(item) for item in obj)
+            elif isinstance(obj, dict):
+                return tuple(sorted((k, make_hashable(v)) for k, v in obj.items()))
+            else:
+                return str(obj)
+
+        normalized_dict = self._to_normalized_self_dict()
+        return hash(make_hashable(normalized_dict))
 
     @pydantic.validator("result_format")
     def _validate_result_format(cls, result_format: ResultFormat | dict) -> ResultFormat | dict:
@@ -398,6 +518,47 @@ class Expectation(pydantic.BaseModel, metaclass=MetaExpectation):
                 "If configuring result format with a dictionary, the key 'result_format' must be present."  # noqa: E501 # FIXME CoP
             )
         return result_format
+
+    @pydantic.root_validator(pre=False)
+    def _transform_legacy_row_condition(cls, values: dict) -> dict:
+        row_condition = values.get("row_condition")
+        condition_parser = values.get("condition_parser")
+        is_great_expectations_condition_parser = (
+            condition_parser is not None
+            and condition_parser
+            in [
+                CONDITION_PARSER_GREAT_EXPECTATIONS,
+                CONDITION_PARSER_GREAT_EXPECTATIONS_DEPRECATED,
+            ]
+        )
+
+        # Warn if condition_parser is provided
+        if condition_parser is not None:
+            warnings.warn(
+                "The condition_parser parameter is deprecated as of GX Core 1.9.0 "
+                "and will be removed in GX Core 2.0. Please use Condition objects "
+                "(e.g., Column('column_name') > 0) instead of string-based row conditions.",
+                DeprecationWarning,  # deprecated-v1.9.0
+                stacklevel=2,
+            )
+
+        # Warn if row_condition is a string
+        if isinstance(row_condition, str):
+            warnings.warn(
+                "Passing a string to the row_condition parameter is deprecated as of GX Core 1.9.0 "
+                "and will be removed in GX Core 2.0. Please use Condition objects "
+                "(e.g., Column('column_name') > 0) instead of string-based row conditions.",
+                DeprecationWarning,  # deprecated-v1.9.0
+                stacklevel=2,
+            )
+            if is_great_expectations_condition_parser:
+                condition_obj = _convert_string_to_condition(row_condition)
+                values["row_condition"] = condition_obj
+
+            else:
+                values["row_condition"] = PassThroughCondition(pass_through_filter=row_condition)
+
+        return values
 
     @classmethod
     def is_abstract(cls) -> bool:
@@ -1252,9 +1413,13 @@ class Expectation(pydantic.BaseModel, metaclass=MetaExpectation):
         runtime_configuration: Optional[dict] = None,
     ) -> Union[Dict[str, Union[str, int, bool, List[str], None]], str]:
         default_result_format: Optional[Any] = self._get_default_value("result_format")
+        # defaulting to empty dict to avoid type errors is safe. All uses expect a string or a dict
+        # and if a dict is provided, it is parsed correctly with defaults injected.
+        # TODO: when working in the area, result format should be typed and defaults should be
+        # injected here, rather than other parts of the codebase.
         configuration_result_format: Union[
             Dict[str, Union[str, int, bool, List[str], None]], str
-        ] = self.configuration.kwargs.get("result_format", default_result_format)
+        ] = self.configuration.kwargs.get("result_format", default_result_format or {})
         result_format: Union[Dict[str, Union[str, int, bool, List[str], None]], str]
         if runtime_configuration:
             result_format = runtime_configuration.get(
@@ -1332,6 +1497,7 @@ class Expectation(pydantic.BaseModel, metaclass=MetaExpectation):
         meta = kwargs.pop("meta", None)
         notes = kwargs.pop("notes", None)
         description = kwargs.pop("description", None)
+        severity = kwargs.pop("severity", FailureSeverity.CRITICAL)
         id = kwargs.pop("id", None)
         rendered_content = kwargs.pop("rendered_content", None)
         return ExpectationConfiguration(
@@ -1340,6 +1506,7 @@ class Expectation(pydantic.BaseModel, metaclass=MetaExpectation):
             meta=meta,
             notes=notes,
             description=description,
+            severity=severity,
             id=id,
             rendered_content=rendered_content,
         )
@@ -1579,6 +1746,16 @@ class BatchExpectation(Expectation, ABC):
     domain_type: ClassVar[MetricDomainTypes] = MetricDomainTypes.TABLE
     args_keys: ClassVar[Tuple[str, ...]] = ()
 
+    @pydantic.validator("row_condition", check_fields=False)
+    def _validate_row_condition(cls, v):
+        """Validate row_condition according to GX Cloud UI constraints.
+
+        This validator applies to all subclasses that define a row_condition field.
+        check_fields=False allows this to work even though row_condition is not
+        defined on BatchExpectation itself.
+        """
+        return validate_row_condition(v)
+
     class Config:
         @staticmethod
         def schema_extra(schema: Dict[str, Any], model: Type[BatchExpectation]) -> None:
@@ -1804,7 +1981,7 @@ class ColumnAggregateExpectation(BatchExpectation, ABC):
     """  # noqa: E501 # FIXME CoP
 
     column: StrictStr = Field(min_length=1, description=COLUMN_DESCRIPTION)
-    row_condition: Union[str, None] = None
+    row_condition: RowConditionType = None
     condition_parser: Union[ConditionParser, None] = None
 
     domain_keys: ClassVar[Tuple[str, ...]] = (
@@ -1852,7 +2029,7 @@ class ColumnMapExpectation(BatchExpectation, ABC):
 
     column: StrictStr = Field(min_length=1, description=COLUMN_DESCRIPTION)
     mostly: MostlyField = 1
-    row_condition: Union[str, None] = None
+    row_condition: RowConditionType = None
     condition_parser: Union[ConditionParser, None] = None
 
     catch_exceptions: bool = True
@@ -2117,7 +2294,7 @@ class ColumnPairMapExpectation(BatchExpectation, ABC):
     column_A: StrictStr = Field(min_length=1, description=COLUMN_A_DESCRIPTION)
     column_B: StrictStr = Field(min_length=1, description=COLUMN_B_DESCRIPTION)
     mostly: MostlyField = 1
-    row_condition: Union[str, None] = None
+    row_condition: RowConditionType = None
     condition_parser: Union[ConditionParser, None] = None
 
     catch_exceptions: bool = True
@@ -2298,9 +2475,14 @@ class ColumnPairMapExpectation(BatchExpectation, ABC):
             self._get_result_format(runtime_configuration=runtime_configuration)
         )
 
+        include_unexpected_rows: bool
         unexpected_index_column_names = None
         if isinstance(result_format, dict):
+            include_unexpected_rows = bool(result_format.get("include_unexpected_rows", False))
             unexpected_index_column_names = result_format.get("unexpected_index_column_names", None)
+        else:
+            include_unexpected_rows = False
+
         total_count: Optional[int] = metrics.get("table.row_count")
         unexpected_count: Optional[int] = metrics.get(
             f"{self.map_metric}.{SummarizationMetricNameSuffixes.UNEXPECTED_COUNT.value}"
@@ -2317,6 +2499,12 @@ class ColumnPairMapExpectation(BatchExpectation, ABC):
         filtered_row_count: Optional[int] = metrics.get(
             f"{self.map_metric}.{SummarizationMetricNameSuffixes.FILTERED_ROW_COUNT.value}"
         )
+
+        unexpected_rows = None
+        if include_unexpected_rows:
+            unexpected_rows = metrics.get(
+                f"{self.map_metric}.{SummarizationMetricNameSuffixes.UNEXPECTED_ROWS.value}"
+            )
 
         if (
             total_count is None
@@ -2344,6 +2532,7 @@ class ColumnPairMapExpectation(BatchExpectation, ABC):
             unexpected_index_list=unexpected_index_list,
             unexpected_index_query=unexpected_index_query,
             unexpected_index_column_names=unexpected_index_column_names,
+            unexpected_rows=unexpected_rows,
         )
 
 
@@ -2370,7 +2559,7 @@ class MulticolumnMapExpectation(BatchExpectation, ABC):
 
     column_list: List[StrictStr] = pydantic.Field(description=COLUMN_LIST_DESCRIPTION)
     mostly: MostlyField = 1
-    row_condition: Union[str, None] = None
+    row_condition: RowConditionType = None
     condition_parser: Union[ConditionParser, None] = None
     ignore_row_if: Literal["all_values_are_missing", "any_value_is_missing", "never"] = (
         "all_values_are_missing"
@@ -2503,9 +2692,6 @@ class MulticolumnMapExpectation(BatchExpectation, ABC):
             ),
         )
 
-        if result_format_str == ResultFormat.BASIC:
-            return validation_dependencies
-
         if include_unexpected_rows:
             metric_kwargs = get_metric_kwargs(
                 metric_name=f"{self.map_metric}.{SummarizationMetricNameSuffixes.UNEXPECTED_ROWS.value}",
@@ -2520,6 +2706,9 @@ class MulticolumnMapExpectation(BatchExpectation, ABC):
                     metric_value_kwargs=metric_kwargs["metric_value_kwargs"],
                 ),
             )
+
+        if result_format_str == ResultFormat.BASIC:
+            return validation_dependencies
 
         from great_expectations.execution_engine import (
             SqlAlchemyExecutionEngine,
@@ -2568,9 +2757,14 @@ class MulticolumnMapExpectation(BatchExpectation, ABC):
         execution_engine: Optional[ExecutionEngine] = None,
     ):
         result_format = self._get_result_format(runtime_configuration=runtime_configuration)
+
+        include_unexpected_rows: bool
         unexpected_index_column_names = None
         if isinstance(result_format, dict):
+            include_unexpected_rows = bool(result_format.get("include_unexpected_rows", False))
             unexpected_index_column_names = result_format.get("unexpected_index_column_names", None)
+        else:
+            include_unexpected_rows = False
 
         total_count: Optional[int] = metrics.get("table.row_count")
         unexpected_count: Optional[int] = metrics.get(
@@ -2588,6 +2782,12 @@ class MulticolumnMapExpectation(BatchExpectation, ABC):
         unexpected_index_query: Optional[str] = metrics.get(
             f"{self.map_metric}.{SummarizationMetricNameSuffixes.UNEXPECTED_INDEX_QUERY.value}"
         )
+
+        unexpected_rows = None
+        if include_unexpected_rows:
+            unexpected_rows = metrics.get(
+                f"{self.map_metric}.{SummarizationMetricNameSuffixes.UNEXPECTED_ROWS.value}"
+            )
 
         if (
             total_count is None
@@ -2615,6 +2815,7 @@ class MulticolumnMapExpectation(BatchExpectation, ABC):
             unexpected_index_list=unexpected_index_list,
             unexpected_index_query=unexpected_index_query,
             unexpected_index_column_names=unexpected_index_column_names,
+            unexpected_rows=unexpected_rows,
         )
 
 
@@ -2876,3 +3077,30 @@ def parse_value_to_observed_type(observed_value: Any, value: Any) -> Any:
 
     # For other types, no special handling needed
     return value
+
+
+def _style_row_condition(
+    row_condition: str,
+    template_str: str,
+    params: dict,
+    styling: Optional[dict] = None,
+) -> tuple[str, dict]:
+    """
+    Style the row condition by adding a "condition_content" parameter
+    to the params and styling dictionary.
+
+    Args:
+        row_condition: The row condition string.
+        template_str: The template string.
+        params: The params dictionary.
+        styling: The styling dictionary.
+
+    Returns:
+        A tuple of (styled_template_string, styling_dictionary).
+    """
+    params.setdefault("condition_content", row_condition)
+    styling = styling or {}
+    styling.setdefault("params", {})["condition_content"] = {
+        "classes": ["badge", "badge-secondary"]
+    }
+    return "If $condition_content, then " + template_str, styling

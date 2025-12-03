@@ -38,7 +38,11 @@ __version__ = get_versions()["version"]  # isort:skip
 from great_expectations._docs_decorators import new_method_or_class
 from great_expectations.compatibility import snowflake, sqlalchemy
 from great_expectations.compatibility.not_imported import is_version_greater_or_equal
-from great_expectations.compatibility.sqlalchemy import Subquery
+from great_expectations.compatibility.sqlalchemy import (
+    DatabaseError,
+    PendingRollbackError,
+    Subquery,
+)
 from great_expectations.compatibility.sqlalchemy import (
     sqlalchemy as sa,
 )
@@ -57,8 +61,9 @@ from great_expectations.expectations.model_field_types import (
     CONDITION_PARSER_GREAT_EXPECTATIONS,
     CONDITION_PARSER_GREAT_EXPECTATIONS_DEPRECATED,
 )
-from great_expectations.util import convert_to_json_serializable  # noqa: TID251 # FIXME CoP
-from great_expectations.validator.computed_metric import MetricValue  # noqa: TC001 # FIXME CoP
+from great_expectations.util import (
+    convert_to_json_serializable,  # noqa: TID251 # Required for SQL result serialization
+)
 
 del get_versions  # isort:skip
 
@@ -82,10 +87,16 @@ from great_expectations.execution_engine.sqlalchemy_batch_data import (
     SqlAlchemyBatchData,
 )
 from great_expectations.execution_engine.sqlalchemy_dialect import GXSqlDialect
-from great_expectations.expectations.row_conditions import (
+from great_expectations.expectations.legacy_row_conditions import (
     RowCondition,
     RowConditionParserType,
     parse_condition_to_sqlalchemy,
+)
+from great_expectations.expectations.row_conditions import (
+    Condition,
+    Operator,
+    PassThroughCondition,
+    deserialize_row_condition,
 )
 from great_expectations.util import (
     filter_properties_dict,
@@ -96,12 +107,25 @@ from great_expectations.util import (
 )
 
 if TYPE_CHECKING:
+    from typing_extensions import TypeAlias
+
+    from great_expectations.expectations.row_conditions import (
+        AndCondition,
+        ComparisonCondition,
+        NullityCondition,
+        OrCondition,
+    )
+    from great_expectations.validator.computed_metric import (
+        MetricValue,
+    )
     from great_expectations.validator.metric_configuration import (
         MetricConfiguration,
         MetricConfigurationID,
     )
 
+
 logger = logging.getLogger(__name__)
+DATABRICKS_MAX_PARAMS_PER_QUERY = 256
 
 
 if sa:
@@ -148,12 +172,26 @@ except ImportError:
 if TYPE_CHECKING:
     from sqlalchemy.engine import Engine as SaEngine  # noqa: TID251 # FIXME CoP
 
+    from great_expectations.compatibility import sqlalchemy
+
+SQLAColumnClause: TypeAlias = object  # sqlalchemy isn't installed in all environments
 
 _PERSISTED_CONNECTION_DIALECTS = (
     GXSqlDialect.SQLITE,
     GXSqlDialect.MSSQL,
     GXSqlDialect.BIGQUERY,
+    GXSqlDialect.DATABRICKS,
 )
+
+
+class InvalidOperatorError(ValueError):
+    def __init__(self, operator: Any) -> None:
+        super().__init__(f"Invalid operator: {operator!r}")
+
+
+class InvalidFilterClause(ValueError):
+    def __init__(self, filter_clause: Any) -> None:
+        super().__init__(f"Invalid filter clause: {type(filter_clause)}")
 
 
 def _dialect_requires_persisted_connection(
@@ -197,7 +235,7 @@ def _dialect_requires_persisted_connection(
     return return_val
 
 
-class SqlAlchemyExecutionEngine(ExecutionEngine):
+class SqlAlchemyExecutionEngine(ExecutionEngine[SQLAColumnClause]):
     """SparkDFExecutionEngine instantiates the ExecutionEngine API to support computations using Spark platform.
 
     Constructor builds a SqlAlchemyExecutionEngine, using a provided connection string/url/engine/credentials to \
@@ -363,7 +401,15 @@ class SqlAlchemyExecutionEngine(ExecutionEngine):
                 sa.event.listen(self.engine, "connect", _on_connect)
                 # Also immediately add the sqlite functions in case there already exists an underlying  # noqa: E501 # FIXME CoP
                 # sqlite3.Connection (distinct from a sqlalchemy Connection).
-                _add_sqlite_functions(self.engine.raw_connection())
+                _raw_dbapi_con = self.engine.raw_connection()
+                try:
+                    _add_sqlite_functions(_raw_dbapi_con)
+                finally:
+                    # Ensure the temporary raw DB-API connection is closed to avoid ResourceWarning.
+                    try:
+                        _raw_dbapi_con.close()
+                    except Exception:
+                        pass
             self._engine_backup = self.engine
 
         # Gather the call arguments of the present function (and add the "class_name"), filter out the Falsy values,  # noqa: E501 # FIXME CoP
@@ -516,7 +562,7 @@ class SqlAlchemyExecutionEngine(ExecutionEngine):
             try:
                 p_key = serialization.load_pem_private_key(
                     key.read(),
-                    password=private_key_passphrase.encode() if private_key_passphrase else None,
+                    password=(private_key_passphrase.encode() if private_key_passphrase else None),
                     backend=default_backend(),
                 )
             except ValueError as e:
@@ -600,17 +646,32 @@ class SqlAlchemyExecutionEngine(ExecutionEngine):
 
         # Filtering by row condition.
         if "row_condition" in domain_kwargs and domain_kwargs["row_condition"] is not None:
-            condition_parser = domain_kwargs["condition_parser"]
-            if condition_parser in [
+            row_condition = domain_kwargs["row_condition"]
+            condition_parser = domain_kwargs.get("condition_parser", None)
+
+            if isinstance(row_condition, dict):
+                row_condition = deserialize_row_condition(row_condition)
+
+            # PassThroughCondition is not supported for SQLAlchemy
+            if isinstance(row_condition, PassThroughCondition):
+                raise GreatExpectationsError(  # noqa: TRY003 # FIXME
+                    "PassThroughCondition (pandas/spark syntax) is not supported for "
+                    "SqlAlchemyExecutionEngine. Please use the latest documented "
+                    "row_condition syntax, which does not require condition_parser."
+                )
+
+            if isinstance(row_condition, Condition):
+                parsed_condition = self.condition_to_filter_clause(row_condition)
+            elif condition_parser in [
                 CONDITION_PARSER_GREAT_EXPECTATIONS,
                 CONDITION_PARSER_GREAT_EXPECTATIONS_DEPRECATED,
             ]:
-                parsed_condition = parse_condition_to_sqlalchemy(domain_kwargs["row_condition"])
-                selectable = sa.select(sa.text("*")).select_from(selectable).where(parsed_condition)  # type: ignore[arg-type] # FIXME CoP
+                parsed_condition = parse_condition_to_sqlalchemy(row_condition)
             else:
                 raise GreatExpectationsError(  # noqa: TRY003 # FIXME CoP
                     "SqlAlchemyExecutionEngine only supports the great_expectations condition_parser."  # noqa: E501 # FIXME CoP
                 )
+            selectable = sa.select(sa.text("*")).select_from(selectable).where(parsed_condition)  # type: ignore[arg-type] # FIXME CoP
 
         # Filtering by filter_conditions
         filter_conditions: List[RowCondition] = domain_kwargs.get("filter_conditions", [])
@@ -897,7 +958,7 @@ class SqlAlchemyExecutionEngine(ExecutionEngine):
         return PartitionDomainKwargs(compute_domain_kwargs, accessor_domain_kwargs)
 
     @override
-    def resolve_metric_bundle(  # noqa: C901 #  too complex
+    def resolve_metric_bundle(
         self,
         metric_fn_bundle: Iterable[MetricComputationConfiguration],
     ) -> dict[MetricConfigurationID, MetricValue]:
@@ -918,45 +979,14 @@ class SqlAlchemyExecutionEngine(ExecutionEngine):
 
         res: List[sqlalchemy.Row]
 
-        # We need a different query for each Domain (where clause).
-        queries: dict[IDDictID, dict] = {}
+        queries: list[dict] = self._organize_metrics_by_domain(
+            metric_fn_bundle,
+            limit=DATABRICKS_MAX_PARAMS_PER_QUERY
+            if self.engine.dialect.name.lower() == GXSqlDialect.DATABRICKS
+            else None,
+        )
 
-        query: dict
-
-        domain_id: IDDictID
-
-        bundled_metric_configuration: MetricComputationConfiguration
-        for bundled_metric_configuration in metric_fn_bundle:
-            metric_to_resolve: MetricConfiguration = (
-                bundled_metric_configuration.metric_configuration
-            )
-            metric_fn: Any = bundled_metric_configuration.metric_fn
-            compute_domain_kwargs: dict = bundled_metric_configuration.compute_domain_kwargs or {}
-            if not isinstance(compute_domain_kwargs, IDDict):
-                compute_domain_kwargs = IDDict(compute_domain_kwargs)
-
-            domain_id = compute_domain_kwargs.to_id()
-            if domain_id not in queries:
-                queries[domain_id] = {
-                    "select": [],
-                    "metric_ids": [],
-                    "domain_kwargs": compute_domain_kwargs,
-                }
-
-            if self.engine.dialect.name == "clickhouse":
-                queries[domain_id]["select"].append(
-                    metric_fn.label(
-                        metric_to_resolve.metric_name.join(
-                            random.choices(string.ascii_lowercase, k=4)
-                        )
-                    )
-                )
-            else:
-                queries[domain_id]["select"].append(metric_fn.label(metric_to_resolve.metric_name))
-
-            queries[domain_id]["metric_ids"].append(metric_to_resolve.id)
-
-        for query in queries.values():
+        for query in queries:
             domain_kwargs: dict = query["domain_kwargs"]
             selectable: sqlalchemy.Selectable = self.get_domain_records(domain_kwargs=domain_kwargs)
 
@@ -1031,6 +1061,154 @@ class SqlAlchemyExecutionEngine(ExecutionEngine):
             self._engine_backup.dispose()
         else:
             self.engine.dispose()
+
+    def _finalize_domain_query(
+        self,
+        domain_id: IDDictID,
+        domain_batches: dict,
+        batch_counters: dict,
+        domain_kwargs_map: dict,
+    ) -> tuple[IDDictID | None, dict | None, int | None]:
+        """Finalize the current accumulated metrics for a domain into a query.
+
+        This method calculates what new query entry should be added and what
+        batch state should be reset for the next parameter batch.
+
+        Returns:
+            Tuple of (final_domain_id, new_query_entry, new_batch_counter)
+            Returns (None, None, None) if no finalization is needed
+        """
+        new_query_entry = None
+        new_batch_counter = None
+        final_domain_id = None
+
+        if domain_id in domain_batches and domain_batches[domain_id]["select"]:
+            batch_idx = batch_counters.get(domain_id, 0)
+            domain_kwargs = domain_kwargs_map[domain_id]
+
+            if batch_idx == 0:
+                final_domain_id = domain_id
+            else:
+                final_domain_id = IDDict({**domain_kwargs, "_batch_idx": batch_idx}).to_id()
+
+            new_query_entry = {
+                "select": domain_batches[domain_id]["select"],
+                "metric_ids": domain_batches[domain_id]["metric_ids"],
+                "domain_kwargs": domain_kwargs,
+            }
+            new_batch_counter = batch_idx + 1
+
+            return final_domain_id, new_query_entry, new_batch_counter
+
+        return final_domain_id, new_query_entry, new_batch_counter
+
+    def _organize_metrics_by_domain(  # noqa: C901 # FIXME
+        self, metric_fn_bundle: Iterable[MetricComputationConfiguration], limit: int | None = None
+    ) -> list[dict]:
+        """Organize metrics from a bundle into domain-grouped queries.
+
+        Args:
+            metric_fn_bundle: The metric bundle containing configurations to organize.
+            limit: The maximum number of parameters per query.
+
+        Returns:
+            Dictionary of domain IDs mapped to query configurations
+            with select expressions and metric IDs.
+        """
+        queries: list[dict] = []
+        domain_batches: dict[IDDictID, dict] = {}
+        batch_counters: dict[IDDictID, int] = {}
+        domain_kwargs_map: dict[IDDictID, dict] = {}
+
+        for bundled_metric_configuration in metric_fn_bundle:
+            metric_to_resolve: MetricConfiguration = (
+                bundled_metric_configuration.metric_configuration
+            )
+            metric_fn: Any = bundled_metric_configuration.metric_fn
+            domain_kwargs: dict = bundled_metric_configuration.compute_domain_kwargs or {}
+            if not isinstance(domain_kwargs, IDDict):
+                domain_kwargs = IDDict(domain_kwargs)
+
+            domain_id = domain_kwargs.to_id()
+            selectable: sqlalchemy.Selectable = self.get_domain_records(domain_kwargs=domain_kwargs)
+
+            if domain_id not in domain_batches:
+                domain_batches[domain_id] = {"select": [], "metric_ids": []}
+                batch_counters[domain_id] = 0
+                domain_kwargs_map[domain_id] = domain_kwargs
+
+            if limit:
+                test_selects = domain_batches[domain_id]["select"] + [
+                    metric_fn.label(metric_to_resolve.metric_name)
+                ]
+                test_param_count = self._count_query_parameters(selectable, test_selects)
+
+                if test_param_count > limit and domain_batches[domain_id]["select"]:
+                    final_domain_id, new_query_entry, new_batch_counter = (
+                        self._finalize_domain_query(
+                            domain_id, domain_batches, batch_counters, domain_kwargs_map
+                        )
+                    )
+                    if final_domain_id is not None:
+                        assert new_query_entry is not None
+                        assert new_batch_counter is not None
+                        queries.append(new_query_entry)
+                        domain_batches[domain_id] = {"select": [], "metric_ids": []}
+                        batch_counters[domain_id] = new_batch_counter
+
+            if self.engine.dialect.name.lower() == GXSqlDialect.CLICKHOUSE:
+                domain_batches[domain_id]["select"].append(
+                    metric_fn.label(
+                        metric_to_resolve.metric_name.join(
+                            random.choices(string.ascii_lowercase, k=4)
+                        )
+                    )
+                )
+                domain_batches[domain_id]["metric_ids"].append(metric_to_resolve.id)
+            else:
+                domain_batches[domain_id]["select"].append(
+                    metric_fn.label(metric_to_resolve.metric_name)
+                )
+                domain_batches[domain_id]["metric_ids"].append(metric_to_resolve.id)
+
+        for domain_id in list(domain_batches.keys()):
+            final_domain_id, new_query_entry, new_batch_counter = self._finalize_domain_query(
+                domain_id, domain_batches, batch_counters, domain_kwargs_map
+            )
+            if final_domain_id is not None:
+                assert new_query_entry is not None
+                assert new_batch_counter is not None
+                queries.append(new_query_entry)
+                domain_batches[domain_id] = {"select": [], "metric_ids": []}
+                batch_counters[domain_id] = new_batch_counter
+
+        return queries
+
+    def _count_query_parameters(self, selectable: sqlalchemy.Selectable, select_list: list) -> int:
+        """Count the total number of parameters in a query with the given select expressions.
+
+        Args:
+            selectable: The base selectable object
+            select_list: List of SELECT expressions to include in the query
+
+        Returns:
+            Total number of parameters that would be generated when the query is compiled
+        """
+        DEFAULT_PARAMS_PER_SELECT = 2  # Conservative upper bound
+        if isinstance(selectable, sqlalchemy.TextClause):
+            test_query = sa.select(*select_list).select_from(selectable.columns().subquery())
+        elif isinstance(selectable, (sqlalchemy.Select, sqlalchemy.TextualSelect)):
+            test_query = sa.select(*select_list).select_from(selectable.subquery())
+        elif isinstance(selectable, sa.sql.FromClause):
+            test_query = sa.select(*select_list).select_from(selectable)
+        else:
+            return len(select_list) * DEFAULT_PARAMS_PER_SELECT
+        try:
+            compiled = test_query.compile(dialect=self.engine.dialect)
+            return len(compiled.params)
+        except Exception:
+            # If compilation fails, fall back to conservative upper bound estimate
+            return len(select_list) * DEFAULT_PARAMS_PER_SELECT
 
     def _get_partitioner_method(self, partitioner_method_name: str) -> Callable:
         """Get the appropriate partitioner method from the method name.
@@ -1187,8 +1365,8 @@ class SqlAlchemyExecutionEngine(ExecutionEngine):
         )
         temp_table_schema_name: Optional[str] = batch_spec.get("temp_table_schema_name")
 
-        source_schema_name: str = batch_spec.get("schema_name", None)
-        source_table_name: str = batch_spec.get("table_name", None)
+        source_schema_name: Optional[str] = batch_spec.get("schema_name", None)
+        source_table_name: Optional[str] = batch_spec.get("table_name", None)
 
         create_temp_table: bool = batch_spec.get("create_temp_table", self._create_temp_table)
         # this is where partitioner components are added to the selectable
@@ -1258,6 +1436,31 @@ class SqlAlchemyExecutionEngine(ExecutionEngine):
             with self.engine.connect() as connection:
                 yield connection
 
+    @staticmethod
+    def _execute_query_with_recovery(
+        connection: sqlalchemy.Connection,
+        query: sqlalchemy.Selectable | sqlalchemy.TextClause,
+    ) -> sqlalchemy.CursorResult | sqlalchemy.LegacyCursorResult:
+        """Execute a query with automatic recovery from invalid transaction state.
+
+        This handles PendingRollbackError which was introduced in SQLAlchemy 2.0.
+        For SQLAlchemy 1.x, this error doesn't exist and won't be raised.
+
+        Args:
+            connection: SQLAlchemy connection to use
+            query: Sqlalchemy selectable query.
+
+        Returns:
+            CursorResult for sqlalchemy 2.0+ or LegacyCursorResult for earlier versions.
+        """
+        try:
+            return connection.execute(query)  # type: ignore[arg-type] # Selectable union type too broad
+        except PendingRollbackError:
+            # Connection has an invalid transaction from a previous failed operation
+            # Roll back and retry with the same connection
+            connection.rollback()
+            return connection.execute(query)  # type: ignore[arg-type] # Selectable union type too broad
+
     @new_method_or_class(version="0.16.14")
     def execute_query(
         self, query: sqlalchemy.Selectable | sqlalchemy.TextClause
@@ -1271,15 +1474,37 @@ class SqlAlchemyExecutionEngine(ExecutionEngine):
             CursorResult for sqlalchemy 2.0+ or LegacyCursorResult for earlier versions.
         """
         with self.get_connection() as connection:
-            result = connection.execute(query)  # type: ignore[arg-type] # FIXME:Selectable overly broad
+            result = self._execute_query_with_recovery(connection, query)
 
         return result
+
+    @staticmethod
+    def _connection_has_transaction(connection: sqlalchemy.Connection) -> bool:
+        """Check if a connection has an active transaction.
+
+        This is specifically for SQLAlchemy 2.0+ autobegin behavior where connections
+        might not have an active transaction if the database is in autocommit mode.
+
+        Args:
+            connection: SQLAlchemy connection to check
+
+        Returns:
+            True if there's an active transaction, False otherwise
+        """
+        # This method is only called in the SQLAlchemy 2.0+ code path
+        # The in_transaction() method was added in 1.4, but we check for 2.0+
+        # because that's when autobegin behavior was introduced
+        if is_version_greater_or_equal(sqlalchemy.sqlalchemy.__version__, "2.0.0"):
+            return connection.in_transaction()
+        # For SQLAlchemy < 2.0, we use explicit connection.begin(), so always in transaction
+        return True
 
     @new_method_or_class(version="0.16.14")
     def execute_query_in_transaction(
         self, query: sqlalchemy.Selectable
     ) -> sqlalchemy.CursorResult | sqlalchemy.LegacyCursorResult:
-        """Execute a query using the underlying database engine within a transaction that will auto commit.
+        """Execute a query using the underlying database engine within a transaction
+        that will auto commit.
 
         Begin once: https://docs.sqlalchemy.org/en/20/core/connections.html#begin-once
 
@@ -1288,16 +1513,76 @@ class SqlAlchemyExecutionEngine(ExecutionEngine):
 
         Returns:
             CursorResult for sqlalchemy 2.0+ or LegacyCursorResult for earlier versions.
-        """  # noqa: E501 # FIXME CoP
+        """
         with self.get_connection() as connection:
             if (
                 is_version_greater_or_equal(sqlalchemy.sqlalchemy.__version__, "2.0.0")
                 and not connection.closed
             ):
-                result = connection.execute(query)  # type: ignore[call-overload] # FIXME:Selectable overly broad
-                connection.commit()
+                result = self._execute_query_with_recovery(connection, query)
+
+                # Some databases auto-commit and don't support explicit transaction management
+                # Try to commit, but ignore errors from databases that auto-commit
+                if self._connection_has_transaction(connection):
+                    try:
+                        connection.commit()
+                    except DatabaseError as e:
+                        # Databricks and other auto-commit databases may not have
+                        # an active transaction even though in_transaction() returns True
+                        if "no active transaction" not in str(e).lower():
+                            raise
             else:
                 with connection.begin():
-                    result = connection.execute(query)  # type: ignore[call-overload] # FIXME:Selectable overly broad
+                    result = self._execute_query_with_recovery(connection, query)
 
         return result
+
+    @override
+    def condition_to_filter_clause(self, condition: Condition) -> sa.ColumnElement:
+        # This override is just to help the type system,
+        # since we can't make the class generic on sqlalchemy
+        # since it's not installed in all environments."""
+        output = super().condition_to_filter_clause(condition)
+        if not isinstance(output, sa.ColumnElement):
+            raise InvalidFilterClause(output)
+        return output
+
+    @override
+    def _comparison_condition_to_filter_clause(  # noqa: C901, PLR0911
+        self, condition: ComparisonCondition
+    ) -> sa.ColumnElement:
+        col: sa.ColumnClause = sa.column(condition.column.name)
+        val = sa.literal(condition.parameter)
+        op = condition.operator
+        if op == Operator.LESS_THAN:
+            return col < val
+        elif op == Operator.LESS_THAN_OR_EQUAL:
+            return col <= val
+        elif op == Operator.EQUAL:
+            return col == val
+        elif op == Operator.NOT_EQUAL:
+            return col != val
+        elif op == Operator.GREATER_THAN:
+            return col > val
+        elif op == Operator.GREATER_THAN_OR_EQUAL:
+            return col >= val
+        elif op == Operator.IN:
+            return col.in_(condition.parameter)
+        elif op == Operator.NOT_IN:
+            return ~col.in_(condition.parameter)
+        else:
+            raise InvalidOperatorError(op)
+
+    @override
+    def _nullity_condition_to_filter_clause(self, condition: NullityCondition) -> sa.ColumnElement:
+        col: sa.ColumnClause = sa.column(condition.column.name)
+        return col.is_(None) if condition.is_null else col.isnot(None)
+
+    @override
+    def _and_condition_to_filter_clause(self, condition: AndCondition) -> sa.ColumnElement:
+        output = sa.and_(*[self.condition_to_filter_clause(c) for c in condition.conditions])
+        return output
+
+    @override
+    def _or_condition_to_filter_clause(self, condition: OrCondition) -> sa.ColumnElement:
+        return sa.or_(*[self.condition_to_filter_clause(c) for c in condition.conditions])

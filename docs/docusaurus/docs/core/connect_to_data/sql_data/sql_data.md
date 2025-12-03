@@ -33,7 +33,7 @@ All other SQL dialects are handled through the python module `SQLAlchemy`.  You 
 
 ## Create a SQL Data Source
 
-Data Sources tell GX where your data is located and how to connect to it.  With SQL databases this is done through a connection string you will provide.
+Data Sources tell GX where your data is located and how to connect to it.
 
 <CreateSqlDataSource/>
 
@@ -44,9 +44,5 @@ Data Sources tell GX where your data is located and how to connect to it.  With 
 ## Create a Batch Definition
 
 A Batch Definition allows you to request all the records from a Data Asset or a subset based on the contents of a date and time field.
-
-:::note For API-managed Expectations only
-If you use GX Cloud and GX Core together, note that Batch Definitions you create with the API apply to [API-managed Expectations](/cloud/expectations/manage_expectations.md#gx-managed-vs-api-managed-expectations) only.
-:::
 
 <CreateBatchDefinition/>

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Optional
 
 from great_expectations.expectations.expectation import (
     ColumnMapExpectation,
+    _style_row_condition,
     render_suite_parameter_string,
 )
 from great_expectations.render import LegacyRendererType, RenderedStringTemplateContent
@@ -14,7 +15,7 @@ from great_expectations.render.renderer_configuration import (
 )
 from great_expectations.render.util import (
     num_to_str,
-    parse_row_condition_string_pandas_engine,
+    parse_row_condition_string,
     substitute_none_for_missing,
 )
 
@@ -53,6 +54,9 @@ class ExpectColumnValuesToBeDateutilParseable(ColumnMapExpectation):
         meta (dict or None): \
             A JSON-serializable dictionary (nesting allowed) that will be included in the output without \
             modification. For more detail, see [meta](https://docs.greatexpectations.io/docs/reference/expectations/standard_arguments/#meta).
+        severity (str or None): \
+            {FAILURE_SEVERITY_DESCRIPTION} \
+            For more detail, see [failure severity](https://docs.greatexpectations.io/docs/cloud/expectations/expectations_overview/#failure-severity).
 
     Returns:
         An [ExpectationSuiteValidationResult](https://docs.greatexpectations.io/docs/terms/validation_result)
@@ -125,9 +129,10 @@ class ExpectColumnValuesToBeDateutilParseable(ColumnMapExpectation):
 
         template_str = "values must be parseable by dateutil"
 
-        if params["mostly"] is not None and params["mostly"] < 1.0:
-            params["mostly_pct"] = num_to_str(params["mostly"] * 100, no_scientific=True)
-            # params["mostly_pct"] = "{:.14f}".format(params["mostly"]*100).rstrip("0").rstrip(".")
+        if params["mostly"] is not None:
+            if isinstance(params["mostly"], (int, float)) and params["mostly"] < 1.0:
+                params["mostly_pct"] = num_to_str(params["mostly"] * 100, no_scientific=True)
+                # params["mostly_pct"] = "{:.14f}".format(params["mostly"]*100).rstrip("0").rstrip(".")  # noqa: E501 # FIXME CoP
             template_str += ", at least $mostly_pct % of the time."
         else:
             template_str += "."
@@ -136,12 +141,14 @@ class ExpectColumnValuesToBeDateutilParseable(ColumnMapExpectation):
             template_str = f"$column {template_str}"
 
         if params["row_condition"] is not None:
-            (
+            conditional_template_str = parse_row_condition_string(params["row_condition"])
+
+            template_str, styling = _style_row_condition(
                 conditional_template_str,
-                conditional_params,
-            ) = parse_row_condition_string_pandas_engine(params["row_condition"])
-            template_str = f"{conditional_template_str}, then {template_str}"
-            params.update(conditional_params)
+                template_str,
+                params,
+                styling,
+            )
 
         return [
             RenderedStringTemplateContent(

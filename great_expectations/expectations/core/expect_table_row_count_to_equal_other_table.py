@@ -1,18 +1,23 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional, Tuple, Type, Union
 
 from great_expectations.compatibility import pydantic
 from great_expectations.compatibility.typing_extensions import override
+from great_expectations.core.suite_parameters import (
+    SuiteParameterDict,  # noqa: TC001 # FIXME CoP
+)
 from great_expectations.expectations.expectation import (
     BatchExpectation,
     render_suite_parameter_string,
 )
 from great_expectations.expectations.metadata_types import DataQualityIssues, SupportedDataSources
+from great_expectations.expectations.model_field_descriptions import FAILURE_SEVERITY_DESCRIPTION
 from great_expectations.expectations.model_field_types import (
     ConditionParser,  # noqa: TC001 # FIXME CoP
 )
+from great_expectations.expectations.row_conditions import RowConditionType  # noqa: TC001
 from great_expectations.render import (
     LegacyDiagnosticRendererType,
     LegacyRendererType,
@@ -47,6 +52,10 @@ OTHER_TABLE_NAME_DESCRIPTION = (
 SUPPORTED_DATA_SOURCES = [
     SupportedDataSources.SQLITE.value,
     SupportedDataSources.POSTGRESQL.value,
+    SupportedDataSources.AURORA.value,
+    SupportedDataSources.CITUS.value,
+    SupportedDataSources.ALLOY.value,
+    SupportedDataSources.NEON.value,
     SupportedDataSources.REDSHIFT.value,
     SupportedDataSources.MYSQL.value,
     SupportedDataSources.MSSQL.value,
@@ -78,6 +87,9 @@ class ExpectTableRowCountToEqualOtherTable(BatchExpectation):
         meta (dict or None): \
             A JSON-serializable dictionary (nesting allowed) that will be included in the output without \
             modification. For more detail, see [meta](https://docs.greatexpectations.io/docs/reference/expectations/standard_arguments/#meta).
+        severity (str or None): \
+            {FAILURE_SEVERITY_DESCRIPTION} \
+            For more detail, see [failure severity](https://docs.greatexpectations.io/docs/cloud/expectations/expectations_overview/#failure-severity).
 
     Returns:
         An [ExpectationSuiteValidationResult](https://docs.greatexpectations.io/docs/terms/validation_result)
@@ -96,6 +108,9 @@ class ExpectTableRowCountToEqualOtherTable(BatchExpectation):
         [{SUPPORTED_DATA_SOURCES[4]}](https://docs.greatexpectations.io/docs/application_integration_support/)
         [{SUPPORTED_DATA_SOURCES[5]}](https://docs.greatexpectations.io/docs/application_integration_support/)
         [{SUPPORTED_DATA_SOURCES[6]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[7]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[8]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[9]}](https://docs.greatexpectations.io/docs/application_integration_support/)
 
     Data Quality Issues:
         {DATA_QUALITY_ISSUES[0]}
@@ -160,8 +175,10 @@ class ExpectTableRowCountToEqualOtherTable(BatchExpectation):
                 }}
     """  # noqa: E501 # FIXME CoP
 
-    other_table_name: str = pydantic.Field(description=OTHER_TABLE_NAME_DESCRIPTION)
-    row_condition: Union[str, None] = None
+    other_table_name: Union[str, SuiteParameterDict] = pydantic.Field(
+        description=OTHER_TABLE_NAME_DESCRIPTION
+    )
+    row_condition: RowConditionType = None
     condition_parser: Union[ConditionParser, None] = None
 
     library_metadata: ClassVar[Dict[str, Union[str, list, bool]]] = {
@@ -177,6 +194,7 @@ class ExpectTableRowCountToEqualOtherTable(BatchExpectation):
     _library_metadata = library_metadata
 
     metric_dependencies = ("table.row_count",)
+    domain_keys: ClassVar[Tuple[str, ...]] = ("row_condition", "condition_parser")
     success_keys = ("other_table_name",)
     args_keys = ("other_table_name",)
 
@@ -312,6 +330,9 @@ class ExpectTableRowCountToEqualOtherTable(BatchExpectation):
         assert table_row_count_metric_config_self, "table_row_count_metric should not be None"
         copy_table_row_count_metric_config_self = deepcopy(table_row_count_metric_config_self)
         copy_table_row_count_metric_config_self.metric_domain_kwargs["table"] = other_table_name
+        # Remove row_condition from other table - it should only apply to the main table
+        copy_table_row_count_metric_config_self.metric_domain_kwargs.pop("row_condition", None)
+        copy_table_row_count_metric_config_self.metric_domain_kwargs.pop("condition_parser", None)
         # instantiating a new MetricConfiguration gives us a new id
         table_row_count_metric_config_other = MetricConfiguration(
             metric_name="table.row_count",

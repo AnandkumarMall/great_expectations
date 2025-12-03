@@ -47,16 +47,20 @@ create_a_data_context = [
         # data_context_dir="",
         backend_dependencies=[],
     ),
-    # TODO: Re-enable this once a --docs-tests-cloud environment is available.
-    # IntegrationTestFixture(
-    #     # To test, run:
-    #     # pytest --docs-tests --cloud -k "create_a_cloud_data_context" tests/integration/test_script_runner.py
-    #     name="create_a_cloud_data_context",
-    #     user_flow_script="docs/docusaurus/docs/core/set_up_a_gx_environment/_create_a_data_context/cloud_data_context.py",
-    #     # data_dir="",
-    #     # data_context_dir="",
-    #     backend_dependencies=[],
-    # ),
+    IntegrationTestFixture(
+        # To test, run:
+        # pytest --docs-tests --cloud -k "connect_python" tests/integration/test_script_runner.py
+        name="connect_python",
+        user_flow_script="docs/docusaurus/docs/cloud/connect/connect_python.py",
+        backend_dependencies=[BackendDependencies.CLOUD],
+    ),
+    IntegrationTestFixture(
+        # To test, run:
+        # pytest --docs-tests --cloud -k "create_a_cloud_data_context" tests/integration/test_script_runner.py
+        name="create_a_cloud_data_context",
+        user_flow_script="docs/docusaurus/docs/core/set_up_a_gx_environment/_create_a_data_context/cloud_data_context.py",
+        backend_dependencies=[BackendDependencies.CLOUD],
+    ),
     IntegrationTestFixture(
         # To test, run:
         # pytest --docs-tests -k "create_a_file_data_context" tests/integration/test_script_runner.py
@@ -428,6 +432,69 @@ example_scripts_for_define_expectations = [
     ),
 ]
 
+docs_examples_cloud_validations = [
+    # Validate GX-managed Expectations for an entire Data Asset.
+    IntegrationTestFixture(
+        # To test, run:
+        # pytest --docs-tests -k "cloud_docs_gx_expectations_entire_asset" tests/integration/test_script_runner.py
+        name="cloud_docs_gx_expectations_entire_asset",
+        user_flow_script="docs/docusaurus/docs/cloud/validations/code_samples/gx_expectations_entire_asset.py",
+        data_dir="docs/docusaurus/docs/components/_testing/test_data_sets/single_test_file",
+        # data_context_dir="",
+        backend_dependencies=[BackendDependencies.CLOUD],
+    ),
+    # Validate GX-managed Expectations for a time-based subset of a SQL Data Asset.
+    IntegrationTestFixture(
+        # To test, run:
+        # pytest --docs-tests -k "cloud_docs_gx_expectations_batch_sql" tests/integration/test_script_runner.py
+        name="cloud_docs_gx_expectations_batch_sql",
+        user_flow_script="docs/docusaurus/docs/cloud/validations/code_samples/gx_expectations_batch_sql.py",
+        data_dir="docs/docusaurus/docs/components/_testing/test_data_sets/single_test_file",
+        # data_context_dir="",
+        backend_dependencies=[BackendDependencies.CLOUD],
+    ),
+    # Validate GX-managed Expectations for a time-based subset of a filesystem Data Asset.
+    IntegrationTestFixture(
+        # To test, run:
+        # pytest --docs-tests -k "cloud_docs_gx_expectations_batch_filesystem" tests/integration/test_script_runner.py
+        name="cloud_docs_gx_expectations_batch_filesystem",
+        user_flow_script="docs/docusaurus/docs/cloud/validations/code_samples/gx_expectations_batch_filesystem.py",
+        # data_dir="",
+        # data_context_dir="",
+        backend_dependencies=[BackendDependencies.CLOUD],
+    ),
+    # Validate API-managed Expectations for an entire Data Asset.
+    IntegrationTestFixture(
+        # To test, run:
+        # pytest --docs-tests -k "cloud_docs_api_expectations_entire_asset" tests/integration/test_script_runner.py
+        name="cloud_docs_api_expectations_entire_asset",
+        user_flow_script="docs/docusaurus/docs/cloud/validations/code_samples/api_expectations_entire_asset.py",
+        data_dir="docs/docusaurus/docs/components/_testing/test_data_sets/single_test_file",
+        # data_context_dir="",
+        backend_dependencies=[BackendDependencies.CLOUD],
+    ),
+    # Validate API-managed Expectations for a time-based subset of a SQL Data Asset.
+    IntegrationTestFixture(
+        # To test, run:
+        # pytest --docs-tests -k "cloud_docs_api_expectations_batch_sql" tests/integration/test_script_runner.py
+        name="cloud_docs_api_expectations_batch_sql",
+        user_flow_script="docs/docusaurus/docs/cloud/validations/code_samples/api_expectations_batch_sql.py",
+        data_dir="docs/docusaurus/docs/components/_testing/test_data_sets/single_test_file",
+        # data_context_dir="",
+        backend_dependencies=[BackendDependencies.CLOUD],
+    ),
+    # Validate API-managed Expectations for a time-based subset of a filesystem Data Asset.
+    IntegrationTestFixture(
+        # To test, run:
+        # pytest --docs-tests -k "cloud_docs_api_expectations_batch_filesystem" tests/integration/test_script_runner.py
+        name="cloud_docs_api_expectations_batch_filesystem",
+        user_flow_script="docs/docusaurus/docs/cloud/validations/code_samples/api_expectations_batch_filesystem.py",
+        # data_dir="",
+        # data_context_dir="",
+        backend_dependencies=[BackendDependencies.CLOUD],
+    ),
+]
+
 docs_examples_trigger_actions_based_on_validation_results = [
     # Create a Checkpoint
     IntegrationTestFixture(
@@ -469,6 +536,26 @@ docs_examples_trigger_actions_based_on_validation_results = [
         # data_context_dir="",
         backend_dependencies=[],
     ),
+    # Create an Action for a Cloud Checkpoint
+    IntegrationTestFixture(
+        # To test, run:
+        # pytest --docs-tests -k "cloud_docs_example_create_a_checkpoint" tests/integration/test_script_runner.py
+        name="cloud_docs_example_create_a_checkpoint",
+        user_flow_script="docs/docusaurus/docs/cloud/alerts/_examples/create_a_checkpoint_with_actions.py",
+        data_dir="docs/docusaurus/docs/components/_testing/test_data_sets/single_test_file",
+        # data_context_dir="",
+        backend_dependencies=[],
+    ),
+    # Create a custom Action for a Cloud Checkpoint
+    IntegrationTestFixture(
+        # To test, run:
+        # pytest --docs-tests -k "cloud_docs_example_create_a_custom_action" tests/integration/test_script_runner.py
+        name="cloud_docs_example_create_a_custom_action",
+        user_flow_script="docs/docusaurus/docs/cloud/alerts/_examples/create_a_custom_action.py",
+        data_dir="docs/docusaurus/docs/components/_testing/test_data_sets/single_test_file",
+        # data_context_dir="",
+        backend_dependencies=[],
+    ),
 ]
 
 docs_examples_customize_expectations = [
@@ -483,9 +570,9 @@ docs_examples_customize_expectations = [
     ),
     IntegrationTestFixture(
         # To test, run:
-        # pytest --docs-tests -k "docs_example_expectation_conditions" tests/integration/test_script_runner.py
-        name="docs_example_expectation_conditions",
-        user_flow_script="docs/docusaurus/docs/core/customize_expectations/_examples/expectation_conditions.py",
+        # pytest --docs-tests -k "docs_example_row_conditions" tests/integration/test_script_runner.py
+        name="docs_example_row_conditions",
+        user_flow_script="docs/docusaurus/docs/core/customize_expectations/_examples/row_conditions.py",
         data_dir="docs/docusaurus/docs/components/_testing/test_data_sets/titantic_test_file",
         # data_context_dir="",
         backend_dependencies=[],
@@ -495,6 +582,15 @@ docs_examples_customize_expectations = [
         # pytest --docs-tests -k "docs_example_use_sql_to_define_a_custom_expectation" tests/integration/test_script_runner.py
         name="docs_example_use_sql_to_define_a_custom_expectation",
         user_flow_script="docs/docusaurus/docs/core/customize_expectations/_examples/use_sql_to_define_a_custom_expectation.py",
+        data_dir="tests/test_sets/taxi_yellow_tripdata_samples/sqlite",
+        # data_context_dir="",
+        backend_dependencies=[],
+    ),
+    IntegrationTestFixture(
+        # To test, run:
+        # pytest --docs-tests -k "docs_example_define_a_multi_source_expectation" tests/integration/test_script_runner.py
+        name="docs_example_define_a_multi_source_expectation",
+        user_flow_script="docs/docusaurus/docs/core/customize_expectations/_examples/define_a_multi_source_expectation.py",
         data_dir="tests/test_sets/taxi_yellow_tripdata_samples/sqlite",
         # data_context_dir="",
         backend_dependencies=[],
@@ -625,7 +721,9 @@ learn_data_quality_use_cases = [
         user_flow_script="docs/docusaurus/docs/reference/learn/data_quality_use_cases/uniqueness_resources/uniqueness_workflow.py",
         data_dir="tests/test_sets/learn_data_quality_use_cases/",
         util_script="tests/test_utils.py",
-        backend_dependencies=[BackendDependencies.POSTGRESQL],
+        backend_dependencies=[
+            BackendDependencies.POSTGRESQL,
+        ],
     ),
     # Volume.
     IntegrationTestFixture(
@@ -642,32 +740,30 @@ learn_data_quality_use_cases = [
         util_script="tests/test_utils.py",
         backend_dependencies=[BackendDependencies.POSTGRESQL],
     ),
+    # Unstructured data.
+    IntegrationTestFixture(
+        name="unstructured_data",
+        user_flow_script="docs/docusaurus/docs/reference/learn/data_quality_use_cases/unstructured_data/unstructured_data.py",
+        data_dir="tests/test_sets/learn_data_quality_use_cases/",
+        util_script="tests/test_utils.py",
+        backend_dependencies=[],
+    ),
 ]
 
 # Extend the docs_tests list with the above sublists (only the docs_tests list is imported
 # into `test_script_runner.py` and actually used in CI checks).
 docs_tests.extend(install_gx)
-
 docs_tests.extend(try_gx)
-
 docs_tests.extend(create_a_data_context)
-
 docs_tests.extend(connect_to_filesystem_data_create_a_data_source)
 docs_tests.extend(connect_to_filesystem_data_create_a_data_asset)
 docs_tests.extend(connect_to_filesystem_data_create_a_batch_definition)
-
 docs_tests.extend(connect_to_dataframe_data)
-
 docs_tests.extend(docs_example_scripts_run_validations)
-
 docs_tests.extend(example_scripts_for_define_expectations)
-
 docs_tests.extend(docs_examples_customize_expectations)
-
+docs_tests.extend(docs_examples_cloud_validations)
 docs_tests.extend(docs_examples_trigger_actions_based_on_validation_results)
-
 docs_tests.extend(docs_example_configure_project_settings)
-
 docs_tests.extend(docs_examples_configure_data_docs)
-
 docs_tests.extend(learn_data_quality_use_cases)

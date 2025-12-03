@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Union
 
+from great_expectations.core.suite_parameters import (
+    SuiteParameterDict,  # noqa: TC001 # FIXME CoP
+)
 from great_expectations.expectations.expectation import (
     ColumnMapExpectation,
+    _style_row_condition,
     render_suite_parameter_string,
 )
 from great_expectations.render import LegacyRendererType, RenderedStringTemplateContent
@@ -14,7 +18,7 @@ from great_expectations.render.renderer_configuration import (
 )
 from great_expectations.render.util import (
     num_to_str,
-    parse_row_condition_string_pandas_engine,
+    parse_row_condition_string,
     substitute_none_for_missing,
 )
 
@@ -62,6 +66,9 @@ class ExpectMulticolumnValuesToBeUnique(ColumnMapExpectation):
         meta (dict or None): \
             A JSON-serializable dictionary (nesting allowed) that will be included in the output without \
             modification. For more detail, see [meta](https://docs.greatexpectations.io/docs/reference/expectations/standard_arguments/#meta).
+        severity (str or None): \
+            {FAILURE_SEVERITY_DESCRIPTION} \
+            For more detail, see [failure severity](https://docs.greatexpectations.io/docs/cloud/expectations/expectations_overview/#failure-severity).
 
      Returns:
          An [ExpectationSuiteValidationResult](https://docs.greatexpectations.io/docs/terms/validation_result)
@@ -70,7 +77,7 @@ class ExpectMulticolumnValuesToBeUnique(ColumnMapExpectation):
     """  # noqa: E501 # FIXME CoP
 
     column_list: Union[tuple, list]
-    ignore_row_if: str = "all_values_are_missing"
+    ignore_row_if: Union[str, SuiteParameterDict] = "all_values_are_missing"
 
     library_metadata = {
         "maturity": "production",
@@ -180,15 +187,14 @@ class ExpectMulticolumnValuesToBeUnique(ColumnMapExpectation):
         params[f"column_list_{last_idx!s}"] = params["column_list"][last_idx]
 
         if params["row_condition"] is not None:
-            (
-                conditional_template_str,
-                conditional_params,
-            ) = parse_row_condition_string_pandas_engine(params["row_condition"])
-            template_str = (
-                conditional_template_str + ", then " + template_str[0].lower() + template_str[1:]
-            )
-            params.update(conditional_params)
+            conditional_template_str = parse_row_condition_string(params["row_condition"])
 
+            template_str, styling = _style_row_condition(
+                conditional_template_str,
+                template_str[0].lower() + template_str[1:],
+                params,
+                styling,
+            )
         return [
             RenderedStringTemplateContent(
                 **{

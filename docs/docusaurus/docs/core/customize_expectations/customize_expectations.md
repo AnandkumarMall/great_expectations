@@ -16,9 +16,9 @@ import OverviewCard from '@site/src/components/OverviewCard';
 <LinkCardGrid>
   <LinkCard 
     topIcon 
-    label="Restrict an Expectation with row conditions"
-    description="Use `row_conditions` to restrict the data an Expectation evaluates"
-    to="/core/customize_expectations/expectation_conditions" 
+    label="Restrict an Expectation to specific rows"
+    description="Filter your data so that only a subset of rows are validated for a given Expectation."
+    to="/core/customize_expectations/row_conditions" 
     icon="/img/expectation_icon.svg" 
   />
   <LinkCard 
@@ -33,6 +33,13 @@ import OverviewCard from '@site/src/components/OverviewCard';
       label="Use SQL to define a custom Expectation"
       description="Create an Expectation that operates by evaluating the results of a customized SQL query."
       to="/core/customize_expectations/use_sql_to_define_a_custom_expectation" 
+      icon="/img/expectation_icon.svg" 
+    /> 
+    <LinkCard 
+      topIcon 
+      label="Define a Multi-source Expectation"
+      description="Create an Expectation that queries multiple Data Sources and compares the results for equality."
+      to="/core/customize_expectations/define_a_multi_source_expectation" 
       icon="/img/expectation_icon.svg" 
     /> 
 </LinkCardGrid>

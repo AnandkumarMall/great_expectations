@@ -10,7 +10,6 @@ module.exports = {
   tagline: 'Always know what to expect from your data.',
   url: 'https://docs.greatexpectations.io', // Url to your site with no trailing slash
   baseUrl: '/',
-  customFields: { posthogApiKey: process.env.POSTHOG_API_KEY },
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'throw',
   favicon: '/img/gx-mark.png',
@@ -25,17 +24,17 @@ module.exports = {
         id: 'GTM-K63L45F' // GTM Container ID
       }
     ],
+    // PostHog plugin for documentation analytics only
     [
       'posthog-docusaurus',
       {
         apiKey: process.env.POSTHOG_API_KEY,
         enableInDevelopment: false,
-        debug: process.env.NODE_ENV === 'development',
-        autocapture: {
-          capture_pageview: false
-        }
+        debug: false,
+        // Use history_change for SPA pageview tracking
+        capture_pageview: 'history_change',
       }
-    ]
+    ],
   ],
 
   scripts: [
@@ -43,10 +42,6 @@ module.exports = {
       src: '/scripts/set-tab.js',
       async: true,
       defer: true
-    },
-    {
-      src: '/scripts/web-tracking.js',
-      async: true
     },
     {
       src: 'https://fast.wistia.net/assets/external/E-v1.js',
@@ -197,18 +192,18 @@ module.exports = {
         },
         {
           type: 'dropdown',
-          label: 'Resources',
+          label: 'Help',
           items: [
             {
               type: 'doc',
               label: 'Get support',
-              docId: 'resources/get_support',
+              docId: 'help/get_support',
               className: 'non-versioned-section'
             },
             {
               type: 'doc',
-              label: 'Integration support policy',
-              docId: 'application_integration_support',
+              label: 'Compatibility reference',
+              docId: 'help/compatibility_reference',
               className: 'non-versioned-section'
             },
             {
@@ -253,8 +248,8 @@ module.exports = {
               to: 'https://greatexpectations.io/gx-oss'
             },
             {
-              label: 'Integration support policy',
-              to: '/docs/application_integration_support'
+              label: 'Compatibility reference',
+              to: '/docs/help/compatibility_reference'
             }
           ]
         },
@@ -318,7 +313,7 @@ module.exports = {
           lastVersion: 'current',
           versions: {
             current: {
-              label: '1.4.5',
+              label: '1.9.1',
             },
             ['0.18']: {
               label: '0.18.21',

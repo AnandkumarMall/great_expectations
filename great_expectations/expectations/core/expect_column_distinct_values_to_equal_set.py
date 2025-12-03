@@ -5,12 +5,14 @@ from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional, Type, Union
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.expectations.expectation import (
     ColumnAggregateExpectation,
+    _style_row_condition,
     parse_value_to_observed_type,
     render_suite_parameter_string,
 )
 from great_expectations.expectations.metadata_types import DataQualityIssues, SupportedDataSources
 from great_expectations.expectations.model_field_descriptions import (
     COLUMN_DESCRIPTION,
+    FAILURE_SEVERITY_DESCRIPTION,
     VALUE_SET_DESCRIPTION,
 )
 from great_expectations.expectations.model_field_types import (
@@ -30,7 +32,7 @@ from great_expectations.render.renderer_configuration import (
     RendererValueType,
 )
 from great_expectations.render.util import (
-    parse_row_condition_string_pandas_engine,
+    parse_row_condition_string,
     substitute_none_for_missing,
 )
 
@@ -50,6 +52,10 @@ SUPPORTED_DATA_SOURCES = [
     SupportedDataSources.SPARK.value,
     SupportedDataSources.SQLITE.value,
     SupportedDataSources.POSTGRESQL.value,
+    SupportedDataSources.AURORA.value,
+    SupportedDataSources.CITUS.value,
+    SupportedDataSources.ALLOY.value,
+    SupportedDataSources.NEON.value,
     SupportedDataSources.MYSQL.value,
     SupportedDataSources.MSSQL.value,
     SupportedDataSources.BIGQUERY.value,
@@ -86,6 +92,9 @@ class ExpectColumnDistinctValuesToEqualSet(ColumnAggregateExpectation):
         meta (dict or None): \
             A JSON-serializable dictionary (nesting allowed) that will be included in the output without \
             modification. For more detail, see [meta](https://docs.greatexpectations.io/docs/reference/expectations/standard_arguments/#meta).
+        severity (str or None): \
+            {FAILURE_SEVERITY_DESCRIPTION} \
+            For more detail, see [failure severity](https://docs.greatexpectations.io/docs/cloud/expectations/expectations_overview/#failure-severity).
 
     Returns:
         An [ExpectationSuiteValidationResult](https://docs.greatexpectations.io/docs/terms/validation_result)
@@ -106,6 +115,10 @@ class ExpectColumnDistinctValuesToEqualSet(ColumnAggregateExpectation):
         [{SUPPORTED_DATA_SOURCES[6]}](https://docs.greatexpectations.io/docs/application_integration_support/)
         [{SUPPORTED_DATA_SOURCES[7]}](https://docs.greatexpectations.io/docs/application_integration_support/)
         [{SUPPORTED_DATA_SOURCES[8]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[9]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[10]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[11]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[12]}](https://docs.greatexpectations.io/docs/application_integration_support/)
 
     Data Quality Issues:
         {DATA_QUALITY_ISSUES[0]}
@@ -287,7 +300,7 @@ class ExpectColumnDistinctValuesToEqualSet(ColumnAggregateExpectation):
     @classmethod
     @renderer(renderer_type=LegacyRendererType.PRESCRIPTIVE)
     @render_suite_parameter_string
-    def _prescriptive_renderer(  # noqa: C901 #  too complex
+    def _prescriptive_renderer(  #  too complex
         cls,
         configuration: Optional[ExpectationConfiguration] = None,
         result: Optional[ExpectationValidationResult] = None,
@@ -321,36 +334,15 @@ class ExpectColumnDistinctValuesToEqualSet(ColumnAggregateExpectation):
         if renderer_configuration.include_column_name:
             template_str = f"$column {template_str}"
 
-        if params["row_condition"] is not None:
-            (
-                conditional_template_str,
-                conditional_params,
-            ) = parse_row_condition_string_pandas_engine(params["row_condition"])
-            template_str = f"{conditional_template_str}, then {template_str}"
-            params.update(conditional_params)
-
-        if params["value_set"] is None or len(params["value_set"]) == 0:
-            values_string = "[ ]"
-        else:
-            for i, v in enumerate(params["value_set"]):
-                params[f"v__{i!s}"] = v
-
-            values_string = " ".join([f"$v__{i!s}" for i, v in enumerate(params["value_set"])])
-
-        template_str = f"distinct values must match this set: {values_string}."
-
-        if renderer_configuration.include_column_name:
-            template_str = f"$column {template_str}"
-
-        if params["row_condition"] is not None:
-            (
-                conditional_template_str,
-                conditional_params,
-            ) = parse_row_condition_string_pandas_engine(params["row_condition"])
-            template_str = f"{conditional_template_str}, then {template_str}"
-            params.update(conditional_params)
-
         styling = runtime_configuration.get("styling", {}) if runtime_configuration else {}
+        if params["row_condition"] is not None:
+            conditional_template_str = parse_row_condition_string(params["row_condition"])
+            template_str, styling = _style_row_condition(
+                conditional_template_str,
+                template_str,
+                params,
+                styling,
+            )
 
         return [
             RenderedStringTemplateContent(

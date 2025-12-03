@@ -74,6 +74,9 @@ ITEMS_IGNORED_FROM_PUBLIC_API = [
         file=pathlib.Path("great_expectations/core/factory/factory.py"), name="all"
     ),
     PrintableDefinition(
+        file=pathlib.Path("great_expectations/core/factory/factory.py"), name="delete"
+    ),
+    PrintableDefinition(
         file=pathlib.Path("great_expectations/core/factory/factory.py"), name="get"
     ),
     PrintableDefinition(
@@ -463,6 +466,12 @@ ITEMS_IGNORED_FROM_PUBLIC_API = [
     ),
     PrintableDefinition(
         file=pathlib.Path(
+            "great_expectations/expectations/core/expect_column_proportion_of_non_null_values_to_be_between.py"
+        ),
+        name="ExpectColumnProportionOfNonNullValuesToBeBetween",
+    ),
+    PrintableDefinition(
+        file=pathlib.Path(
             "great_expectations/expectations/core/expect_column_proportion_of_unique_values_to_be_between.py"
         ),
         name="ExpectColumnProportionOfUniqueValuesToBeBetween",
@@ -517,6 +526,12 @@ ITEMS_IGNORED_FROM_PUBLIC_API = [
     ),
     PrintableDefinition(
         file=pathlib.Path(
+            "great_expectations/expectations/core/expect_column_distinct_values_to_be_in_set.py"
+        ),
+        name="ExpectColumnDistinctValuesToBeInSet",
+    ),
+    PrintableDefinition(
+        file=pathlib.Path(
             "great_expectations/expectations/core/expect_compound_columns_to_be_unique.py"
         ),
         name="ExpectCompoundColumnsToBeUnique",
@@ -526,6 +541,12 @@ ITEMS_IGNORED_FROM_PUBLIC_API = [
             "great_expectations/expectations/core/expect_multicolumn_sum_to_equal.py"
         ),
         name="ExpectMulticolumnSumToEqual",
+    ),
+    PrintableDefinition(
+        file=pathlib.Path(
+            "great_expectations/expectations/core/expect_query_results_to_match_comparison.py"
+        ),
+        name="ExpectQueryResultsToMatchComparison",
     ),
     PrintableDefinition(
         file=pathlib.Path(
@@ -680,18 +701,6 @@ ITEMS_IGNORED_FROM_PUBLIC_API = [
         name="get_validator",
     ),
     PrintableDefinition(
-        file=pathlib.Path(
-            "great_expectations/experimental/rule_based_profiler/helpers/util.py"
-        ),
-        name="build_batch_request",
-    ),
-    PrintableDefinition(
-        file=pathlib.Path(
-            "great_expectations/experimental/rule_based_profiler/rule_based_profiler.py"
-        ),
-        name="run",
-    ),
-    PrintableDefinition(
         file=pathlib.Path("great_expectations/render/components.py"),
         name="CollapseContent",
     ),
@@ -779,5 +788,23 @@ ITEMS_IGNORED_FROM_PUBLIC_API = [
     ),
     PrintableDefinition(
         file=pathlib.Path("great_expectations/validator/validator.py"), name="validate"
+    ),
+    PrintableDefinition(
+        file=pathlib.Path("great_expectations/core/partitioners.py"),
+        name="ColumnPartitionerDaily",
+    ),
+    PrintableDefinition(
+        file=pathlib.Path("great_expectations/core/partitioners.py"),
+        name="FileNamePartitionerDaily",
+    ),
+    PrintableDefinition(
+        file=pathlib.Path(
+            "great_expectations/data_context/data_context/abstract_data_context.py"
+        ),
+        name="update_datasource",
+    ),
+    PrintableDefinition(
+        file=pathlib.Path("great_expectations/datasource/fluent/sources.py"),
+        name="update_datasource",
     ),
 ]

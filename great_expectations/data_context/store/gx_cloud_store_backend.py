@@ -40,6 +40,7 @@ class ErrorPayload(TypedDict):
 class EndpointVersion(str, Enum):
     V0 = "V0"
     V1 = "V1"
+    V2 = "V2"
 
 
 def get_user_friendly_error_message(
@@ -104,11 +105,11 @@ class GXCloudStoreBackend(StoreBackend, metaclass=ABCMeta):
 
     _ENDPOINT_VERSION_LOOKUP: dict[str, EndpointVersion] = {
         GXCloudRESTResource.CHECKPOINT: EndpointVersion.V1,
-        GXCloudRESTResource.DATASOURCE: EndpointVersion.V1,
+        GXCloudRESTResource.DATASOURCE: EndpointVersion.V2,
         GXCloudRESTResource.DATA_ASSET: EndpointVersion.V1,
         GXCloudRESTResource.DATA_CONTEXT: EndpointVersion.V1,
         GXCloudRESTResource.DATA_CONTEXT_VARIABLES: EndpointVersion.V1,
-        GXCloudRESTResource.EXPECTATION_SUITE: EndpointVersion.V1,
+        GXCloudRESTResource.EXPECTATION_SUITE: EndpointVersion.V2,
         GXCloudRESTResource.VALIDATION_DEFINITION: EndpointVersion.V1,
         GXCloudRESTResource.VALIDATION_RESULT: EndpointVersion.V1,
     }
@@ -213,6 +214,7 @@ class GXCloudStoreBackend(StoreBackend, metaclass=ABCMeta):
             base_url=self.ge_cloud_base_url,
             organization_id=self.ge_cloud_credentials["organization_id"],
             resource_name=self.ge_cloud_resource_name,
+            workspace_id=self.ge_cloud_credentials.get("workspace_id"),
         )
 
         payload = self._send_get_request_to_api(url=url)
@@ -276,6 +278,7 @@ class GXCloudStoreBackend(StoreBackend, metaclass=ABCMeta):
             base_url=self.ge_cloud_base_url,
             organization_id=organization_id,
             resource_name=self.ge_cloud_resource_name,
+            workspace_id=self.ge_cloud_credentials.get("workspace_id"),
         )
 
         if id:
@@ -368,6 +371,7 @@ class GXCloudStoreBackend(StoreBackend, metaclass=ABCMeta):
         resource_type = self.ge_cloud_resource_type
         resource_name = self.ge_cloud_resource_name
         organization_id = self.ge_cloud_credentials["organization_id"]
+        workspace_id = self.ge_cloud_credentials.get("workspace_id")
 
         attributes_key = self.PAYLOAD_ATTRIBUTES_KEYS[resource_type]
 
@@ -384,6 +388,7 @@ class GXCloudStoreBackend(StoreBackend, metaclass=ABCMeta):
             base_url=self.ge_cloud_base_url,
             organization_id=organization_id,
             resource_name=resource_name,
+            workspace_id=workspace_id,
         )
 
         try:
@@ -439,6 +444,7 @@ class GXCloudStoreBackend(StoreBackend, metaclass=ABCMeta):
             base_url=self.ge_cloud_base_url,
             organization_id=self.ge_cloud_credentials["organization_id"],
             resource_name=self.ge_cloud_resource_name,
+            workspace_id=self.ge_cloud_credentials.get("workspace_id"),
         )
 
         resource_type = self.ge_cloud_resource_type
@@ -478,6 +484,7 @@ class GXCloudStoreBackend(StoreBackend, metaclass=ABCMeta):
             organization_id=self.ge_cloud_credentials["organization_id"],
             resource_name=self.ge_cloud_resource_name,
             id=id,
+            workspace_id=self.ge_cloud_credentials.get("workspace_id"),
         )
         return url
 
@@ -499,6 +506,7 @@ class GXCloudStoreBackend(StoreBackend, metaclass=ABCMeta):
                     organization_id=self.ge_cloud_credentials["organization_id"],
                     resource_name=self.ge_cloud_resource_name,
                     id=id,
+                    workspace_id=self.ge_cloud_credentials.get("workspace_id"),
                 )
                 response = self._session.delete(url)
                 response.raise_for_status()
@@ -509,6 +517,7 @@ class GXCloudStoreBackend(StoreBackend, metaclass=ABCMeta):
                     base_url=self.ge_cloud_base_url,
                     organization_id=self.ge_cloud_credentials["organization_id"],
                     resource_name=self.ge_cloud_resource_name,
+                    workspace_id=self.ge_cloud_credentials.get("workspace_id"),
                 )
                 response = self._session.delete(url, params={"name": resource_object_name})
                 response.raise_for_status()
@@ -641,20 +650,28 @@ class GXCloudStoreBackend(StoreBackend, metaclass=ABCMeta):
         organization_id: str,
         resource_name: str,
         id: Optional[str] = None,
+        workspace_id: Optional[str] = None,
     ) -> str:
         """Construct the correct url for a given resource."""
         version = cls._ENDPOINT_VERSION_LOOKUP.get(resource_name, EndpointVersion.V0)
 
-        if version == EndpointVersion.V1:
-            url = urljoin(
-                base_url,
-                f"api/v1/organizations/{organization_id}/{hyphen(resource_name)}",
-            )
-        else:  # default to EndpointVersion.V0
+        if version == EndpointVersion.V0:
             url = urljoin(
                 base_url,
                 f"organizations/{organization_id}/{hyphen(resource_name)}",
             )
+        else:
+            version_str = str(version.value).lower()
+            if workspace_id:
+                url = urljoin(
+                    base_url,
+                    f"api/{version_str}/organizations/{organization_id}/workspaces/{workspace_id}/{hyphen(resource_name)}",
+                )
+            else:
+                url = urljoin(
+                    base_url,
+                    f"api/{version_str}/organizations/{organization_id}/{hyphen(resource_name)}",
+                )
 
         if id:
             url = f"{url}/{id}"
@@ -677,7 +694,16 @@ class GXCloudStoreBackend(StoreBackend, metaclass=ABCMeta):
         are deprecated in GX V1, and are only required for resources still using V0 endpoints.
         """
         version = cls._ENDPOINT_VERSION_LOOKUP.get(resource_type, EndpointVersion.V0)
-        if version == EndpointVersion.V1:
+        if version == EndpointVersion.V0:
+            return cls._construct_json_payload_v0(
+                resource_type=resource_type,
+                organization_id=organization_id,
+                attributes_key=attributes_key,
+                attributes_value=attributes_value,
+                resource_id=resource_id,
+                **kwargs,
+            )
+        else:
             if isinstance(attributes_value, dict):
                 payload = {**attributes_value, **kwargs}
             elif attributes_value is None:
@@ -689,15 +715,6 @@ class GXCloudStoreBackend(StoreBackend, metaclass=ABCMeta):
                 )
 
             return cls._construct_json_payload_v1(payload=payload)
-        else:
-            return cls._construct_json_payload_v0(
-                resource_type=resource_type,
-                organization_id=organization_id,
-                attributes_key=attributes_key,
-                attributes_value=attributes_value,
-                resource_id=resource_id,
-                **kwargs,
-            )
 
     @classmethod
     def _construct_json_payload_v0(

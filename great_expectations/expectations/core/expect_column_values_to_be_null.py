@@ -8,6 +8,7 @@ from great_expectations.core.metric_function_types import (
 from great_expectations.expectations.expectation import (
     ColumnMapExpectation,
     _format_map_output,
+    _style_row_condition,
     render_suite_parameter_string,
 )
 from great_expectations.expectations.expectation_configuration import (
@@ -16,6 +17,7 @@ from great_expectations.expectations.expectation_configuration import (
 from great_expectations.expectations.metadata_types import DataQualityIssues, SupportedDataSources
 from great_expectations.expectations.model_field_descriptions import (
     COLUMN_DESCRIPTION,
+    FAILURE_SEVERITY_DESCRIPTION,
     MOSTLY_DESCRIPTION,
 )
 from great_expectations.render import (
@@ -30,7 +32,7 @@ from great_expectations.render.renderer_configuration import (
 )
 from great_expectations.render.util import (
     num_to_str,
-    parse_row_condition_string_pandas_engine,
+    parse_row_condition_string,
     substitute_none_for_missing,
 )
 
@@ -54,6 +56,10 @@ SUPPORTED_DATA_SOURCES = [
     SupportedDataSources.SPARK.value,
     SupportedDataSources.SQLITE.value,
     SupportedDataSources.POSTGRESQL.value,
+    SupportedDataSources.AURORA.value,
+    SupportedDataSources.CITUS.value,
+    SupportedDataSources.ALLOY.value,
+    SupportedDataSources.NEON.value,
     SupportedDataSources.MYSQL.value,
     SupportedDataSources.MSSQL.value,
     SupportedDataSources.BIGQUERY.value,
@@ -89,6 +95,9 @@ class ExpectColumnValuesToBeNull(ColumnMapExpectation):
         meta (dict or None): \
             A JSON-serializable dictionary (nesting allowed) that will be included in the output without \
             modification. For more detail, see [meta](https://docs.greatexpectations.io/docs/reference/expectations/standard_arguments/#meta).
+        severity (str or None): \
+            {FAILURE_SEVERITY_DESCRIPTION} \
+            For more detail, see [failure severity](https://docs.greatexpectations.io/docs/cloud/expectations/expectations_overview/#failure-severity).
 
     Returns:
         An [ExpectationSuiteValidationResult](https://docs.greatexpectations.io/docs/terms/validation_result)
@@ -108,6 +117,10 @@ class ExpectColumnValuesToBeNull(ColumnMapExpectation):
         [{SUPPORTED_DATA_SOURCES[6]}](https://docs.greatexpectations.io/docs/application_integration_support/)
         [{SUPPORTED_DATA_SOURCES[7]}](https://docs.greatexpectations.io/docs/application_integration_support/)
         [{SUPPORTED_DATA_SOURCES[8]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[9]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[10]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[11]}](https://docs.greatexpectations.io/docs/application_integration_support/)
+        [{SUPPORTED_DATA_SOURCES[12]}](https://docs.greatexpectations.io/docs/application_integration_support/)
 
     Data Quality Issues:
         {DATA_QUALITY_ISSUES[0]}
@@ -269,9 +282,10 @@ class ExpectColumnValuesToBeNull(ColumnMapExpectation):
             ["column", "mostly", "row_condition", "condition_parser"],
         )
 
-        if params["mostly"] is not None and params["mostly"] < 1.0:
-            params["mostly_pct"] = num_to_str(params["mostly"] * 100, no_scientific=True)
-            # params["mostly_pct"] = "{:.14f}".format(params["mostly"]*100).rstrip("0").rstrip(".")
+        if params["mostly"] is not None:
+            if isinstance(params["mostly"], (int, float)) and params["mostly"] < 1.0:
+                params["mostly_pct"] = num_to_str(params["mostly"] * 100, no_scientific=True)
+                # params["mostly_pct"] = "{:.14f}".format(params["mostly"]*100).rstrip("0").rstrip(".")  # noqa: E501 # FIXME CoP
             template_str = "values must be null, at least $mostly_pct % of the time."
         else:
             template_str = "values must be null."
@@ -279,15 +293,17 @@ class ExpectColumnValuesToBeNull(ColumnMapExpectation):
         if renderer_configuration.include_column_name:
             template_str = f"$column {template_str}"
 
-        if params["row_condition"] is not None:
-            (
-                conditional_template_str,
-                conditional_params,
-            ) = parse_row_condition_string_pandas_engine(params["row_condition"])
-            template_str = f"{conditional_template_str}, then {template_str}"
-            params.update(conditional_params)
-
         styling = runtime_configuration.get("styling", {}) if runtime_configuration else {}
+
+        if params["row_condition"] is not None:
+            conditional_template_str = parse_row_condition_string(params["row_condition"])
+
+            template_str, styling = _style_row_condition(
+                conditional_template_str,
+                template_str,
+                params,
+                styling,
+            )
 
         return [
             RenderedStringTemplateContent(
@@ -358,8 +374,16 @@ class ExpectColumnValuesToBeNull(ColumnMapExpectation):
 
         nonnull_count = None
 
+        # Handle unexpected_rows for include_unexpected_rows feature
+        parsed_result_format = parse_result_format(result_format)
+        unexpected_rows = None
+        if parsed_result_format.get("include_unexpected_rows", False):
+            unexpected_rows = metrics.get(
+                f"{self.map_metric}.{SummarizationMetricNameSuffixes.UNEXPECTED_ROWS.value}"
+            )
+
         return _format_map_output(
-            result_format=parse_result_format(result_format),
+            result_format=parsed_result_format,
             success=success,
             element_count=metrics.get("table.row_count"),
             nonnull_count=nonnull_count,
@@ -375,4 +399,5 @@ class ExpectColumnValuesToBeNull(ColumnMapExpectation):
             unexpected_index_query=metrics.get(
                 f"{self.map_metric}.{SummarizationMetricNameSuffixes.UNEXPECTED_INDEX_QUERY.value}"
             ),
+            unexpected_rows=unexpected_rows,
         )

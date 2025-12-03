@@ -36,9 +36,9 @@ Freshness checks can be run against both the `reading_ts` and `created_at` colum
 ## Key freshness Expectations
 
 GX Cloud and GX Core provide several options to use Expectations to validate freshness:
-1. Built-in Expectations, such as those discussed in this section, can be used on timestamp columns to create freshness checks. Built-in expectations can be added in the GX Cloud UI or when using a GX Core Python workflow.
-2. Custom SQL Expectations can be used in [GX Cloud](/cloud/expectations/manage_expectations.md#custom-sql-expectations) or [GX Core](/core/customize_expectations/use_sql_to_define_a_custom_expectation.md) to define and check data freshness based on SQL logic.
-3. In GX Core, you can [customize Expectation classes](/core/customize_expectations/define_a_custom_expectation_class.md) to create Expectations that use Python logic to define and validate data freshness.
+1. Built-in Expectations, such as those discussed in this section, can be used on timestamp columns to create freshness checks. Built-in expectations can be added in GX Cloud or GX Core.
+2. Custom SQL Expectations can be used in [GX Cloud](/cloud/expectations/expectations_overview.md#custom-sql-expectations) or [GX Core](/core/customize_expectations/use_sql_to_define_a_custom_expectation.md) to define and check data freshness based on SQL logic.
+3. You can [customize Expectation classes](/core/customize_expectations/define_a_custom_expectation_class.md) with the GX Cloud API or in GX Core to create Expectations that use Python logic to define and validate data freshness.
 
 ### Expect column maximum to be between
 
@@ -84,8 +84,8 @@ The examples in this section showcase how to use available features in GX Cloud 
 Use the GX Cloud UI to walk through the following steps:
 
 1. Using the following connection string to create a Postgres Data Source, create a Data Asset for the `freshness_sensor_readings` table:
-   ```
-   postgresql+psycopg2://try_gx:try_gx@postgres.workshops.greatexpectations.io/gx_learn_data_quality
+   ```python title="Connection string"
+   postgresql+psycopg2://try_gx:try_gx@postgres.workshops.greatexpectations.io/gx_learn_data_quality?options=-csearch_path%3Dpublic
    ```
 
 2. Using the query below, create a custom SQL Expectation on the `freshness_sensor_readings` Data Asset which expects that sensor readings are available in the database no more than 10 minutes after they are initially captured on the sensor.
@@ -105,7 +105,7 @@ Use the GX Cloud UI to walk through the following steps:
    where extract(epoch from (age(current_timestamp, most_recent_reading))) > 5*60
    ```
 
-5. Edit the active Validation schedule to modify the frequency of recurring data validation. Select a **Frequency** of *Every 1 hour* to run recurring freshness checks each hour.
+5. Edit the Validation schedule to turn **ON** recurring data validation with a **Frequency** of *Every 1 hour* to run recurring freshness checks each hour.
 
 6. Inspect the Validation Results on the `freshness_sensor_readings` Data Asset once validation has run.
 
@@ -135,7 +135,7 @@ Most recent reading timestamp: 2024-11-22 14:49:00
 
 The Expectation fails because the sample data represents readings from a past point in time, the sample data is not being continually refreshed in Postgres. However, were new sensor readings to be arriving in the database, the custom Expectation could be used to check that new readings had arrived within the desired time frame.
 
-**GX solution**: GX Core enables using custom, Python-based logic to define and validate data freshness. Custom Expectation classes in GX Core can be used to complement and extend GX Cloud workflows.
+**GX solution**: Use custom, Python-based logic to define and validate data freshness. Though this example showcased use of a custom Expectation class in GX Core, this feature is also available in GX Cloud.
 
 ## Identifying and setting freshness thresholds
 

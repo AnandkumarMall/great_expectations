@@ -36,6 +36,15 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class MissingFilePathTemplateMapFnError(ValueError):
+    def __init__(self):
+        super().__init__(
+            "Converting file paths to fully-qualified object references for "
+            f"`{self.__class__.__name__}` requires "
+            "`file_path_template_map_fn: Callable` to be set."
+        )
+
+
 class FilePathDataConnector(DataConnector):
     """The base class for Data Connectors designed to access filesystem-like data.
 
@@ -525,7 +534,7 @@ def _invert_regex_to_data_reference_template(  # noqa: C901 #  too complex
 
     # print("-"*80)
     parsed_sre = sre_parse.parse(str(regex_pattern))
-    for parsed_sre_tuple, char in zip(parsed_sre, list(str(regex_pattern))):  # type: ignore[call-overload] # FIXME CoP
+    for parsed_sre_tuple, char in zip(parsed_sre, list(str(regex_pattern)), strict=False):  # type: ignore[call-overload] # FIXME CoP
         token, value = parsed_sre_tuple
         if token == sre_constants.LITERAL:
             # Transcribe the character directly into the template
