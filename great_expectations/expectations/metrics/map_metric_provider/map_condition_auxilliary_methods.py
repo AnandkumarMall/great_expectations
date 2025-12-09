@@ -35,7 +35,6 @@ from great_expectations.expectations.metrics.util import (
     sqlalchemy_select_to_sql_string,
 )
 from great_expectations.util import (
-    convert_to_json_serializable,  # noqa: TID251 # FIXME CoP
     generate_temporary_table_name,
     get_sqlalchemy_selectable,
 )
@@ -343,7 +342,7 @@ def _sqlalchemy_map_condition_unexpected_count_value(
             .select_from(count_selectable)  # type: ignore[arg-type] # FIXME CoP
             .alias("UnexpectedCountSubquery")
         )
-        unexpected_count: Union[float, int] = execution_engine.execute_query(  # type: ignore[assignment] # FIXME CoP
+        unexpected_count_result = execution_engine.execute_query(
             sa.select(
                 unexpected_count_query.c[
                     f"{SummarizationMetricNameSuffixes.UNEXPECTED_COUNT.value}"
@@ -352,16 +351,19 @@ def _sqlalchemy_map_condition_unexpected_count_value(
         ).scalar()
         # Unexpected count can be None if the table is empty, in which case the count
         # should default to zero.
-        try:
-            unexpected_count = int(unexpected_count)
-        except TypeError:
-            unexpected_count = 0
+        if unexpected_count_result is None:
+            unexpected_count: int = 0
+        else:
+            try:
+                unexpected_count = int(unexpected_count_result)
+            except TypeError:
+                unexpected_count = 0
 
     except sqlalchemy.OperationalError as oe:
         exception_message: str = f"An SQL execution Exception occurred: {oe!s}."
         raise gx_exceptions.InvalidMetricAccessorDomainKwargsKeyError(message=exception_message)
 
-    return convert_to_json_serializable(unexpected_count)
+    return unexpected_count
 
 
 def _sqlalchemy_map_condition_rows(

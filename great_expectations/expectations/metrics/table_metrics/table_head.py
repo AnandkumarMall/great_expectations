@@ -104,7 +104,7 @@ class TableHead(TableMetricProvider):
         df, _, _ = execution_engine.get_compute_domain(
             metric_domain_kwargs, domain_type=MetricDomainTypes.TABLE
         )
-        rows: list[pyspark.Row] | list[dict]
+        rows: list[pyspark.Row]
         if metric_value_kwargs["fetch_all"]:
             rows = df.collect()
         else:
@@ -118,7 +118,8 @@ class TableHead(TableMetricProvider):
             else:
                 rows = df.head(n=df.count() + n_rows)
 
-        rows = [element.asDict() for element in rows]
-        df = pd.DataFrame(data=rows)  # type: ignore[assignment] # FIXME CoP
+        # Convert pyspark.Row objects to dicts
+        rows_dict: list[dict] = [element.asDict() for element in rows]
+        result_df = pd.DataFrame(data=rows_dict)
 
-        return df  # type: ignore[return-value] # FIXME CoP
+        return result_df

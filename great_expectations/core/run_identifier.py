@@ -36,29 +36,34 @@ class RunIdentifier(DataContextKey):
         )
         self._run_name = run_name
 
+        parsed_run_time: datetime.datetime | None = None
         if isinstance(run_time, str):
             try:
-                run_time = parse(run_time)
+                parsed_run_time = parse(run_time)
             except (ValueError, TypeError):
                 warnings.warn(
                     f'Unable to parse provided run_time str ("{run_time}") to datetime. Defaulting '
                     f"run_time to current time."
                 )
-                run_time = datetime.datetime.now(datetime.timezone.utc)
+                parsed_run_time = datetime.datetime.now(datetime.timezone.utc)
+        elif isinstance(run_time, datetime.datetime):
+            parsed_run_time = run_time
 
-        if not run_time:
+        if not parsed_run_time and run_name is not None:
             try:
-                run_time = parse(run_name)  # type: ignore[arg-type] # FIXME CoP
+                parsed_run_time = parse(run_name)
             except (ValueError, TypeError):
-                run_time = None
+                parsed_run_time = None
 
-        run_time = run_time or datetime.datetime.now(tz=datetime.timezone.utc)
-        if not run_time.tzinfo:
+        final_run_time: datetime.datetime = parsed_run_time or datetime.datetime.now(
+            tz=datetime.timezone.utc
+        )
+        if not final_run_time.tzinfo:
             # This will change the timzeone to UTC, and convert the time based
             # on assuming that the current time is in local.
-            run_time = run_time.astimezone(tz=datetime.timezone.utc)
+            final_run_time = final_run_time.astimezone(tz=datetime.timezone.utc)
 
-        self._run_time = run_time
+        self._run_time = final_run_time
 
     @property
     def run_name(self):

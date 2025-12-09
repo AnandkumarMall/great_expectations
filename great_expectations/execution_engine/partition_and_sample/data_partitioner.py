@@ -174,14 +174,19 @@ class DataPartitioner(abc.ABC):  # noqa: B024 # FIXME CoP
             A dict of {date_part as str: date_part value} eg. {"day": 3}.
         """
 
+        parsed_identifiers: datetime.datetime | dict
         if isinstance(column_batch_identifiers, str):
-            column_batch_identifiers = parse(column_batch_identifiers)
+            parsed_identifiers = parse(column_batch_identifiers)
+        elif isinstance(column_batch_identifiers, datetime.datetime):
+            parsed_identifiers = column_batch_identifiers
+        else:
+            parsed_identifiers = column_batch_identifiers
 
-        if isinstance(column_batch_identifiers, datetime.datetime):
+        if isinstance(parsed_identifiers, datetime.datetime):
             return {
-                date_part.value: getattr(column_batch_identifiers, date_part.value)
+                date_part.value: getattr(parsed_identifiers, date_part.value)
                 for date_part in date_parts
             }
         else:
-            self._verify_all_strings_are_valid_date_parts(list(column_batch_identifiers.keys()))
-            return column_batch_identifiers
+            self._verify_all_strings_are_valid_date_parts(list(parsed_identifiers.keys()))
+            return parsed_identifiers
