@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from great_expectations.core.result_format import ResultFormat
 from great_expectations.data_context.util import file_relative_path
 from great_expectations.expectations import UnexpectedRowsExpectation
 from great_expectations.expectations.metrics.util import MAX_RESULT_RECORDS
@@ -170,3 +171,124 @@ def test_data_docs_rendering():
         "params": {"unexpected_rows_query": query},
         "styling": {},
     }
+
+
+class TestUnexpectedRowsExpectationResultFormat:
+    """Test class for UnexpectedRowsExpectation result format behavior."""
+
+    @pytest.mark.sqlite
+    @pytest.mark.parametrize(
+        "query, expected_success",
+        [
+            pytest.param(
+                "SELECT * FROM {batch} WHERE passenger_count > 6",
+                False,
+                id="failure_case",
+            ),
+            pytest.param(
+                "SELECT * FROM {batch} WHERE passenger_count > 7",
+                True,
+                id="success_case",
+            ),
+        ],
+    )
+    def test_boolean_only_without_flag(
+        self, sqlite_batch: Batch, query: str, expected_success: bool
+    ):
+        """Test that BOOLEAN_ONLY without return_unexpected_rows/include_unexpected_rows
+        doesn't include unexpected_rows."""
+        batch = sqlite_batch
+        expectation = UnexpectedRowsExpectation(unexpected_rows_query=query)
+        result = batch.validate(
+            expectation, result_format={"result_format": ResultFormat.BOOLEAN_ONLY}
+        )
+
+        assert result.success is expected_success
+        # For BOOLEAN_ONLY without flags, result should be empty (post-processing clears it)
+        assert result.result == {}
+
+    @pytest.mark.sqlite
+    @pytest.mark.parametrize(
+        "flag_name, query, expected_success, expected_unexpected_count",
+        [
+            pytest.param(
+                "return_unexpected_rows",
+                "SELECT * FROM {batch} WHERE passenger_count > 6",
+                False,
+                1,
+                id="return_unexpected_rows_failure",
+            ),
+            pytest.param(
+                "include_unexpected_rows",
+                "SELECT * FROM {batch} WHERE passenger_count > 6",
+                False,
+                1,
+                id="include_unexpected_rows_failure",
+            ),
+            pytest.param(
+                "return_unexpected_rows",
+                "SELECT * FROM {batch} WHERE passenger_count > 7",
+                True,
+                0,
+                id="return_unexpected_rows_success",
+            ),
+            pytest.param(
+                "include_unexpected_rows",
+                "SELECT * FROM {batch} WHERE passenger_count > 7",
+                True,
+                0,
+                id="include_unexpected_rows_success",
+            ),
+        ],
+    )
+    def test_boolean_only_with_flag(
+        self,
+        sqlite_batch: Batch,
+        flag_name: str,
+        query: str,
+        expected_success: bool,
+        expected_unexpected_count: int,
+    ):
+        """Test that BOOLEAN_ONLY with return_unexpected_rows/include_unexpected_rows=True
+        includes unexpected_rows."""
+        batch = sqlite_batch
+        expectation = UnexpectedRowsExpectation(unexpected_rows_query=query)
+        result = batch.validate(
+            expectation,
+            result_format={
+                "result_format": ResultFormat.BOOLEAN_ONLY,
+                flag_name: True,
+            },
+        )
+
+        assert result.success is expected_success
+        # For BOOLEAN_ONLY with flag, unexpected_rows should be included
+        assert "details" in result.result
+        assert "unexpected_rows" in result.result["details"]
+        assert len(result.result["details"]["unexpected_rows"]) == expected_unexpected_count
+
+    @pytest.mark.sqlite
+    @pytest.mark.parametrize(
+        "result_format",
+        [
+            ResultFormat.BASIC,
+            ResultFormat.SUMMARY,
+            ResultFormat.COMPLETE,
+        ],
+    )
+    def test_other_formats_always_include_unexpected_rows(
+        self, sqlite_batch: Batch, result_format: ResultFormat
+    ):
+        """Test that other result formats (BASIC, SUMMARY, COMPLETE)
+        always include unexpected_rows."""
+        batch = sqlite_batch
+        query = "SELECT * FROM {batch} WHERE passenger_count > 6"
+
+        expectation = UnexpectedRowsExpectation(unexpected_rows_query=query)
+        result = batch.validate(expectation, result_format={"result_format": result_format})
+
+        assert result.success is False
+        # For other result formats, unexpected_rows should always be included
+        assert "details" in result.result
+        assert "unexpected_rows" in result.result["details"]
+        assert len(result.result["details"]["unexpected_rows"]) == 1

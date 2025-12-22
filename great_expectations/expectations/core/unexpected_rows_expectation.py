@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional, Tuple, Type, Un
 
 from great_expectations.compatibility import pydantic
 from great_expectations.compatibility.typing_extensions import override
+from great_expectations.core.result_format import ResultFormat
 from great_expectations.core.suite_parameters import (
     SuiteParameterDict,  # FIXME CoP
 )
@@ -13,6 +14,7 @@ from great_expectations.expectations.expectation import (
     BatchExpectation,
     render_suite_parameter_string,
 )
+from great_expectations.expectations.expectation_configuration import parse_result_format
 from great_expectations.expectations.metadata_types import DataQualityIssues, SupportedDataSources
 from great_expectations.expectations.model_field_descriptions import FAILURE_SEVERITY_DESCRIPTION
 from great_expectations.render import (
@@ -34,6 +36,8 @@ if TYPE_CHECKING:
     from great_expectations.core import ExpectationValidationResult
     from great_expectations.execution_engine import ExecutionEngine
     from great_expectations.expectations.expectation_configuration import ExpectationConfiguration
+else:
+    ExpectationValidationResult = None
 
 
 logger = logging.getLogger(__name__)
@@ -261,6 +265,50 @@ class UnexpectedRowsExpectation(BatchExpectation):
         )
 
     @override
+    def metrics_validate(
+        self,
+        metrics: dict,
+        runtime_configuration: dict | None = None,
+        execution_engine: ExecutionEngine | None = None,
+        **kwargs: dict,
+    ) -> ExpectationValidationResult:
+        """Override to preserve details with unexpected_rows for BOOLEAN_ONLY when flag is set."""
+
+        # Check if we need to preserve details before calling parent (which does post-processing)
+        should_preserve_details = False
+        details_to_preserve = None
+        if runtime_configuration:
+            result_format = parse_result_format(runtime_configuration.get("result_format", {}))
+            if result_format.get("result_format") == ResultFormat.BOOLEAN_ONLY:
+                return_unexpected_rows = result_format.get("return_unexpected_rows", False)
+                include_unexpected_rows = result_format.get("include_unexpected_rows", False)
+
+                if return_unexpected_rows or include_unexpected_rows:
+                    # Get the original result before post-processing clears it
+                    original_result = self._validate(
+                        metrics=metrics,
+                        runtime_configuration=runtime_configuration,
+                        execution_engine=execution_engine,
+                    )
+                    if isinstance(original_result, dict) and "result" in original_result:
+                        if "details" in original_result["result"]:
+                            should_preserve_details = True
+                            details_to_preserve = original_result["result"]["details"]
+
+        evr = super().metrics_validate(
+            metrics=metrics,
+            runtime_configuration=runtime_configuration,
+            execution_engine=execution_engine,
+            **kwargs,
+        )
+
+        # Restore details if needed
+        if should_preserve_details and details_to_preserve:
+            evr.result["details"] = details_to_preserve
+
+        return evr
+
+    @override
     def _validate(
         self,
         metrics: dict,
@@ -269,10 +317,30 @@ class UnexpectedRowsExpectation(BatchExpectation):
     ) -> Union[ExpectationValidationResult, dict]:
         metric_value = metrics["unexpected_rows_query.table"]
         unexpected_row_count = metrics["unexpected_rows_query.row_count"]
+
+        result_dict: dict = {
+            "observed_value": unexpected_row_count,
+        }
+
+        # Check result format to determine if we should include unexpected_rows
+        if runtime_configuration:
+            result_format = parse_result_format(runtime_configuration.get("result_format", {}))
+            result_format_str = result_format.get("result_format", ResultFormat.SUMMARY)
+            include_unexpected_rows = result_format.get("include_unexpected_rows", False)
+            return_unexpected_rows = result_format.get("return_unexpected_rows", False)
+
+            # For BOOLEAN_ONLY, only include unexpected_rows if explicitly requested
+            if result_format_str == ResultFormat.BOOLEAN_ONLY:
+                if include_unexpected_rows or return_unexpected_rows:
+                    result_dict["details"] = {"unexpected_rows": metric_value}
+            else:
+                # For other result formats, always include unexpected_rows
+                result_dict["details"] = {"unexpected_rows": metric_value}
+        else:
+            # Default behavior: include unexpected_rows
+            result_dict["details"] = {"unexpected_rows": metric_value}
+
         return {
             "success": unexpected_row_count == 0,
-            "result": {
-                "observed_value": unexpected_row_count,
-                "details": {"unexpected_rows": metric_value},
-            },
+            "result": result_dict,
         }
