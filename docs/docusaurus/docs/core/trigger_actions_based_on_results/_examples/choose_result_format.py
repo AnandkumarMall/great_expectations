@@ -55,7 +55,7 @@ def set_up_context_for_example(context):
     checkpoint_name = "my_checkpoint"
     validation_definitions = [validation_definition]
     action_list = []
-    checkpoint = context.checkpoints.add(
+    context.checkpoints.add(
         gx.Checkpoint(
             name=checkpoint_name,
             validation_definitions=validation_definitions,
@@ -63,8 +63,6 @@ def set_up_context_for_example(context):
             result_format={"result_format": "COMPLETE"},
         )
     )
-    checkpoint.save()
-
 
 # EXAMPLE SCRIPT STARTS HERE:
 # <snippet name="docs/docusaurus/docs/core/trigger_actions_based_on_results/_examples/choose_result_format.py - full code example">

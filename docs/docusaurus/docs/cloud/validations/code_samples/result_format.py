@@ -65,6 +65,7 @@ checkpoint_config = gx.Checkpoint(
 )
 
 checkpoint = context.checkpoints.add(checkpoint_config)
+checkpoint.save()
 
 # BOOLEAN_ONLY Result Format
 # <snippet name="docs/docusaurus/docs/cloud/validations/code_samples/result_format.py - boolean_only Result Format">
