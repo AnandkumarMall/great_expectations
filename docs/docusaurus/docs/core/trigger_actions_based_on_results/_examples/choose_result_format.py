@@ -64,6 +64,7 @@ def set_up_context_for_example(context):
         )
     )
 
+
 # EXAMPLE SCRIPT STARTS HERE:
 # <snippet name="docs/docusaurus/docs/core/trigger_actions_based_on_results/_examples/choose_result_format.py - full code example">
 import great_expectations as gx
