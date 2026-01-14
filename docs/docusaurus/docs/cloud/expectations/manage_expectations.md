@@ -24,10 +24,20 @@ This page provides instructions for working with Expectations. To learn about Ex
 
 4. Select a data quality issue to test for or an option for writing your own test.
 
-   :::tip Options for accelerating test coverage
-   If you are using a [supported Data Source](/docs/cloud/data_sources/manage_data_sources), you can use the following to speed up test creation:
-   - If you selected the **Schema**, **Volume**, or **Completeness** data quality issue, you will have the **Automatic** option to generate Expectations for [Anomaly Detection](/cloud/overview/accelerating_test_coverage.md#anomaly-detection). Generated Expectations will default to warning severity, which you can edit later. If you instead want to create your own rules, click **Manual**.
-   - If you selected custom **SQL**, you will have the option to **Generate SQL** with [ExpectAI](#generate-sql). You can write your own SQL if you prefer.
+   :::tip Tip
+   this is a tip
+   :::
+
+   :::note Note
+   this is a note
+   :::
+
+   :::warning Warning
+   this is a warning
+   :::
+
+   :::danger Danger
+   this is a danger, though we don't really use this one
    :::
 
 5. Select an Expectation type.
