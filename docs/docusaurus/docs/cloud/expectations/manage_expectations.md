@@ -34,6 +34,44 @@ This page provides instructions for working with Expectations. To learn about Ex
 
 6. Complete the mandatory and optional fields for the Expectation.
 
+   <details>
+   <summary>Restrict an Expectation to specific rows</summary>
+
+   To restrict an Expectation to a subset of the data retrieved in a Batch, use the `row_condition` argument. The `row_condition` argument takes a boolean expression built with Python objects. Rows will be validated for the Expectation when the `row_condition` expression evaluates to True. Conversely, if the `row_condition` evaluates to False, the corresponding row will not be validated for the Expectation.
+
+
+   To support complex business use cases, logical clauses can be combined with AND / OR relationships within the `row_condition` argument.
+
+   ```python title="Python" name="docs/docusaurus/docs/core/customize_expectations/_examples/row_conditions.py - determine expression"
+   ```
+
+   Here are some examples of how to create common patterns in row conditions:
+
+   - **A and B**.
+      ```python title="Python" name="docs/docusaurus/docs/core/customize_expectations/_examples/row_conditions.py - a and b"
+      ```
+
+   - **A or B**.
+      ```python title="Python" name="docs/docusaurus/docs/core/customize_expectations/_examples/row_conditions.py - a or b"
+      ```
+
+   - **(A and B) or (C and D)**.
+      ```python title="Python" name="docs/docusaurus/docs/core/customize_expectations/_examples/row_conditions.py - a and b or c and d"
+      ```
+
+   - **A and (B or C)**. This pattern is not supported verbatim, but you can achieve the same result with **(A and B) or (A and C)**.
+      ```python title="Python" name="docs/docusaurus/docs/core/customize_expectations/_examples/row_conditions.py - a and b or c"
+      ```
+
+   The following comparison operators are supported: `==`, `!=`, `>`, `<`, `>=`, `<=`, `is_in`, `is_not_in`, `is_null`, `is_not_null`. Here are some examples of using different kinds of operators:
+
+   ```python title="Python" name="docs/docusaurus/docs/core/customize_expectations/_examples/row_conditions.py - operators"
+   ```
+
+
+   </details>
+   
+
 7. Click **Save** or click **Save & Add More** and then repeat steps 4 through 7 to add additional Expectations.
 
 8. Optional. [Run an ad hoc Validation](/cloud/validations/run_validations.md).
