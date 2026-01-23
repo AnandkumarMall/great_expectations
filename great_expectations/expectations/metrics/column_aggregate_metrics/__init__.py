@@ -3,6 +3,7 @@ from .column_distinct_values import (
     ColumnDistinctValues,
     ColumnDistinctValuesCount,
     ColumnDistinctValuesCountUnderThreshold,
+    ColumnDistinctValuesNotEqualSet,
 )
 from .column_histogram import ColumnHistogram
 from .column_max import ColumnMax
