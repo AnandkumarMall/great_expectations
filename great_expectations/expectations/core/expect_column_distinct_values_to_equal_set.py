@@ -424,7 +424,7 @@ class ExpectColumnDistinctValuesToEqualSet(ColumnAggregateExpectation):
         return validation_dependencies
 
     @override
-    def _validate(  # noqa: C901, PLR0912 # FIXME CoP
+    def _validate(  # noqa: C901, PLR0912, PLR0915 # FIXME CoP
         self,
         metrics: Dict,
         runtime_configuration: Optional[dict] = None,
@@ -437,6 +437,16 @@ class ExpectColumnDistinctValuesToEqualSet(ColumnAggregateExpectation):
         observed_value_set = metrics.get("column.distinct_values")
         if observed_value_set is None and "column.value_counts" in metrics:
             observed_value_set = set(metrics["column.value_counts"].index)
+
+        # Filter out nulls/NaN from observed values (expectation should ignore nulls)
+        if observed_value_set:
+            import math
+
+            observed_value_set = {
+                v
+                for v in observed_value_set
+                if v is not None and not (isinstance(v, float) and math.isnan(v))
+            }
 
         # Coerce value_set to match observed value types
         coerced_value_set = value_set
@@ -466,7 +476,7 @@ class ExpectColumnDistinctValuesToEqualSet(ColumnAggregateExpectation):
         result_format = self._get_result_format(runtime_configuration)
         if isinstance(result_format, dict):
             result_format_str = result_format.get("result_format", "SUMMARY")
-            partial_unexpected_count = result_format.get("partial_unexpected_count", 20)
+            partial_unexpected_count = int(result_format.get("partial_unexpected_count", 20))
         else:
             result_format_str = result_format or "SUMMARY"
             partial_unexpected_count = 20
@@ -504,8 +514,12 @@ class ExpectColumnDistinctValuesToEqualSet(ColumnAggregateExpectation):
 
             result["result"] = {
                 "observed_value": observed_value,
-                "unexpected_count": len(in_column_not_in_set) + len(in_set_not_in_column),
             }
+            # Only include unexpected_count when there are violations
+            if not success:
+                result["result"]["unexpected_count"] = len(in_column_not_in_set) + len(
+                    in_set_not_in_column
+                )
 
             # Add value_counts details when result_format is COMPLETE
             if result_format_str == "COMPLETE" and "column.value_counts" in metrics:
