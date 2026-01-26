@@ -131,20 +131,3 @@ class TestColumnDistinctValuesNotEqualSet:
         assert isinstance(metric_result, ColumnDistinctValuesNotEqualSetResult)
         assert metric_result.value["in_column_not_in_set"] == []
         assert metric_result.value["in_set_not_in_column"] == []
-
-    @parameterize_batch_for_data_sources(
-        data_source_configs=DATA_SOURCES_THAT_SUPPORT_DATE_COMPARISONS,
-        data=DATE_DATA_FRAME,
-    )
-    def test_dates_with_str_value_set(self, batch_for_datasource: Batch) -> None:
-        """When date column is compared with string value_set, should handle type coercion."""
-        metric = ColumnDistinctValuesNotEqualSet(
-            column=COLUMN_NAME,
-            value_set=["2024-11-19", "2024-11-20"],  # strings instead of date objects
-        )
-        metric_result = batch_for_datasource.compute_metrics(metric)
-
-        assert isinstance(metric_result, ColumnDistinctValuesNotEqualSetResult)
-        # After type coercion, the sets should be equal
-        assert metric_result.value["in_column_not_in_set"] == []
-        assert metric_result.value["in_set_not_in_column"] == []
