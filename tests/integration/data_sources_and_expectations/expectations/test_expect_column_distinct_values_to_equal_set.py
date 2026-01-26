@@ -1,17 +1,22 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 import pytest
 
 import great_expectations.expectations as gxe
 from great_expectations.core.result_format import ResultFormat
-from great_expectations.datasource.fluent.interfaces import Batch
 from tests.integration.conftest import parameterize_batch_for_data_sources
 from tests.integration.data_sources_and_expectations.test_canonical_expectations import (
     ALL_DATA_SOURCES,
     DATA_SOURCES_THAT_SUPPORT_DATE_COMPARISONS,
     JUST_PANDAS_DATA_SOURCES,
 )
+
+if TYPE_CHECKING:
+    from great_expectations.datasource.fluent.interfaces import Batch
 
 COL_NAME = "my_col"
 
@@ -89,3 +94,129 @@ def test_fails_if_data_is_not_equal(batch_for_datasource: Batch, value_set: list
     expectation = gxe.ExpectColumnDistinctValuesToEqualSet(column=COL_NAME, value_set=value_set)
     result = batch_for_datasource.validate(expectation)
     assert not result.success
+
+
+# Result format tests
+
+
+@pytest.mark.parametrize(
+    "result_format,expected_result_keys",
+    [
+        pytest.param("BOOLEAN_ONLY", set(), id="boolean_only"),
+        pytest.param("BASIC", {"observed_value"}, id="basic"),
+        pytest.param("SUMMARY", {"observed_value"}, id="summary"),
+        pytest.param("COMPLETE", {"observed_value", "details"}, id="complete"),
+    ],
+)
+@parameterize_batch_for_data_sources(
+    data_source_configs=JUST_PANDAS_DATA_SOURCES, data=ONES_AND_TWOS
+)
+def test_result_format_success(
+    batch_for_datasource: Batch,
+    result_format: Literal["BOOLEAN_ONLY", "BASIC", "SUMMARY", "COMPLETE"],
+    expected_result_keys: set[str],
+) -> None:
+    """Test that result format controls what's included in the result on success."""
+    expectation = gxe.ExpectColumnDistinctValuesToEqualSet(column=COL_NAME, value_set=[1, 2])
+    result = batch_for_datasource.validate(expectation, result_format=result_format)
+
+    assert result.success
+
+    if result_format == "BOOLEAN_ONLY":
+        assert result.result == {}
+    else:
+        assert set(result.result.keys()) == expected_result_keys
+
+
+@pytest.mark.parametrize(
+    "result_format,expected_result_keys",
+    [
+        pytest.param("BOOLEAN_ONLY", set(), id="boolean_only"),
+        pytest.param("BASIC", {"observed_value", "unexpected_count"}, id="basic"),
+        pytest.param("SUMMARY", {"observed_value", "unexpected_count"}, id="summary"),
+        pytest.param("COMPLETE", {"observed_value", "unexpected_count", "details"}, id="complete"),
+    ],
+)
+@parameterize_batch_for_data_sources(
+    data_source_configs=JUST_PANDAS_DATA_SOURCES, data=ONES_AND_TWOS
+)
+def test_result_format_failure(
+    batch_for_datasource: Batch,
+    result_format: Literal["BOOLEAN_ONLY", "BASIC", "SUMMARY", "COMPLETE"],
+    expected_result_keys: set[str],
+) -> None:
+    """Test that result format controls what's included in the result on failure."""
+    # value_set [1] doesn't include 2 which is in column
+    expectation = gxe.ExpectColumnDistinctValuesToEqualSet(column=COL_NAME, value_set=[1])
+    result = batch_for_datasource.validate(expectation, result_format=result_format)
+
+    assert not result.success
+
+    if result_format == "BOOLEAN_ONLY":
+        assert result.result == {}
+    else:
+        assert set(result.result.keys()) == expected_result_keys
+        # Verify observed_value contains all distinct values from the column
+        assert sorted(result.result["observed_value"]) == [1, 2]
+        # Verify unexpected_count reflects the number of violations (2 is extra in column)
+        assert result.result["unexpected_count"] == 1
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=JUST_PANDAS_DATA_SOURCES, data=ONES_AND_TWOS
+)
+def test_failure_complete_results(batch_for_datasource: Batch) -> None:
+    """Test that COMPLETE result format includes value_counts in details on failure."""
+    expectation = gxe.ExpectColumnDistinctValuesToEqualSet(column=COL_NAME, value_set=[1])
+    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
+
+    assert not result.success
+    result_dict = result.to_json_dict()["result"]
+
+    # Check observed_value contains all distinct values
+    assert sorted(result_dict["observed_value"]) == [1, 2]
+    # Check unexpected_count
+    assert result_dict["unexpected_count"] == 1
+    # Check details contains value_counts
+    assert "details" in result_dict
+    assert "value_counts" in result_dict["details"]
+    assert result_dict["details"]["value_counts"] == [
+        {"value": 1, "count": 1},
+        {"value": 2, "count": 3},
+    ]
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=JUST_PANDAS_DATA_SOURCES, data=ONES_AND_TWOS
+)
+def test_failure_missing_from_set(batch_for_datasource: Batch) -> None:
+    """Test failure when column is missing values from the expected set."""
+    # value_set requires [1, 2, 3] but column only has [1, 2]
+    expectation = gxe.ExpectColumnDistinctValuesToEqualSet(column=COL_NAME, value_set=[1, 2, 3])
+    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
+
+    assert not result.success
+    result_dict = result.to_json_dict()["result"]
+
+    # Check observed_value contains all distinct values from column
+    assert sorted(result_dict["observed_value"]) == [1, 2]
+    # Check unexpected_count: 3 is missing from column
+    assert result_dict["unexpected_count"] == 1
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=JUST_PANDAS_DATA_SOURCES, data=ONES_AND_TWOS
+)
+def test_failure_both_extra_and_missing(batch_for_datasource: Batch) -> None:
+    """Test failure when column has extra values AND set has extra values."""
+    # value_set [1, 3] - column has 2 (extra) and is missing 3
+    expectation = gxe.ExpectColumnDistinctValuesToEqualSet(column=COL_NAME, value_set=[1, 3])
+    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
+
+    assert not result.success
+    result_dict = result.to_json_dict()["result"]
+
+    # Check observed_value contains all distinct values from column
+    assert sorted(result_dict["observed_value"]) == [1, 2]
+    # Check unexpected_count: 2 (extra in column) + 3 (missing from column)
+    assert result_dict["unexpected_count"] == 2
