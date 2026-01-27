@@ -171,16 +171,15 @@ def test_failure_complete_results(batch_for_datasource: Batch) -> None:
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
 
     assert not result.success
-    result_dict = result.to_json_dict()["result"]
 
     # Check observed_value contains all distinct values
-    assert sorted(result_dict["observed_value"]) == [1, 2]
+    assert sorted(result.result["observed_value"]) == [1, 2]
     # Check unexpected_count
-    assert result_dict["unexpected_count"] == 1
+    assert result.result["unexpected_count"] == 1
     # Check details contains value_counts
-    assert "details" in result_dict
-    assert "value_counts" in result_dict["details"]
-    assert result_dict["details"]["value_counts"] == [
+    assert "details" in result.result
+    assert "value_counts" in result.result["details"]
+    assert result.result["details"]["value_counts"] == [
         {"value": 1, "count": 1},
         {"value": 2, "count": 3},
     ]
@@ -196,12 +195,11 @@ def test_failure_missing_from_set(batch_for_datasource: Batch) -> None:
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
 
     assert not result.success
-    result_dict = result.to_json_dict()["result"]
 
     # Check observed_value contains all distinct values from column
-    assert sorted(result_dict["observed_value"]) == [1, 2]
+    assert sorted(result.result["observed_value"]) == [1, 2]
     # Check unexpected_count: 3 is missing from column
-    assert result_dict["unexpected_count"] == 1
+    assert result.result["unexpected_count"] == 1
 
 
 @parameterize_batch_for_data_sources(
@@ -214,9 +212,8 @@ def test_failure_both_extra_and_missing(batch_for_datasource: Batch) -> None:
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
 
     assert not result.success
-    result_dict = result.to_json_dict()["result"]
 
     # Check observed_value contains all distinct values from column
-    assert sorted(result_dict["observed_value"]) == [1, 2]
+    assert sorted(result.result["observed_value"]) == [1, 2]
     # Check unexpected_count: 2 (extra in column) + 3 (missing from column)
-    assert result_dict["unexpected_count"] == 2
+    assert result.result["unexpected_count"] == 2
