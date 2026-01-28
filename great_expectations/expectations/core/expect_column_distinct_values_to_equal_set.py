@@ -6,6 +6,7 @@ from great_expectations.compatibility.typing_extensions import override
 from great_expectations.expectations.expectation import (
     ColumnAggregateExpectation,
     _style_row_condition,
+    parse_value_to_observed_type,
     render_suite_parameter_string,
 )
 from great_expectations.expectations.metadata_types import DataQualityIssues, SupportedDataSources
@@ -25,6 +26,7 @@ from great_expectations.render import (
     RenderedStringTemplateContent,
     renderedAtomicValueSchema,
 )
+from great_expectations.render.renderer.observed_value_renderer import ObservedValueRenderState
 from great_expectations.render.renderer.renderer import renderer
 from great_expectations.render.renderer_configuration import (
     RendererConfiguration,
@@ -472,15 +474,90 @@ class ExpectColumnDistinctValuesToEqualSet(ColumnAggregateExpectation):
         result: Optional[ExpectationValidationResult] = None,
         runtime_configuration: Optional[dict] = None,
     ) -> RenderedAtomicContent:
-        """Render observed value - returns None since violations are in partial_unexpected_list."""
         renderer_configuration: RendererConfiguration = RendererConfiguration(
             configuration=configuration,
             result=result,
             runtime_configuration=runtime_configuration,
         )
+        expected_param_prefix = "exp__"
+        expected_param_name = "expected_value"
+        unexpected_param_prefix = "unexp__"
+        unexpected_param_name = "unexpected_value"
 
-        # observed_value is None for this expectation - violations are in partial_unexpected_list
-        renderer_configuration.template_str = "--"
+        # Get details from result - contains in_column_not_in_set and in_set_not_in_column
+        details = result.get("result", {}).get("details", {}) if result else {}
+        in_column_not_in_set = details.get("in_column_not_in_set", [])
+        in_set_not_in_column = details.get("in_set_not_in_column", [])
+
+        # Add expected values (from value_set)
+        renderer_configuration.add_param(
+            name=expected_param_name,
+            param_type=RendererValueType.ARRAY,
+            value=renderer_configuration.kwargs.get("value_set", []),
+        )
+        renderer_configuration = cls._add_array_params(
+            array_param_name=expected_param_name,
+            param_prefix=expected_param_prefix,
+            renderer_configuration=renderer_configuration,
+        )
+
+        # Add unexpected values (in column but not in set)
+        renderer_configuration.add_param(
+            name=unexpected_param_name,
+            param_type=RendererValueType.ARRAY,
+            value=in_column_not_in_set,
+        )
+        renderer_configuration = cls._add_array_params(
+            array_param_name=unexpected_param_name,
+            param_prefix=unexpected_param_prefix,
+            renderer_configuration=renderer_configuration,
+        )
+
+        missing_value_set = set(in_set_not_in_column)
+
+        expected_values = (
+            (name, schema)
+            for name, schema in renderer_configuration.params
+            if name.startswith(expected_param_prefix)
+        )
+
+        unexpected_values = (
+            (name, schema)
+            for name, schema in renderer_configuration.params
+            if name.startswith(unexpected_param_prefix)
+        )
+
+        template_str_list = []
+
+        # Render unexpected values (in column but not in set)
+        for name, schema in unexpected_values:
+            renderer_configuration.params.__dict__[
+                name
+            ].render_state = ObservedValueRenderState.UNEXPECTED.value
+            template_str_list.append(f"${name}")
+
+        # Render expected values, marking missing ones
+        for name, schema in expected_values:
+            # Check if this expected value is missing from column
+            if missing_value_set:
+                sample_missing_value = next(iter(missing_value_set))
+                coerced_value = parse_value_to_observed_type(
+                    observed_value=sample_missing_value, value=schema.value
+                )
+            else:
+                coerced_value = schema.value
+
+            if coerced_value in missing_value_set:
+                renderer_configuration.params.__dict__[
+                    name
+                ].render_state = ObservedValueRenderState.MISSING.value
+            else:
+                renderer_configuration.params.__dict__[
+                    name
+                ].render_state = ObservedValueRenderState.EXPECTED.value
+            template_str_list.append(f"${name}")
+
+        renderer_configuration.template_str = " ".join(template_str_list)
 
         value_obj = renderedAtomicValueSchema.load(
             {
