@@ -6,7 +6,6 @@ from great_expectations.compatibility.typing_extensions import override
 from great_expectations.expectations.expectation import (
     ColumnAggregateExpectation,
     _style_row_condition,
-    parse_value_to_observed_type,
     render_suite_parameter_string,
 )
 from great_expectations.expectations.metadata_types import DataQualityIssues, SupportedDataSources
@@ -26,7 +25,6 @@ from great_expectations.render import (
     RenderedStringTemplateContent,
     renderedAtomicValueSchema,
 )
-from great_expectations.render.renderer.observed_value_renderer import ObservedValueRenderState
 from great_expectations.render.renderer.renderer import renderer
 from great_expectations.render.renderer_configuration import (
     RendererConfiguration,
@@ -423,8 +421,12 @@ class ExpectColumnDistinctValuesToEqualSet(ColumnAggregateExpectation):
 
         # Get result_format settings
         result_format = self._get_result_format(runtime_configuration)
+        partial_unexpected_count: int = 20
         if isinstance(result_format, dict):
             result_format_str = result_format.get("result_format", "SUMMARY")
+            puc = result_format.get("partial_unexpected_count", 20)
+            if isinstance(puc, int):
+                partial_unexpected_count = puc
         else:
             result_format_str = result_format or "SUMMARY"
 
@@ -436,22 +438,24 @@ class ExpectColumnDistinctValuesToEqualSet(ColumnAggregateExpectation):
         if result_format_str == "BOOLEAN_ONLY":
             result["result"] = {}
         else:
-            # BREAKING CHANGE: observed_value now contains only differences, not all distinct values
-            # Combine both types of differences for observed_value
+            # Combine both types of differences for partial_unexpected_list
             try:
-                observed_value = sorted(in_column_not_in_set + in_set_not_in_column)
+                violations = sorted(in_column_not_in_set + in_set_not_in_column)
             except TypeError:
-                # If types are incompatible, just concatenate without sorting
-                observed_value = list(in_column_not_in_set) + list(in_set_not_in_column)
+                violations = list(in_column_not_in_set) + list(in_set_not_in_column)
 
+            # observed_value is None - violations go in partial_unexpected_list
             result["result"] = {
-                "observed_value": observed_value,
+                "observed_value": None,
+                "unexpected_count": len(in_column_not_in_set) + len(in_set_not_in_column),
             }
+
+            # Add partial_unexpected_list (limited sample of violations)
+            if violations and partial_unexpected_count > 0:
+                result["result"]["partial_unexpected_list"] = violations[:partial_unexpected_count]
+
+            # Include details about what's different
             if not success:
-                result["result"]["unexpected_count"] = len(in_column_not_in_set) + len(
-                    in_set_not_in_column
-                )
-                # Include details about what's different
                 result["result"]["details"] = {
                     "in_column_not_in_set": in_column_not_in_set,
                     "in_set_not_in_column": in_set_not_in_column,
@@ -468,80 +472,15 @@ class ExpectColumnDistinctValuesToEqualSet(ColumnAggregateExpectation):
         result: Optional[ExpectationValidationResult] = None,
         runtime_configuration: Optional[dict] = None,
     ) -> RenderedAtomicContent:
+        """Render observed value - returns None since violations are in partial_unexpected_list."""
         renderer_configuration: RendererConfiguration = RendererConfiguration(
             configuration=configuration,
             result=result,
             runtime_configuration=runtime_configuration,
         )
-        expected_param_prefix = "exp__"
-        expected_param_name = "expected_value"
-        ov_param_prefix = "ov__"
-        ov_param_name = "observed_value"
 
-        renderer_configuration.add_param(
-            name=expected_param_name,
-            param_type=RendererValueType.ARRAY,
-            value=renderer_configuration.kwargs.get("value_set", []),
-        )
-        renderer_configuration = cls._add_array_params(
-            array_param_name=expected_param_name,
-            param_prefix=expected_param_prefix,
-            renderer_configuration=renderer_configuration,
-        )
-
-        renderer_configuration.add_param(
-            name=ov_param_name,
-            param_type=RendererValueType.ARRAY,
-            value=result.get("result", {}).get("observed_value", []) if result else [],
-        )
-        renderer_configuration = cls._add_array_params(
-            array_param_name=ov_param_name,
-            param_prefix=ov_param_prefix,
-            renderer_configuration=renderer_configuration,
-        )
-        observed_value_set = set(
-            result.get("result", {}).get("observed_value", []) if result else []
-        )
-        sample_observed_value = next(iter(observed_value_set)) if observed_value_set else None
-        expected_value_set = {
-            parse_value_to_observed_type(observed_value=sample_observed_value, value=value)
-            for value in renderer_configuration.kwargs.get("value_set", [])
-        }
-
-        observed_values = (
-            (name, schema)
-            for name, schema in renderer_configuration.params
-            if name.startswith(ov_param_prefix)
-        )
-
-        expected_values = (
-            (name, schema)
-            for name, schema in renderer_configuration.params
-            if name.startswith(expected_param_prefix)
-        )
-
-        template_str_list = []
-        for name, schema in observed_values:
-            render_state = (
-                ObservedValueRenderState.EXPECTED.value
-                if schema.value in expected_value_set
-                else ObservedValueRenderState.UNEXPECTED.value
-            )
-            renderer_configuration.params.__dict__[name].render_state = render_state
-            template_str_list.append(f"${name}")
-
-        for name, schema in expected_values:
-            coerced_value = parse_value_to_observed_type(
-                observed_value=sample_observed_value,
-                value=schema.value,
-            )
-            if coerced_value not in observed_value_set:
-                renderer_configuration.params.__dict__[
-                    name
-                ].render_state = ObservedValueRenderState.MISSING.value
-                template_str_list.append(f"${name}")
-
-        renderer_configuration.template_str = " ".join(template_str_list)
+        # observed_value is None for this expectation - violations are in partial_unexpected_list
+        renderer_configuration.template_str = "--"
 
         value_obj = renderedAtomicValueSchema.load(
             {
