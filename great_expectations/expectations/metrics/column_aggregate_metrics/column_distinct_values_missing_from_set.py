@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List
 
+from great_expectations.compatibility.not_imported import is_version_greater_or_equal
 from great_expectations.compatibility.pyspark import (
     functions as F,
+)
+from great_expectations.compatibility.sqlalchemy import (
+    __version__ as SQLALCHEMY_VERSION,
 )
 from great_expectations.compatibility.sqlalchemy import sqlalchemy as sa
 from great_expectations.core.metric_domain_types import MetricDomainTypes
@@ -16,8 +20,7 @@ from great_expectations.expectations.metrics.column_aggregate_metric_provider im
     ColumnAggregateMetricProvider,
     column_aggregate_value,
 )
-from great_expectations.expectations.metrics.column_aggregate_metrics.column_distinct_values import (  # noqa: E501 # long import path
-    _SQLALCHEMY_1_4_OR_GREATER,
+from great_expectations.expectations.metrics.column_aggregate_metrics.column_distinct_values import (  # noqa: E501
     _coerce_value_set_for_sql,
     _coerce_value_set_to_column_type,
 )
@@ -27,6 +30,11 @@ if TYPE_CHECKING:
     import pandas as pd
 
     from great_expectations.compatibility import pyspark, sqlalchemy
+
+# SQLAlchemy 1.4+ uses is_not() instead of isnot()
+_SQLALCHEMY_1_4_OR_GREATER = SQLALCHEMY_VERSION is not None and is_version_greater_or_equal(
+    SQLALCHEMY_VERSION, "1.4.0"
+)
 
 
 class ColumnDistinctValuesMissingFromSetCount(ColumnAggregateMetricProvider):
