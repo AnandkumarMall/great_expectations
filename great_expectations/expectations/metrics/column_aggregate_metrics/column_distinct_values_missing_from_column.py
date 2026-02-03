@@ -37,14 +37,14 @@ _SQLALCHEMY_1_4_OR_GREATER = SQLALCHEMY_VERSION is not None and is_version_great
 )
 
 
-class ColumnDistinctValuesMissingFromSetCount(ColumnAggregateMetricProvider):
+class ColumnDistinctValuesMissingFromColumnCount(ColumnAggregateMetricProvider):
     """Metric that returns count of expected values missing from the column.
 
     Used for expect_column_distinct_values_to_contain_set to determine pass/fail
     without fetching all distinct values.
     """
 
-    metric_name = "column.distinct_values.missing_from_set.count"
+    metric_name = "column.distinct_values.missing_from_column.count"
     value_keys = ("value_set",)
 
     @column_aggregate_value(engine=PandasExecutionEngine)
@@ -132,14 +132,14 @@ class ColumnDistinctValuesMissingFromSetCount(ColumnAggregateMetricProvider):
         return len(value_set) - found_count
 
 
-class ColumnDistinctValuesMissingFromSet(ColumnAggregateMetricProvider):
+class ColumnDistinctValuesMissingFromColumn(ColumnAggregateMetricProvider):
     """Metric that returns values in the expected set that are missing from the column.
 
     Used for expect_column_distinct_values_to_contain_set to check which
     required values are not present in the column.
     """
 
-    metric_name = "column.distinct_values.missing_from_set"
+    metric_name = "column.distinct_values.missing_from_column"
     value_keys = ("value_set", "limit")
 
     @column_aggregate_value(engine=PandasExecutionEngine)

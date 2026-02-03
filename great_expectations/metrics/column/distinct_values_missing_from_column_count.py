@@ -4,11 +4,11 @@ from great_expectations.metrics.column import ColumnMetric
 from great_expectations.metrics.metric_results import MetricResult
 
 
-class ColumnDistinctValuesMissingFromSetCountResult(MetricResult[int]): ...
+class ColumnDistinctValuesMissingFromColumnCountResult(MetricResult[int]): ...
 
 
-class ColumnDistinctValuesMissingFromSetCount(
-    ColumnMetric[ColumnDistinctValuesMissingFromSetCountResult]
+class ColumnDistinctValuesMissingFromColumnCount(
+    ColumnMetric[ColumnDistinctValuesMissingFromColumnCountResult]
 ):
     """Count of expected values that are missing from the column.
 
@@ -16,5 +16,5 @@ class ColumnDistinctValuesMissingFromSetCount(
     without fetching all distinct values.
     """
 
-    name = "column.distinct_values.missing_from_set.count"
+    name = "column.distinct_values.missing_from_column.count"
     value_set: List
