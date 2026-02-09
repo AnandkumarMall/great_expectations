@@ -33,7 +33,7 @@ This page provides instructions for working with Expectations. To learn about Ex
    :::
 
    :::warning Warning
-   this is a warning
+   This is a warning.
    :::
 
    :::danger Danger
