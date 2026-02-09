@@ -29,7 +29,7 @@ This page provides instructions for working with Expectations. To learn about Ex
    :::
 
    :::note Note
-   this is a note
+   This is a note.
    :::
 
    :::warning Warning
