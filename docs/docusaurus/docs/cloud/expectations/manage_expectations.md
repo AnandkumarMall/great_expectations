@@ -25,7 +25,7 @@ This page provides instructions for working with Expectations. To learn about Ex
 4. Select a data quality issue to test for or an option for writing your own test.
 
    :::tip Tip
-   this is a tip
+   This is a tip.
    :::
 
    :::note Note
