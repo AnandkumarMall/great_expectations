@@ -166,3 +166,6 @@ assets/docker/mercury/volume/
 
 # mise
 mise.toml
+
+# test artifacts
+junit.xml
