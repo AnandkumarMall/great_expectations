@@ -162,6 +162,7 @@ class _PandasDatasource(Datasource):
     ) -> str: ...
 
 _DYNAMIC_ASSET_TYPES: list[Type[_PandasDataAsset]]
+_GBQ_ASSET_MANUALLY_CREATED: bool
 
 class PandasDatasource(_PandasDatasource):
     asset_types: ClassVar[Sequence[Type[DataAsset]]]

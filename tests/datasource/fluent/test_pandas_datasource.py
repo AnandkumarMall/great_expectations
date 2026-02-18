@@ -20,8 +20,10 @@ from great_expectations.datasource.fluent.dynamic_pandas import PANDAS_VERSION
 from great_expectations.datasource.fluent.interfaces import Batch
 from great_expectations.datasource.fluent.pandas_datasource import (
     _DYNAMIC_ASSET_TYPES,
+    _GBQ_ASSET_MANUALLY_CREATED,
     CSVAsset,
     DataFrameAsset,
+    GBQAsset,
     TableAsset,
     _PandasDataAsset,
 )
@@ -155,6 +157,14 @@ class TestDynamicPandasAssets:
         )
         method = getattr(ds, method_name)
 
+        if _GBQ_ASSET_MANUALLY_CREATED and asset_class is GBQAsset:
+            # pd.read_gbq was removed in pandas 3.0+, so no dynamic GBQAsset can be generated
+            # from its signature. The manual fallback allows extra fields so that kwargs like
+            # project_id and credentials pass through to the reader without a ValidationError.
+            asset = method(f"{asset_class.__name__}_add_asset_test", query="SELECT 1")
+            assert isinstance(asset, GBQAsset)
+            return
+
         with pytest.raises(pydantic.ValidationError) as exc_info:
             positional_arg_string = "foo"
             positional_args: list[str] = []
@@ -207,6 +217,13 @@ class TestDynamicPandasAssets:
         validation, and doesn't accept arbitrary keyword arguments.
         This is also a proxy for testing that the dynamic pydantic model creation was successful.
         """
+        if _GBQ_ASSET_MANUALLY_CREATED and asset_class is GBQAsset:
+            pytest.skip(
+                "Manually created GBQAsset intentionally allows extra fields because "
+                "pd.read_gbq was removed in pandas 3.0+, so its parameter list cannot be "
+                "auto-discovered and all reader kwargs must be accepted as extra fields."
+            )
+
         with pytest.raises(pydantic.ValidationError) as exc_info:
             asset_class(  # type: ignore[call-arg] # FIXME CoP
                 name="test",
