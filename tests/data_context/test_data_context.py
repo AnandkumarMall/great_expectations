@@ -651,7 +651,7 @@ def test_modifications_to_env_vars_is_recognized_within_same_program_execution(
     env_var_name: str = "MY_PLUGINS_DIRECTORY"
     env_var_value: str = "my_patched_value"
 
-    context.variables.config.plugins_directory = f"${env_var_name}"
+    context.variables.config.plugins_directory = f"${{{env_var_name}}}"
     monkeypatch.setenv(env_var_name, env_var_value)
 
     assert context.plugins_directory and context.plugins_directory.endswith(env_var_value)
@@ -673,7 +673,7 @@ def test_modifications_to_config_vars_is_recognized_within_same_program_executio
     config_var_name: str = "my_plugins_dir"
     config_var_value: str = "my_patched_value"
 
-    context.variables.config.plugins_directory = f"${config_var_name}"
+    context.variables.config.plugins_directory = f"${{{config_var_name}}}"
     context.save_config_variable(name=config_var_name, value=config_var_value)
 
     assert context.plugins_directory and context.plugins_directory.endswith(config_var_value)

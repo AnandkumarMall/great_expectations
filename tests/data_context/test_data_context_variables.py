@@ -459,7 +459,7 @@ def test_file_data_context_variables_e2e(
 
     # Set attributes defined above
     file_data_context.variables.progress_bars = updated_progress_bars
-    file_data_context.variables.plugins_directory = f"${env_var_name}"
+    file_data_context.variables.plugins_directory = f"${{{env_var_name}}}"
     file_data_context.variables.save()
 
     # Review great_expectations.yml where values were written and confirm changes
@@ -473,7 +473,7 @@ def test_file_data_context_variables_e2e(
 
     assert config_saved_to_disk.progress_bars == updated_progress_bars.to_dict()
     assert file_data_context.variables.plugins_directory == value_associated_with_env_var
-    assert config_saved_to_disk.plugins_directory == f"${env_var_name}"
+    assert config_saved_to_disk.plugins_directory == f"${{{env_var_name}}}"
 
 
 @pytest.mark.cloud

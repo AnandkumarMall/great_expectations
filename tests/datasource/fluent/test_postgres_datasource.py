@@ -1277,7 +1277,7 @@ def test_add_postgres_query_asset_with_batch_metadata(
     years = [2021, 2022]
     asset_specified_metadata = {
         "pipeline_name": "my_pipeline",
-        "no_curly_pipeline_filename": "$pipeline_filename",
+        "no_curly_pipeline_filename": "${pipeline_filename}",
         "curly_pipeline_filename": "${pipeline_filename}",
     }
 
@@ -1321,7 +1321,7 @@ def test_add_postgres_table_asset_with_batch_metadata(
     years = [2021, 2022]
     asset_specified_metadata = {
         "pipeline_name": "my_pipeline",
-        "no_curly_pipeline_filename": "$pipeline_filename",
+        "no_curly_pipeline_filename": "${pipeline_filename}",
         "curly_pipeline_filename": "${pipeline_filename}",
     }
 

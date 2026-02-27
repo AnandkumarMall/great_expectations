@@ -77,7 +77,7 @@ def test_spark_data_asset_batch_metadata(
     spark_datasource = empty_data_context.data_sources.add_spark("my_spark_datasource")
 
     batch_metadata = {
-        "no_curly_pipeline_filename": "$pipeline_filename",
+        "no_curly_pipeline_filename": "${pipeline_filename}",
         "curly_pipeline_filename": "${pipeline_filename}",
         "pipeline_step": "transform_3",
     }

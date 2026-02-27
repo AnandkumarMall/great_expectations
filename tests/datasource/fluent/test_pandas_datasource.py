@@ -507,7 +507,7 @@ def test_pandas_data_asset_batch_metadata(
     pandas_datasource = empty_data_context.data_sources.pandas_default
 
     batch_metadata = {
-        "no_curly_pipeline_filename": "$pipeline_filename",
+        "no_curly_pipeline_filename": "${pipeline_filename}",
         "curly_pipeline_filename": "${pipeline_filename}",
         "pipeline_step": "transform_3",
     }
