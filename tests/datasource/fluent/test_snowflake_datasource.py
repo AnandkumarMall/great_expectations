@@ -457,7 +457,7 @@ def test_valid_config(
                 {
                     "loc": ("connection_string",),
                     "msg": "ConfigStr - contains no config template strings in the format "
-                    "'${MY_CONFIG_VAR}' or '$MY_CONFIG_VAR'",
+                    "'${MY_CONFIG_VAR}'",
                     "type": "value_error",
                 },
                 {
@@ -492,7 +492,7 @@ def test_valid_config(
                 {
                     "loc": ("connection_string",),
                     "msg": "ConfigStr - contains no config template strings in the format "
-                    "'${MY_CONFIG_VAR}' or '$MY_CONFIG_VAR'",
+                    "'${MY_CONFIG_VAR}'",
                     "type": "value_error",
                 },
                 {
@@ -528,7 +528,7 @@ def test_valid_config(
                 {
                     "loc": ("connection_string",),
                     "msg": "ConfigStr - contains no config template strings in the format "
-                    "'${MY_CONFIG_VAR}' or '$MY_CONFIG_VAR'",
+                    "'${MY_CONFIG_VAR}'",
                     "type": "value_error",
                 },
                 {
@@ -563,7 +563,7 @@ def test_valid_config(
                 {
                     "loc": ("connection_string",),
                     "msg": "ConfigStr - contains no config template strings in the format "
-                    "'${MY_CONFIG_VAR}' or '$MY_CONFIG_VAR'",
+                    "'${MY_CONFIG_VAR}'",
                     "type": "value_error",
                 },
                 {
@@ -599,7 +599,7 @@ def test_valid_config(
                 {
                     "loc": ("connection_string",),
                     "msg": "ConfigStr - contains no config template strings in the format "
-                    "'${MY_CONFIG_VAR}' or '$MY_CONFIG_VAR'",
+                    "'${MY_CONFIG_VAR}'",
                     "type": "value_error",
                 },
                 {
@@ -656,7 +656,7 @@ def test_missing_required_params(
                 {
                     "loc": ("connection_string",),
                     "msg": "ConfigStr - contains no config template strings in the format"
-                    " '${MY_CONFIG_VAR}' or '$MY_CONFIG_VAR'",
+                    " '${MY_CONFIG_VAR}'",
                     "type": "value_error",
                 },
                 {
@@ -691,7 +691,7 @@ def test_missing_required_params(
                 {
                     "loc": ("connection_string",),
                     "msg": "ConfigStr - contains no config template strings in the format"
-                    " '${MY_CONFIG_VAR}' or '$MY_CONFIG_VAR'",
+                    " '${MY_CONFIG_VAR}'",
                     "type": "value_error",
                 },
                 {
@@ -726,7 +726,7 @@ def test_missing_required_params(
                 {
                     "loc": ("connection_string",),
                     "msg": "ConfigStr - contains no config template strings in the format"
-                    " '${MY_CONFIG_VAR}' or '$MY_CONFIG_VAR'",
+                    " '${MY_CONFIG_VAR}'",
                     "type": "value_error",
                 },
                 {
@@ -825,7 +825,7 @@ def test_connection_updating_templated_connection_string():
     "private_key",
     [
         pytest.param("${MY_PRIVATE_KEY}", id="Env Variable"),
-        pytest.param("$MY_PRIVATE_KEY", id="Config Variable"),
+        pytest.param("${MY_PRIVATE_KEY}", id="Config Variable"),
     ],
 )
 @pytest.mark.unit
@@ -848,7 +848,7 @@ def test_creating_datasource_with_templated_private_key(private_key):
     "private_key",
     [
         pytest.param("${MY_PRIVATE_KEY}", id="Env Variable"),
-        pytest.param("$MY_PRIVATE_KEY", id="Config Variable"),
+        pytest.param("${MY_PRIVATE_KEY}", id="Config Variable"),
     ],
 )
 @pytest.mark.unit

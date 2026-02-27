@@ -113,7 +113,7 @@ def test_substitute_config_variable():
         == "abcval_of_arg_0"
     )
     assert (
-        config_substitutor.substitute_config_variable("abc$arg0", config_variables_dict)
+        config_substitutor.substitute_config_variable("abc${arg0}", config_variables_dict)
         == "abcval_of_arg_0"
     )
     assert (
@@ -151,17 +151,19 @@ def test_substitute_config_variable():
     )
     # Test with upper case
     assert (
-        config_substitutor.substitute_config_variable("prefix_$ARG4/suffix", config_variables_dict)
+        config_substitutor.substitute_config_variable(
+            "prefix_${ARG4}/suffix", config_variables_dict
+        )
         == "prefix_val_of_ARG_4/suffix"
     )
     assert (
-        config_substitutor.substitute_config_variable("$ARG4", config_variables_dict)
+        config_substitutor.substitute_config_variable("${ARG4}", config_variables_dict)
         == "val_of_ARG_4"
     )
 
     # Test with multiple substitutions
     assert (
-        config_substitutor.substitute_config_variable("prefix${arg0}$aRg3", config_variables_dict)
+        config_substitutor.substitute_config_variable("prefix${arg0}${aRg3}", config_variables_dict)
         == "prefixval_of_arg_0val_of_aRg_3"
     )
 
@@ -174,7 +176,7 @@ def test_substitute_config_variable():
     # Multiple configurations together
     assert (
         config_substitutor.substitute_config_variable(
-            r"prefix$ARG4.$arg0/$aRg3:${ARG4}/\$dontsub${arg0}:${aRg3}.suffix",
+            r"prefix${ARG4}.${arg0}/${aRg3}:${ARG4}/\$dontsub${arg0}:${aRg3}.suffix",
             config_variables_dict,
         )
         == "prefixval_of_ARG_4.val_of_arg_0/val_of_aRg_3:val_of_ARG_4/$dontsubval_of_arg_0:val_of_aRg_3.suffix"  # noqa: E501 # FIXME CoP

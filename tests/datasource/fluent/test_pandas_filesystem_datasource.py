@@ -579,7 +579,7 @@ def test_csv_asset_batch_metadata(
 
     asset_specified_metadata = {
         "pipeline_name": "my_pipeline",
-        "no_curly_pipeline_filename": "$pipeline_filename",
+        "no_curly_pipeline_filename": "${pipeline_filename}",
         "curly_pipeline_filename": "${pipeline_filename}",
     }
 
