@@ -373,5 +373,34 @@ class TestConfigUriInvalid:
             _ = pydantic.parse_obj_as(ConfigUri, "snowflake://me:password@account/db")
 
 
+def test_bare_dollar_not_treated_as_template():
+    """Bare $word in a password should not match the config template pattern."""
+    assert not ConfigStr.str_contains_config_template("P@ss$word")
+    assert not ConfigStr.str_contains_config_template("pa$word")
+    assert not ConfigStr.str_contains_config_template("abc$DEF")
+
+
+def test_bare_dollar_passes_through_substitution(env_config_provider: _ConfigurationProvider):
+    """A string with a bare $word should be returned unchanged by the substitutor."""
+    result = env_config_provider.substitute_config("postgresql://user:P@ss$word@host/db")
+    assert result == "postgresql://user:P@ss$word@host/db"
+
+
+def test_union_config_str_or_str_with_bare_dollar():
+    """Union[ConfigStr, str] field with a bare $ in the value should fall through to str."""
+
+    class MyModel(FluentBaseModel):
+        password: Union[ConfigStr, str]
+
+    m = MyModel(password="P@ss$word")
+    assert m.password == "P@ss$word"
+
+
+def test_escaped_dollar_brace_passes_through(env_config_provider: _ConfigurationProvider):
+    r"""\\${ should escape to a literal ${ after substitution."""
+    result = env_config_provider.substitute_config(r"pa\${word}")
+    assert result == "pa${word}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-vv"])

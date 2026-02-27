@@ -14,14 +14,12 @@ from great_expectations.data_context.types.base import BaseYamlConfig
 
 logger = logging.getLogger(__name__)
 
-TEMPLATE_STR_REGEX: Final[re.Pattern] = re.compile(
-    r"(?<!\\)\$\{(.*?)\}|(?<!\\)\$([_a-zA-Z][_a-zA-Z0-9]*)"
-)
+TEMPLATE_STR_REGEX: Final[re.Pattern] = re.compile(r"(?<!\\)\$\{(.*?)\}")
 
 
 class _ConfigurationSubstitutor:
     """
-    Responsible for encapsulating all logic around $VARIABLE (or ${VARIABLE}) substitution.
+    Responsible for encapsulating all logic around ${VARIABLE} substitution.
 
     While the config variables utilized for substitution are provided at runtime, all the
     behavior necessary to actually update config objects with their appropriate runtime values
@@ -81,11 +79,11 @@ class _ConfigurationSubstitutor:
         dollar_sign_escape_string: str = r"\$",
     ) -> Optional[str]:
         """
-        This method takes a string, and if it contains a pattern ${SOME_VARIABLE} or $SOME_VARIABLE,
+        This method takes a string, and if it contains a pattern ${SOME_VARIABLE},
         returns a string where the pattern is replaced with the value of SOME_VARIABLE,
-        otherwise returns the string unchanged. These patterns are case sensitive. There can be multiple
-        patterns in a string, e.g. all 3 will be substituted in the following:
-        $SOME_VARIABLE${some_OTHER_variable}$another_variable
+        otherwise returns the string unchanged. The pattern is case sensitive. There can be multiple
+        patterns in a string, e.g. both will be substituted in the following:
+        ${SOME_VARIABLE}${some_OTHER_variable}
 
         If the environment variable SOME_VARIABLE is set, the method uses its value for substitution.
         If it is not set, the value of SOME_VARIABLE is looked up in the config variables store (file).
@@ -97,12 +95,14 @@ class _ConfigurationSubstitutor:
 
         If the value starts with the keyword `secret|`, it tries to apply secret store substitution.
 
+        A bare `$` not followed by `{` is not treated as a substitution marker and passes through
+        unchanged. Only `${` initiates substitution.
+
         :param template_str: a string that might or might not be of the form ${SOME_VARIABLE}
-                or $SOME_VARIABLE
         :param config_variables_dict: a dictionary of config variables. It is loaded from the
                 config variables store (by default, "uncommitted/config_variables.yml file)
-        :param dollar_sign_escape_string: a string that will be used in place of a `$` when substitution
-                is not desired.
+        :param dollar_sign_escape_string: a string that will be used in place of `${` when
+                substitution is not desired (e.g. r"\\${").
 
         :return: a string with values substituted, or the same object if template_str is not a string.
         """  # noqa: E501 # FIXME CoP
@@ -118,8 +118,7 @@ class _ConfigurationSubstitutor:
             return template_str
 
         for m in match:
-            # Match either the first group e.g. ${Variable} or the second e.g. $Variable
-            config_variable_name = m.group(1) or m.group(2)
+            config_variable_name = m.group(1)
             config_variable_value = config_variables_dict.get(config_variable_name)
 
             if config_variable_value is not None:

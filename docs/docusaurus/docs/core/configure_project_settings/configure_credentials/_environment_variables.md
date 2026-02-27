@@ -23,8 +23,10 @@ export MY_POSTGRES_PASSWORD=<PASSWORD>
 export POSTGRES_CONNECTION_STRING=postgresql+psycopg2://${MY_POSTGRES_USERNAME}:${MY_POSTGRES_PASSWORD}@<HOST>:<PORT>/<DATABASE>
 ```
 
-Because the dollar sign character `$` is used to indicate the start of a string substitution they should be escaped using a backslash `\` if they are part of your credentials. For example, if your password is `pa$$word` then in the previous examples you would use the command:
+Because the `${` sequence is used to indicate the start of a config variable substitution (e.g. `${MY_PASSWORD}`), it should be escaped using a backslash `\` if it appears literally in your credentials. For example, if your password is `pa${word}` then in the previous examples you would use the command:
 
 ```bash title="Terminal or ~/.bashrc"
-export MY_POSTGRES_PASSWORD=pa\$\$word
+export MY_POSTGRES_PASSWORD=pa\${word}
 ```
+
+Note: a bare `$` that is not followed by `{` does not need to be escaped. For example, a password like `pa$word` can be used as-is.

@@ -317,3 +317,37 @@ def test_substitute_value_from_azure_keyvault(
                 )
                 == expected
             )
+
+
+@pytest.mark.unit
+def test_bare_dollar_not_substituted():
+    """$word in a value should not be treated as a variable reference."""
+    substitutor = _ConfigurationSubstitutor()
+    result = substitutor.substitute_config_variable("P@ss$word", {})
+    assert result == "P@ss$word"
+
+
+@pytest.mark.unit
+def test_bare_dollar_in_connection_string():
+    """Connection strings with bare $ chars should pass through unmodified."""
+    substitutor = _ConfigurationSubstitutor()
+    conn = "postgresql://user:P@ss$word@host/db"
+    result = substitutor.substitute_config_variable(conn, {})
+    assert result == conn
+
+
+@pytest.mark.unit
+def test_only_curly_brace_form_is_substituted():
+    """Only ${VAR} triggers substitution; $VAR does not."""
+    substitutor = _ConfigurationSubstitutor()
+    variables = {"MYVAR": "replaced"}
+    result = substitutor.substitute_config_variable("prefix_${MYVAR}_suffix", variables)
+    assert result == "prefix_replaced_suffix"
+
+
+@pytest.mark.unit
+def test_escaped_dollar_brace_becomes_literal():
+    r"""\\${ should produce a literal ${ in the output."""
+    substitutor = _ConfigurationSubstitutor()
+    result = substitutor.substitute_config_variable(r"pa\${word}", {})
+    assert result == "pa${word}"
