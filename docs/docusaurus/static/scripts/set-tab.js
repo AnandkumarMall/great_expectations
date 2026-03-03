@@ -21,8 +21,20 @@
 })()
 
 function scrollToHeading () {
-  const heading = document.querySelector(`${window.location.hash}`)
-  heading.scrollIntoView()
+  try {
+    const heading = document.querySelector(window.location.hash)
+    if (heading) {
+      heading.scrollIntoView()
+    }
+  } catch (e) {
+    // Sphinx anchor IDs (e.g. #module.Class.method) are invalid CSS selectors;
+    // fall back to getElementById which accepts bare IDs without CSS escaping.
+    const id = window.location.hash.slice(1)
+    const heading = document.getElementById(id)
+    if (heading) {
+      heading.scrollIntoView()
+    }
+  }
 }
 
 window.onload = () => window.location.hash && scrollToHeading()
