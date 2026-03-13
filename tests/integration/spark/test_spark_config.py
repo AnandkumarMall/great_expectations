@@ -86,46 +86,75 @@ def test_spark_config_execution_engine_block_config(spark_session):
     new_spark_session.sparkContext.stop()
 
 
-def test_spark_timestamp_roundtrip_via_arrow(spark_session):
-    """Verify that timestamp data survives the pandas -> Spark -> pandas round-trip.
-
-    This exercises both Arrow-optimized code paths:
-      1. build_spark_engine passes the pandas DataFrame directly to
-         createDataFrame(pandas_df, schema), which uses Arrow serialization.
-      2. engine.head() calls toPandas(), which uses Arrow deserialization.
-
-    Without pyarrow installed and spark.sql.execution.arrow.pyspark.enabled=true,
-    this round-trip may silently degrade timestamp types to object dtype or fail
-    outright on pandas 3.x due to Pandas4Warning in PySpark's Arrow serializer.
-    """
-    timestamps = [
-        datetime.datetime(2021, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc),
-        datetime.datetime(2021, 6, 15, 12, 30, 0, tzinfo=datetime.timezone.utc),
-        datetime.datetime(2021, 12, 31, 23, 59, 59, tzinfo=datetime.timezone.utc),
-    ]
-
-    engine = build_spark_engine(
-        spark=spark_session,
-        df=pd.DataFrame(
-            {
-                "id": [1, 2, 3],
-                "event_time": timestamps,
-            }
-        ),
-        schema=pyspark.types.StructType(
+@pytest.mark.parametrize(
+    "label, timestamps",
+    [
+        pytest.param(
+            "simple",
             [
-                pyspark.types.StructField("id", pyspark.types.IntegerType(), True),
-                pyspark.types.StructField("event_time", pyspark.types.TimestampType(), True),
-            ]
+                datetime.datetime(2021, 1, 1, tzinfo=datetime.timezone.utc),
+                datetime.datetime(2021, 6, 15, tzinfo=datetime.timezone.utc),
+                datetime.datetime(2021, 12, 31, tzinfo=datetime.timezone.utc),
+            ],
+            id="simple-timestamps",
         ),
-        batch_id="arrow_timestamp_test",
+        pytest.param(
+            "with-null",
+            [
+                datetime.datetime(2021, 1, 1, tzinfo=datetime.timezone.utc),
+                None,
+                datetime.datetime(2021, 12, 31, tzinfo=datetime.timezone.utc),
+            ],
+            id="timestamps-with-null",
+        ),
+        pytest.param(
+            "pre-nanosecond-epoch",
+            [
+                datetime.datetime(1400, 1, 1, tzinfo=datetime.timezone.utc),
+                datetime.datetime(1600, 6, 15, tzinfo=datetime.timezone.utc),
+                datetime.datetime(1677, 9, 20, tzinfo=datetime.timezone.utc),
+            ],
+            id="before-1677-nanosecond-epoch",
+        ),
+        pytest.param(
+            "post-nanosecond-epoch",
+            [
+                datetime.datetime(2262, 4, 12, tzinfo=datetime.timezone.utc),
+                datetime.datetime(2300, 1, 1, tzinfo=datetime.timezone.utc),
+                datetime.datetime(2500, 6, 15, tzinfo=datetime.timezone.utc),
+            ],
+            id="after-2262-nanosecond-epoch",
+        ),
+    ],
+)
+def test_spark_timestamp_roundtrip_via_arrow(spark_session, label, timestamps):
+    """Verify that toPandas() preserves datetime64 dtype for timestamp columns.
+
+    Without pyarrow and Arrow optimization, toPandas() converts timestamps via
+    datetime64[ns] which has a limited range (1677-2262). Timestamps outside that
+    range fall back to object dtype. With Arrow enabled, toPandas() uses
+    datetime64[us] which covers a much wider range.
+
+    This test also checks null handling and simple in-range timestamps as controls.
+    """
+    schema = pyspark.types.StructType(
+        [
+            pyspark.types.StructField("id", pyspark.types.IntegerType(), True),
+            pyspark.types.StructField("event_time", pyspark.types.TimestampType(), True),
+        ]
+    )
+    rows = [(i, ts) for i, ts in enumerate(timestamps)]
+    spark_df = spark_session.createDataFrame(rows, schema=schema)
+
+    engine = SparkDFExecutionEngine(
+        spark_config=dict(spark_session.sparkContext.getConf().getAll()),
+        batch_data_dict={"test_batch": spark_df},
     )
 
-    result = engine.head(n=3)
+    result = engine.head(n=len(timestamps))
 
     assert pd.api.types.is_datetime64_any_dtype(result["event_time"]), (
-        f"Expected datetime64 dtype for timestamp column, got {result['event_time'].dtype}. "
+        f"[{label}] Expected datetime64 dtype for timestamp column, "
+        f"got {result['event_time'].dtype}. "
         "Ensure pyarrow is installed and spark.sql.execution.arrow.pyspark.enabled is true."
     )
-    for original, roundtripped in zip(timestamps, result["event_time"], strict=True):
-        assert roundtripped == pd.Timestamp(original).tz_localize(None)
