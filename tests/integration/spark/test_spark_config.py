@@ -128,4 +128,4 @@ def test_spark_timestamp_roundtrip_via_arrow(spark_session):
         "Ensure pyarrow is installed and spark.sql.execution.arrow.pyspark.enabled is true."
     )
     for original, roundtripped in zip(timestamps, result["event_time"], strict=True):
-        assert roundtripped == pd.Timestamp(original)
+        assert roundtripped == pd.Timestamp(original).tz_localize(None)
