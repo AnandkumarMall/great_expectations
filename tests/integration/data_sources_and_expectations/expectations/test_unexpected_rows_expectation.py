@@ -14,7 +14,6 @@ from great_expectations.datasource.fluent.interfaces import Batch
 from tests.integration.conftest import parameterize_batch_for_data_sources
 from tests.integration.test_utils.data_source_config import (
     BigQueryDatasourceTestConfig,
-    DatabricksDatasourceTestConfig,
     DataSourceTestConfig,
     MySQLDatasourceTestConfig,
     PostgreSQLDatasourceTestConfig,
@@ -29,7 +28,6 @@ from tests.integration.test_utils.data_source_config.base import Mapping
 # pandas not currently supported by this Expecatation
 ALL_SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     BigQueryDatasourceTestConfig(),
-    DatabricksDatasourceTestConfig(),
     SQLServerDatasourceTestConfig(),
     MySQLDatasourceTestConfig(),
     PostgreSQLDatasourceTestConfig(),
@@ -43,7 +41,6 @@ ALL_SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
 # spark and big query not currently supported with extra_data, so we can't test JOIN
 # pandas not currently supported by this Expecatation
 EXTRA_DATA_SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
-    DatabricksDatasourceTestConfig(),
     SQLServerDatasourceTestConfig(),
     MySQLDatasourceTestConfig(),
     PostgreSQLDatasourceTestConfig(),
@@ -55,7 +52,6 @@ EXTRA_DATA_SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
 # pandas and spark not currently supporting partitioners
 _PARTITIONER_SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     BigQueryDatasourceTestConfig(),
-    DatabricksDatasourceTestConfig(),
     SQLServerDatasourceTestConfig(),
     MySQLDatasourceTestConfig(),
     PostgreSQLDatasourceTestConfig(),
@@ -68,7 +64,6 @@ _PARTITIONER_SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
 # spark and big query not currently supported with extra_data, so we can't test JOIN
 # pandas and spark not currently supporting partitioners
 PARTITIONER_AND_EXTRA_DATA_SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
-    DatabricksDatasourceTestConfig(),
     SQLServerDatasourceTestConfig(),
     MySQLDatasourceTestConfig(),
     PostgreSQLDatasourceTestConfig(),

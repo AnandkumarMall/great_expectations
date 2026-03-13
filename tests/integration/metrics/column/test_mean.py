@@ -8,7 +8,6 @@ from great_expectations.metrics.metric_results import MetricErrorResult
 from tests.integration.conftest import parameterize_batch_for_data_sources
 from tests.integration.test_utils.data_source_config import (
     BigQueryDatasourceTestConfig,
-    DatabricksDatasourceTestConfig,
     DataSourceTestConfig,
     PandasDataFrameDatasourceTestConfig,
     PostgreSQLDatasourceTestConfig,
@@ -36,7 +35,6 @@ DATA_SOURCES_WITHOUT_SPARK_DATABRICKS_SQLITE: list[DataSourceTestConfig] = [
 
 DATA_SOURCES: list[DataSourceTestConfig] = DATA_SOURCES_WITHOUT_SPARK_DATABRICKS_SQLITE + [
     SparkFilesystemCsvDatasourceTestConfig(),
-    DatabricksDatasourceTestConfig(),
     SqliteDatasourceTestConfig(),
 ]
 

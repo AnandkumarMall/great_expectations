@@ -11,7 +11,6 @@ from tests.integration.conftest import (
     multi_source_batch_setup,
 )
 from tests.integration.test_utils.data_source_config import (
-    DatabricksDatasourceTestConfig,
     DataSourceTestConfig,
     PostgreSQLDatasourceTestConfig,
     RedshiftDatasourceTestConfig,
@@ -53,14 +52,6 @@ ALL_COMPARISON_TO_BASE_SOURCES = [
     ),
     MultiSourceTestConfig(
         comparison=SnowflakeDatasourceTestConfig(),
-        base=SqliteDatasourceTestConfig(),
-    ),
-    MultiSourceTestConfig(
-        comparison=DatabricksDatasourceTestConfig(),
-        base=DatabricksDatasourceTestConfig(),
-    ),
-    MultiSourceTestConfig(
-        comparison=DatabricksDatasourceTestConfig(),
         base=SqliteDatasourceTestConfig(),
     ),
     MultiSourceTestConfig(

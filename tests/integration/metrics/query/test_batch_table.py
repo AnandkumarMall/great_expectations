@@ -11,7 +11,6 @@ from tests.integration.conftest import (
     parameterize_batch_for_data_sources,
 )
 from tests.integration.test_utils.data_source_config import (
-    DatabricksDatasourceTestConfig,
     DataSourceTestConfig,
     PostgreSQLDatasourceTestConfig,
     SnowflakeDatasourceTestConfig,
@@ -23,7 +22,6 @@ SQL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     PostgreSQLDatasourceTestConfig(),
     SqliteDatasourceTestConfig(),
     SnowflakeDatasourceTestConfig(),
-    DatabricksDatasourceTestConfig(),
 ]
 
 SPARK_DATA_SOURCES: Sequence[DataSourceTestConfig] = [

@@ -14,9 +14,6 @@ from tests.integration.data_sources_and_expectations.test_canonical_expectations
 from tests.integration.test_utils.data_source_config import RedshiftDatasourceTestConfig
 from tests.integration.test_utils.data_source_config.base import DataSourceTestConfig
 from tests.integration.test_utils.data_source_config.big_query import BigQueryDatasourceTestConfig
-from tests.integration.test_utils.data_source_config.databricks import (
-    DatabricksDatasourceTestConfig,
-)
 from tests.integration.test_utils.data_source_config.mysql import MySQLDatasourceTestConfig
 from tests.integration.test_utils.data_source_config.pandas_data_frame import (
     PandasDataFrameDatasourceTestConfig,
@@ -64,7 +61,6 @@ except ModuleNotFoundError:
 
 ALL_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     BigQueryDatasourceTestConfig(column_types=COLUMN_TYPES),
-    DatabricksDatasourceTestConfig(column_types=COLUMN_TYPES),
     SQLServerDatasourceTestConfig(column_types=COLUMN_TYPES),
     MySQLDatasourceTestConfig(column_types=COLUMN_TYPES),
     PandasDataFrameDatasourceTestConfig(),

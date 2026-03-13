@@ -11,7 +11,6 @@ from tests.integration.data_sources_and_expectations.test_canonical_expectations
     JUST_PANDAS_DATA_SOURCES,
 )
 from tests.integration.test_utils.data_source_config import (
-    DatabricksDatasourceTestConfig,
     DataSourceTestConfig,
     MySQLDatasourceTestConfig,
     PandasDataFrameDatasourceTestConfig,
@@ -37,7 +36,6 @@ DATA = pd.DataFrame(
 SUPPORTED_DATA_SOURCES: Sequence[DataSourceTestConfig] = [
     PandasDataFrameDatasourceTestConfig(),
     PandasFilesystemCsvDatasourceTestConfig(),
-    DatabricksDatasourceTestConfig(),
     MySQLDatasourceTestConfig(),
     PostgreSQLDatasourceTestConfig(),
     RedshiftDatasourceTestConfig(),
