@@ -12,6 +12,7 @@ The key difference between using GX Core and GX Cloud is the Data Context. By se
 
 ## Examples
 
+### Configuration Setup
 In the example below, a File Data Context has been created, along with a Postgres Data Source and Data Asset.
 
 ```python
@@ -59,6 +60,34 @@ context.validation_definitions.add(validation_definition)
 ```
 
 Running this script will now create the same Data Source, Data Asset, Batch Definition, and Validation Definition in your GX Cloud organization.
+
+### Running Validations
+
+The code snippet below runs a Checkpoint in an existing GX Core configuration.
+
+```python
+import great_expectations as gx
+
+context = gx.get_context("file")
+checkpoint = context.checkpoints.get("My Checkpoint")
+checkpoint.run()
+```
+
+In order to execute a checkpoint within your GX Cloud organization, the same code snippet can be used. In the same way as the previous example, set the mode of your data context to `cloud` and provide your [GX Cloud Credentials](/cloud/connect/connect_python.md#get-your-credentials) for the `GX_CLOUD_ORGANIZATION_ID`, `GX_CLOUD_WORKSPACE_ID` and `GX_CLOUD_ACCESS_TOKEN` environment variables.
+
+```python
+import great_expectations as gx
+
+os.environ["GX_CLOUD_ORGANIZATION_ID"] = "<YOUR_GX_CLOUD_ORGANIZATION_ID>"
+os.environ["GX_CLOUD_WORKSPACE_ID"] = "<YOUR_GX_CLOUD_WORKSPACE_ID>"
+os.environ["GX_CLOUD_ACCESS_TOKEN"] = "<YOUR_GX_CLOUD_ACCESS_TOKEN>"
+
+context = gx.get_context(mode="cloud")
+checkpoint = context.checkpoints.get("My Checkpoint")
+checkpoint.run()
+```
+
+Your GX Cloud checkpoint can now be used to run validations wherever needed, such as within your data pipelines.
 
 ## Limitations
 Any Custom Expectations that you may have created are not compatible with GX Cloud. 
