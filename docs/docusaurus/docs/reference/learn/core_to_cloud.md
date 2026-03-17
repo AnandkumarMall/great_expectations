@@ -44,17 +44,17 @@ os.environ["GX_CLOUD_WORKSPACE_ID"] = "<YOUR_GX_CLOUD_WORKSPACE_ID>"
 os.environ["GX_CLOUD_ACCESS_TOKEN"] = "<YOUR_GX_CLOUD_ACCESS_TOKEN>"
 
 context = gx.get_context(mode="cloud")
-ds = context.data_sources.add_sql(name="Postgres DB", connection_string="postgresql+psycopg2://username:passowrd@myhost.domain>:443>/sample_db")
-asset = ds.add_table_asset(table_name="sample_table", name="sample_table")
+data_source = context.data_sources.add_sql(name="Postgres DB", connection_string="postgresql+psycopg2://username:passowrd@myhost.domain>:443>/sample_db")
+asset = data_source.add_table_asset(table_name="sample_table", name="sample_table")
 
-bd = asset.add_batch_definition_whole_table(
+batch_definition = asset.add_batch_definition_whole_table(
     name="FULL_TABLE"
 )
 
 suite = context.suites.get("my_suite")
 
 validation_definition = gx.ValidationDefinition(
-    data=bd, suite=suite, name="Validation Definition"
+    data=batch_definition, suite=suite, name="Validation Definition"
 )
 context.validation_definitions.add(validation_definition)
 ```
