@@ -264,6 +264,7 @@ module.exports = {
     }
   ],
   learn: [
+    'reference/learn/core_to_cloud',
     {
       type: 'category',
       label: 'GX in your data pipeline',
