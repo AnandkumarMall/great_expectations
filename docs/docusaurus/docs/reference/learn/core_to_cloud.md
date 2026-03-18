@@ -38,6 +38,7 @@ In order to recreate these same entities in GX Cloud, create a Cloud Data Contex
 
 ```python
 import great_expectations as gx
+import os
 
 os.environ["GX_CLOUD_ORGANIZATION_ID"] = "<YOUR_GX_CLOUD_ORGANIZATION_ID>"
 os.environ["GX_CLOUD_WORKSPACE_ID"] = "<YOUR_GX_CLOUD_WORKSPACE_ID>"
@@ -77,6 +78,7 @@ In order to execute a checkpoint within your GX Cloud organization, the same cod
 
 ```python
 import great_expectations as gx
+import os
 
 os.environ["GX_CLOUD_ORGANIZATION_ID"] = "<YOUR_GX_CLOUD_ORGANIZATION_ID>"
 os.environ["GX_CLOUD_WORKSPACE_ID"] = "<YOUR_GX_CLOUD_WORKSPACE_ID>"
