@@ -14,7 +14,6 @@ from tests.integration.data_sources_and_expectations.test_canonical_expectations
     JUST_PANDAS_DATA_SOURCES,
     SQL_DATA_SOURCES,
     BigQueryDatasourceTestConfig,
-    DatabricksDatasourceTestConfig,
     DataSourceTestConfig,
     GenericSQLDatasourceTestConfig,
     MySQLDatasourceTestConfig,
@@ -23,6 +22,9 @@ from tests.integration.data_sources_and_expectations.test_canonical_expectations
     SnowflakeDatasourceTestConfig,
     SqliteDatasourceTestConfig,
     SQLServerDatasourceTestConfig,
+)
+from tests.integration.test_utils.data_source_config import (
+    DatabricksDatasourceTestConfig,
 )
 
 COL_A = "col_a"
