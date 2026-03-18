@@ -6,6 +6,7 @@ from tests.integration.conftest import (
     multi_source_batch_setup,
 )
 from tests.integration.test_utils.data_source_config import (
+    GenericSQLDatasourceTestConfig,
     PostgreSQLDatasourceTestConfig,
     RedshiftDatasourceTestConfig,
     SnowflakeDatasourceTestConfig,
@@ -36,6 +37,14 @@ ALL_COMPARISON_TO_BASE_SOURCES = [
     ),
     MultiSourceTestConfig(
         comparison=RedshiftDatasourceTestConfig(),
+        base=SqliteDatasourceTestConfig(),
+    ),
+    MultiSourceTestConfig(
+        comparison=GenericSQLDatasourceTestConfig(),
+        base=GenericSQLDatasourceTestConfig(),
+    ),
+    MultiSourceTestConfig(
+        comparison=GenericSQLDatasourceTestConfig(),
         base=SqliteDatasourceTestConfig(),
     ),
 ]
