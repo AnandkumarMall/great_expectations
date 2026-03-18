@@ -92,4 +92,8 @@ checkpoint.run()
 Your GX Cloud checkpoint can now be used to run validations wherever needed, such as within your data pipelines.
 
 ## Limitations
-Any Custom Expectations that you may have created are not compatible with GX Cloud. 
+Some common limitations of migration from GX Core to GX Cloud are listed below. Refer to the [compatibility reference](/help/compatibility_reference.md) for a comprehensive list.
+
+- Some Data Sources that are supported in GX Core may not be supported in GX Cloud. 
+- Any Custom Expectations that you may have created are not compatible with GX Cloud. 
+- Credentials stored in the `config_variables.yml` file are not supported in GX Cloud.
