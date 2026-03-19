@@ -8,7 +8,7 @@ title: "GX Core to GX Cloud Migration Guide"
 
 This guide will enable you to migrate your GX Core configuration to a GX Cloud organization. Since GX Cloud is built on top of GX Core, the code you used to originally set up your GX Core configuration can be reused for setting up your GX Cloud organization. 
 
-The key difference between using GX Core and GX Cloud is the Data Context. By setting the mode of your Data Context to Cloud and then providing the appropriate credentials, you will be able to connect to your GX Cloud organization. Once you have created a Cloud Data Context, the rest of the code you have already written to configure your GX entities, such as Data Sources, Data Assets, and Expectations, can be re-run to migrate your existing configuration into GX Cloud. Similarly, any code that you have written to run validations, including Custom Actions, can also be reused.
+The key difference between using GX Core and GX Cloud is the Data Context. By setting the mode of your Data Context to `cloud` and then providing the appropriate credentials, you will be able to connect to your GX Cloud organization. Once you have created a Cloud Data Context, the rest of the code you have already written to configure your GX entities, such as Data Sources, Data Assets, and Expectations, can be re-run to migrate your existing configuration into GX Cloud. Similarly, any code that you have written to run validations, including Custom Actions, can also be reused.
 
 ## Examples
 
