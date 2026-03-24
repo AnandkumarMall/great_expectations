@@ -7,6 +7,9 @@ from .expect_column_distinct_values_to_contain_set import (
 from .expect_column_distinct_values_to_equal_set import (
     ExpectColumnDistinctValuesToEqualSet,
 )
+from .expect_column_js_divergence_to_be_less_than import (
+    ExpectColumnJSDivergenceToBeLessThan,
+)
 from .expect_column_kl_divergence_to_be_less_than import (
     ExpectColumnKLDivergenceToBeLessThan,
 )
