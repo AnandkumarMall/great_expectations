@@ -515,7 +515,7 @@ class ExpectColumnJSDivergenceToBeLessThan(ColumnAggregateExpectation):
 
         return validation_dependencies
 
-    def _validate(
+    def _validate(  # noqa: C901, PLR0912, PLR0915
         self,
         metrics: Dict,
         runtime_configuration: Optional[dict] = None,
@@ -679,7 +679,7 @@ class ExpectColumnJSDivergenceToBeLessThan(ColumnAggregateExpectation):
     # ---- Rendering helpers ----
 
     @classmethod
-    def _get_js_divergence_chart(cls, partition_object, header=None):
+    def _get_js_divergence_chart(cls, partition_object, header=None):  # noqa: C901
         weights = partition_object["weights"]
 
         if len(weights) > 60:  # noqa: PLR2004
