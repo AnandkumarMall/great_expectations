@@ -676,7 +676,7 @@ class ExpectColumnJSDivergenceToBeLessThan(ColumnAggregateExpectation):
 
         return return_obj
 
-    # ---- Rendering helpers (shared with KL divergence chart structure) ----
+    # ---- Rendering helpers ----
 
     @classmethod
     def _get_js_divergence_chart(cls, partition_object, header=None):
