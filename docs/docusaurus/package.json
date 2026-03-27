@@ -65,7 +65,7 @@
     "gray-matter/js-yaml": "3.14.2",
     "parse-md/js-yaml": "3.14.2",
     "@jest/transform/js-yaml": "3.14.2",
-    "minimatch": ">=3.1.4"
+    "minimatch": "~3.1.4"
   },
   "browserslist": {
     "production": [
