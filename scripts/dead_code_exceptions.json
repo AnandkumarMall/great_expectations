@@ -1,0 +1,9 @@
+{
+    "always_reachable_modules": [
+        "great_expectations.compatibility.*"
+    ],
+    "ignore_patterns": [],
+    "notes": {
+        "great_expectations.compatibility.*": "Compatibility shims for optional dependencies; loaded conditionally at runtime"
+    }
+}

@@ -750,6 +750,31 @@ def public_api_task(
     public_api_report.generate_public_api_report(write_to_file=write_to_file)
 
 
+@invoke.task(
+    name="dead-code",
+    help={
+        "json_output": "Path for JSON report output (default: dead_code_report.json)",
+        "layer": "Which layers to run: 1 (modules), 2 (symbols), 4 (tests), all (default: all)",
+        "verbose": "Print detailed analysis progress",
+    },
+)
+def dead_code_task(
+    ctx: Context,
+    json_output: str = "dead_code_report.json",
+    layer: str = "all",
+    verbose: bool = False,
+):
+    """Analyze the codebase for dead code not reachable from @public_api roots."""
+
+    repo_root = pathlib.Path(__file__).parent
+    _exit_with_error_if_not_run_from_correct_dir(task_name="dead-code", correct_dir=repo_root)
+
+    cmd = f"{sys.executable} scripts/find_dead_code.py --json-output {json_output} --layer {layer}"
+    if verbose:
+        cmd += " --verbose"
+    ctx.run(cmd, echo=True)
+
+
 def _exit_with_error_if_not_run_from_correct_dir(
     task_name: str, correct_dir: Union[pathlib.Path, None] = None
 ) -> None:
