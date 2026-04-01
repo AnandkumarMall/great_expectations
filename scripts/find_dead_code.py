@@ -203,9 +203,7 @@ class ModuleGraphBuilder:
             return f"{base}.{node.module}"
         return base
 
-    def _resolve_relative_base(
-        self, current_module: str, is_init: bool, level: int
-    ) -> str | None:
+    def _resolve_relative_base(self, current_module: str, is_init: bool, level: int) -> str | None:
         package = current_module if is_init else current_module.rsplit(".", 1)[0]
         steps_up = level - 1
         pkg_parts = package.split(".")
@@ -335,9 +333,7 @@ class DynamicImportDetector:
     @staticmethod
     def _is_instantiate_call(node: ast.Call) -> bool:
         func = node.func
-        return (
-            isinstance(func, ast.Name) and func.id == "instantiate_class_from_config"
-        ) or (
+        return (isinstance(func, ast.Name) and func.id == "instantiate_class_from_config") or (
             isinstance(func, ast.Attribute) and func.attr == "instantiate_class_from_config"
         )
 
@@ -367,9 +363,8 @@ class DynamicImportDetector:
             if kw.arg == "config_defaults" and isinstance(kw.value, ast.Dict):
                 self._extract_module_from_dict(kw.value, module_name, extra_roots, extra_edges)
 
-        if (
-            len(node.args) > _CONFIG_DEFAULTS_ARG_INDEX
-            and isinstance(node.args[_CONFIG_DEFAULTS_ARG_INDEX], ast.Dict)
+        if len(node.args) > _CONFIG_DEFAULTS_ARG_INDEX and isinstance(
+            node.args[_CONFIG_DEFAULTS_ARG_INDEX], ast.Dict
         ):
             self._extract_module_from_dict(
                 node.args[_CONFIG_DEFAULTS_ARG_INDEX], module_name, extra_roots, extra_edges
@@ -609,9 +604,7 @@ class SymbolGraphBuilder:
                 roots.add(body_fqn)
         return roots
 
-    def _add_init_export_roots(
-        self, mod_name: str, info: ModuleInfo, roots: set[str]
-    ) -> None:
+    def _add_init_export_roots(self, mod_name: str, info: ModuleInfo, roots: set[str]) -> None:
         for name in info.all_exports or []:
             if name in info.defined_symbols:
                 roots.add(f"{mod_name}.{name}")
@@ -818,9 +811,7 @@ class ReachabilityAnalyzer:
         self._log(f"Found {len(roots)} root modules (with @public_api)")
 
         # --- Layer 3: Dynamic imports ---
-        extra_roots, ignore_patterns, extra_symbol_roots = self._run_layer3(
-            builder, edges, report
-        )
+        extra_roots, ignore_patterns, extra_symbol_roots = self._run_layer3(builder, edges, report)
 
         # --- BFS module reachability ---
         all_roots = roots | extra_roots
