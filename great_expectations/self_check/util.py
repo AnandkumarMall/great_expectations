@@ -1136,14 +1136,11 @@ def candidate_test_is_on_temporary_notimplemented_list_v2_api(context, expectati
             "expect_column_values_to_match_json_schema",
             "expect_column_stdev_to_be_between",
             "expect_column_most_common_value_to_be_in_set",
-            "expect_column_bootstrapped_ks_test_p_value_to_be_greater_than",
-            "expect_column_parameterized_distribution_ks_test_p_value_to_be_greater_than",
             "expect_column_pair_values_to_be_equal",
             "expect_column_pair_values_a_to_be_greater_than_b",
             "expect_select_column_values_to_be_unique_within_record",
             "expect_compound_columns_to_be_unique",
             "expect_multicolumn_values_to_be_unique",
-            "expect_column_pair_cramers_phi_value_to_be_less_than",
             "expect_multicolumn_sum_to_equal",
             "expect_column_value_z_scores_to_be_less_than",
         ]
@@ -1154,9 +1151,6 @@ def candidate_test_is_on_temporary_notimplemented_list_v2_api(context, expectati
             ###
             expectations_not_implemented_v2_sql.append(
                 "expect_column_kl_divergence_to_be_less_than"
-            )  # TODO: unique to bigquery  -- https://github.com/great-expectations/great_expectations/issues/3261
-            expectations_not_implemented_v2_sql.append(
-                "expect_column_chisquare_test_p_value_to_be_greater_than"
             )  # TODO: unique to bigquery  -- https://github.com/great-expectations/great_expectations/issues/3261
             expectations_not_implemented_v2_sql.append(
                 "expect_column_values_to_be_between"
@@ -1182,10 +1176,7 @@ def candidate_test_is_on_temporary_notimplemented_list_v2_api(context, expectati
         return expectation_type in [
             "expect_column_values_to_be_dateutil_parseable",
             "expect_column_values_to_be_json_parseable",
-            "expect_column_bootstrapped_ks_test_p_value_to_be_greater_than",
-            "expect_column_parameterized_distribution_ks_test_p_value_to_be_greater_than",
             "expect_compound_columns_to_be_unique",
-            "expect_column_pair_cramers_phi_value_to_be_less_than",
             "expect_table_row_count_to_equal_other_table",
             "expect_column_value_z_scores_to_be_less_than",
         ]
