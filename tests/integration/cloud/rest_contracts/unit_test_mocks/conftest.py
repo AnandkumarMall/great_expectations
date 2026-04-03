@@ -24,7 +24,7 @@ def _convert_matcher_to_value(matcher: match.AbstractMatcher) -> JsonData:
     """
     integration = matcher.to_integration_json()
     if "value" in integration:
-        return integration["value"]  # type: ignore[return-value]
+        return integration["value"]
     # Matchers without a value need a sensible default
     if integration.get("pact:matcher:type") == "regex":
         # uuid() and similar regex-based matchers
