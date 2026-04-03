@@ -234,4 +234,5 @@ def pact_test(request) -> Generator[Pact, None, None]:
     """
     _pact = Pact(CONSUMER_NAME, PROVIDER_NAME)
     yield _pact
+    PACT_DIR.mkdir(parents=True, exist_ok=True)
     _pact.write_file(str(PACT_DIR), overwrite=True)

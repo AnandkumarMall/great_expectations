@@ -35,20 +35,12 @@ def _convert_matcher_to_value(matcher: match.AbstractMatcher) -> JsonData:
 def _reify_pact_body(
     body: PactBody | JsonData,
 ) -> JsonData:
-    if isinstance(body, list):
-        for index, item in enumerate(body):
-            if isinstance(item, match.AbstractMatcher):
-                body[index] = _convert_matcher_to_value(matcher=item)
-            body[index] = _reify_pact_body(body=body[index])
-        return body
-    elif isinstance(body, match.AbstractMatcher):
+    if isinstance(body, match.AbstractMatcher):
         return _reify_pact_body(body=_convert_matcher_to_value(matcher=body))
+    elif isinstance(body, list):
+        return [_reify_pact_body(body=item) for item in body]
     elif isinstance(body, dict):
-        for key, value in body.items():
-            if isinstance(value, match.AbstractMatcher):
-                body[key] = _convert_matcher_to_value(matcher=value)
-            body[key] = _reify_pact_body(body=body[key])
-        return body
+        return {key: _reify_pact_body(body=value) for key, value in body.items()}
     else:
         return body
 
