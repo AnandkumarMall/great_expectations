@@ -5,6 +5,7 @@ from unittest import mock
 import pytest
 import requests
 from pact import match
+
 import great_expectations as gx
 from great_expectations.data_context import CloudDataContext
 from tests.integration.cloud.rest_contracts.conftest import JsonData, PactBody
@@ -30,7 +31,7 @@ def _convert_matcher_to_value(matcher: match.AbstractMatcher) -> JsonData:
     return None
 
 
-def _reify_pact_body(  # noqa: C901 # FIXME CoP
+def _reify_pact_body(  # FIXME CoP
     body: PactBody,
 ) -> JsonData:
     if isinstance(body, list):
