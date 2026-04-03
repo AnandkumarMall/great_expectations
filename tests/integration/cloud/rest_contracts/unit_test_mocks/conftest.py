@@ -17,22 +17,23 @@ from tests.integration.cloud.rest_contracts.test_data_context_configuration impo
 def _convert_matcher_to_value(matcher: match.AbstractMatcher) -> JsonData:
     """Extract the example value from a pact-python v3 matcher.
 
-    In v3, matchers expose ``.value`` (the example value) and ``.has_value()``
-    to indicate whether an example was provided.  Matchers like ``match.uuid()``
-    called without an explicit example return ``Unset``; for those we generate a
-    sensible default.
+    Uses ``to_integration_json()`` which is available on all matcher types
+    and returns a dict with ``"value"`` and ``"pact:matcher:type"`` keys.
+    Matchers like ``match.uuid()`` called without an explicit value may
+    omit ``"value"``; for those we generate a sensible default.
     """
-    if matcher.has_value():
-        return matcher.value  # type: ignore[return-value]
+    integration = matcher.to_integration_json()
+    if "value" in integration:
+        return integration["value"]  # type: ignore[return-value]
     # Matchers without a value need a sensible default
-    if matcher.type == "regex":
+    if integration.get("pact:matcher:type") == "regex":
         # uuid() and similar regex-based matchers
         return str(uuid_mod.uuid4())
     return None
 
 
-def _reify_pact_body(  # FIXME CoP
-    body: PactBody,
+def _reify_pact_body(
+    body: PactBody | JsonData,
 ) -> JsonData:
     if isinstance(body, list):
         for index, item in enumerate(body):

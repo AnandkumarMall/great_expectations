@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import pathlib
 import subprocess
+from collections.abc import Generator
 from typing import TYPE_CHECKING, Any, Dict, Final, List, Union
 
 import pytest
@@ -183,7 +184,7 @@ def setup_data_context_config_interaction(
         pact_test.upon_receiving("a request for Data Context configuration (client-driven setup)")
         .given("the Data Context exists")
         .with_request("GET", path)
-        .with_headers(dict(session.headers))
+        .with_headers({k: str(v) for k, v in session.headers.items()})
         .will_respond_with(200)
         .with_body(DATA_CONTEXT_CONFIG_RESPONSE_BODY, content_type="application/json")
     )
@@ -224,7 +225,7 @@ def get_git_commit_hash() -> str:
 
 
 @pytest.fixture(scope="package")
-def pact_test(request) -> Pact:
+def pact_test(request) -> Generator[Pact, None, None]:
     """
     pact_test yields a Pact v3 instance. Interactions are registered on it,
     then ``pact.serve()`` is used as a context manager in each test to start
