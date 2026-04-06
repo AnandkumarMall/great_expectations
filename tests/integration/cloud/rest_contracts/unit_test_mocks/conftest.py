@@ -73,6 +73,7 @@ def mock_cloud_data_context() -> CloudDataContext:
             mode="cloud",
             cloud_base_url="https://fake-host.io",
             cloud_organization_id=str(uuid_mod.uuid4()),
+            cloud_workspace_id=str(uuid_mod.uuid4()),
             cloud_access_token="not a real token",
         )
 
