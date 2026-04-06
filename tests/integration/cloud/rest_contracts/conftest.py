@@ -158,6 +158,7 @@ def cloud_data_context(
 def setup_data_context_config_interaction(
     pact_test: Pact,
     access_token: str,
+    description_suffix: str = "",
 ) -> None:
     """Register the GET /data-context-configuration Pact interaction.
 
@@ -174,14 +175,20 @@ def setup_data_context_config_interaction(
             ``PACT_DUMMY_ACCESS_TOKEN`` when no real credentials are needed (e.g.
             in the ``pact_cloud_context`` fixture), or a real token when testing
             against a live provider.
+        description_suffix: Optional suffix to make the ``upon_receiving``
+            description unique when multiple tests share the same ``pact_test``
+            fixture (pact v3 requires unique descriptions per interaction).
     """
     session = create_session(access_token=access_token)
     path = (
         f"/api/v1/organizations/{EXISTING_ORGANIZATION_ID}/"
         f"workspaces/{EXISTING_WORKSPACE_ID}/data-context-configuration"
     )
+    description = "a request for Data Context configuration (client-driven setup)"
+    if description_suffix:
+        description = f"{description} [{description_suffix}]"
     (
-        pact_test.upon_receiving("a request for Data Context configuration (client-driven setup)")
+        pact_test.upon_receiving(description)
         .given("the Data Context exists")
         .with_request("GET", path)
         .with_headers({k: str(v) for k, v in session.headers.items()})
@@ -207,7 +214,9 @@ def pact_cloud_context(
     Use this fixture in new client-driven contract tests instead of
     ``cloud_data_context``.
     """
-    setup_data_context_config_interaction(pact_test, access_token=PACT_DUMMY_ACCESS_TOKEN)
+    setup_data_context_config_interaction(
+        pact_test, access_token=PACT_DUMMY_ACCESS_TOKEN, description_suffix="pact-cloud-context"
+    )
 
     with pact_test.serve() as srv:
         context = CloudDataContext(

@@ -120,7 +120,9 @@ def test_add_pandas_datasource(pact_test: Pact) -> None:
     headers = _session_headers()
 
     # 1. GET /data-context-configuration (required for context init)
-    setup_data_context_config_interaction(pact_test, access_token=PACT_DUMMY_ACCESS_TOKEN)
+    setup_data_context_config_interaction(
+        pact_test, access_token=PACT_DUMMY_ACCESS_TOKEN, description_suffix="add-datasource"
+    )
 
     # 2. GET /datasources (list -- _add_fluent_datasource __contains__ check)
     (
@@ -199,7 +201,9 @@ def test_get_pandas_datasource(pact_test: Pact) -> None:
     headers = _session_headers()
 
     # 1. GET /data-context-configuration (required for context init)
-    setup_data_context_config_interaction(pact_test, access_token=PACT_DUMMY_ACCESS_TOKEN)
+    setup_data_context_config_interaction(
+        pact_test, access_token=PACT_DUMMY_ACCESS_TOKEN, description_suffix="get-datasource"
+    )
 
     # 2. GET /datasources?name=... (serves both has_key probe and actual get in retrieve_by_name)
     get_response_body = {
@@ -267,7 +271,9 @@ def test_add_or_update_pandas_datasource_puts_when_exists(
         "assets": [],
     }
     # 1. GET /data-context-configuration
-    setup_data_context_config_interaction(pact_test, access_token=PACT_DUMMY_ACCESS_TOKEN)
+    setup_data_context_config_interaction(
+        pact_test, access_token=PACT_DUMMY_ACCESS_TOKEN, description_suffix="update-datasource"
+    )
 
     # 2. GET /datasources (no query -- Pact v2 matches any query, so this serves
     #    both the list calls and the by-name retrieve_by_name calls)
@@ -348,7 +354,9 @@ def test_delete_pandas_datasource(pact_test: Pact) -> None:
         "assets": [],
     }
     # 1. GET /data-context-configuration
-    setup_data_context_config_interaction(pact_test, access_token=PACT_DUMMY_ACCESS_TOKEN)
+    setup_data_context_config_interaction(
+        pact_test, access_token=PACT_DUMMY_ACCESS_TOKEN, description_suffix="delete-datasource"
+    )
 
     # 2. GET /datasources?name=... (serves retrieve_by_name calls)
     (
