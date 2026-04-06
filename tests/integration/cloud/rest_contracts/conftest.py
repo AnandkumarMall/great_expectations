@@ -233,15 +233,18 @@ def get_git_commit_hash() -> str:
     return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
 
 
-@pytest.fixture(scope="package")
-def pact_test(request) -> Generator[Pact, None, None]:
+@pytest.fixture
+def pact_test() -> Generator[Pact, None, None]:
     """
-    pact_test yields a Pact v3 instance. Interactions are registered on it,
-    then ``pact.serve()`` is used as a context manager in each test to start
-    the mock server.  After all tests complete, the pact file is written to
-    disk.
+    pact_test yields a fresh Pact v3 instance per test.  Each test registers
+    interactions, calls ``pact.serve()`` to start the mock server, and on
+    teardown the pact file is written (merged) to disk.
+
+    Must be function-scoped because the pact-python v3 Rust FFI permanently
+    locks the ``PactHandle`` after ``serve()`` is called, preventing any new
+    interactions from being registered on the same instance.
     """
     _pact = Pact(CONSUMER_NAME, PROVIDER_NAME)
     yield _pact
     PACT_DIR.mkdir(parents=True, exist_ok=True)
-    _pact.write_file(str(PACT_DIR), overwrite=True)
+    _pact.write_file(str(PACT_DIR), overwrite=False)
