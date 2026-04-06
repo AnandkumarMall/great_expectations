@@ -214,9 +214,7 @@ def test_get_pandas_datasource(pact_test: Pact) -> None:
         )
     }
     (
-        pact_test.upon_receiving(
-            "a request to get the Pandas datasource by name (client-driven)"
-        )
+        pact_test.upon_receiving("a request to get the Pandas datasource by name (client-driven)")
         .given("the Pandas datasource exists")
         .with_request("GET", DATASOURCES_PATH)
         .with_headers(headers)
@@ -289,9 +287,7 @@ def test_add_or_update_pandas_datasource_puts_when_exists(
 
     # 3. PUT /datasources/{id} -- the primary contract under test
     (
-        pact_test.upon_receiving(
-            "a request to update a Pandas datasource via PUT (client-driven)"
-        )
+        pact_test.upon_receiving("a request to update a Pandas datasource via PUT (client-driven)")
         .given("the Pandas datasource exists for update")
         .with_request("PUT", DATASOURCE_BY_ID_PATH)
         .with_headers(headers)
@@ -372,9 +368,7 @@ def test_delete_pandas_datasource(pact_test: Pact) -> None:
 
     # 3. DELETE /datasources/{id} -- the primary contract under test
     (
-        pact_test.upon_receiving(
-            "a request to delete a Pandas datasource by id (client-driven)"
-        )
+        pact_test.upon_receiving("a request to delete a Pandas datasource by id (client-driven)")
         .given("the Pandas datasource exists for deletion")
         .with_request("DELETE", DATASOURCE_BY_ID_PATH)
         .with_headers(headers)
