@@ -40,10 +40,10 @@ PactBody: TypeAlias = Union[
 
 
 EXISTING_ORGANIZATION_ID: Final[str] = (
-    os.environ.get("GX_CLOUD_ORGANIZATION_ID", "") or "0ccac18e-7631-4bdd-8a42-3c35cce574c6"
+    os.environ.get("GX_CLOUD_ORGANIZATION_ID", "") or "d2179c7d-685d-49ec-b1e2-85e54308e8b6"
 )
 EXISTING_WORKSPACE_ID: Final[str] = (
-    os.environ.get("GX_CLOUD_WORKSPACE_ID", "") or "44444444-4444-4bdd-8a42-3c35cce574c6"
+    os.environ.get("GX_CLOUD_WORKSPACE_ID", "") or "003e13da-9d39-47b3-8b9b-b290280ccc37"
 )
 
 # Full data-context-configuration response body used as the Pact mock response when
