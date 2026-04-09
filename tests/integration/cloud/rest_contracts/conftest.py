@@ -50,16 +50,10 @@ EXISTING_WORKSPACE_ID: Final[str] = (
 # constructing a CloudDataContext in tests.  Store backend URLs use the environment-variable
 # placeholder so they resolve correctly at runtime regardless of mock host/port.
 DATA_CONTEXT_CONFIG_RESPONSE_BODY: Final[dict] = {
-    "anonymous_usage_statistics": match.like(
-        {
-            "data_context_id": match.uuid(),
-            "enabled": False,
-        }
-    ),
-    "datasources": match.like({}),
+    "analytics_enabled": match.like(True),
     "checkpoint_store_name": "default_checkpoint_store",
     "expectations_store_name": "default_expectations_store",
-    "validation_results_store_name": "default_validation_results_store",
+    "validation_results_store_name": "default_validations_store",
     "stores": {
         "default_expectations_store": {
             "class_name": "ExpectationsStore",
