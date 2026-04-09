@@ -432,19 +432,19 @@ def test_pandas_datasource_workflow(pact_test: Pact) -> None:
                                     "datasource": match.like(
                                         {
                                             "name": match.like(DATASOURCE_NAME),
-                                            "id": match.uuid(),
+                                            "id": match.uuid(EXISTING_DATASOURCE_ID),
                                         }
                                     ),
                                     "asset": match.like(
                                         {
                                             "name": match.like(ASSET_NAME),
-                                            "id": match.uuid(),
+                                            "id": match.uuid(EXISTING_ASSET_ID),
                                         }
                                     ),
                                     "batch_definition": match.like(
                                         {
                                             "name": match.like(BATCH_DEF_NAME),
-                                            "id": match.uuid(),
+                                            "id": match.uuid(EXISTING_BATCH_DEF_ID),
                                         }
                                     ),
                                 }
@@ -452,7 +452,7 @@ def test_pandas_datasource_workflow(pact_test: Pact) -> None:
                             "suite": match.like(
                                 {
                                     "name": match.like(SUITE_NAME),
-                                    "id": match.uuid(),
+                                    "id": match.uuid(EXISTING_SUITE_ID),
                                 }
                             ),
                         }
@@ -493,7 +493,12 @@ def test_pandas_datasource_workflow(pact_test: Pact) -> None:
                         {
                             "name": match.like(CHECKPOINT_NAME),
                             "validation_definitions": match.like(
-                                [{"id": match.uuid(), "name": match.like(VALDEF_NAME)}]
+                                [
+                                    {
+                                        "id": match.uuid(EXISTING_VALDEF_ID),
+                                        "name": match.like(VALDEF_NAME),
+                                    }
+                                ]
                             ),
                             "actions": match.like([]),
                             "result_format": match.like("SUMMARY"),
