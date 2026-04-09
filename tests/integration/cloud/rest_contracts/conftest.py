@@ -81,7 +81,7 @@ DATA_CONTEXT_CONFIG_RESPONSE_BODY: Final[dict] = {
                 "suppress_store_backend_id": True,
             },
         },
-        "default_validation_results_store": {
+        "default_validations_store": {
             "class_name": "ValidationResultsStore",
             "store_backend": {
                 "class_name": "GXCloudStoreBackend",
