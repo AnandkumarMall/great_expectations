@@ -355,9 +355,7 @@ def test_pandas_datasource_workflow(pact_test: Pact) -> None:
                             "name": match.like(SUITE_NAME),
                             "id": None,
                             "expectations": match.like([]),
-                            "meta": match.like(
-                                {"great_expectations_version": match.like("1.0.0")}
-                            ),
+                            "meta": match.like({"great_expectations_version": match.like("1.0.0")}),
                             "notes": None,
                         }
                     )
