@@ -587,7 +587,21 @@ jobs:
         run: invoke ci-tests 'cloud' --up-services --verbose  --reports -W default::great_expectations.datasource.fluent.GxInvalidDatasourceWarning
 
       - name: Publish pact contracts to PactFlow
-        if: env.PACT_BROKER_READ_WRITE_TOKEN != '' && !(github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+        if: >-
+          env.PACT_BROKER_READ_WRITE_TOKEN != ''
+          && !(github.event_name == 'push' && (
+            startsWith(github.ref, 'refs/tags/')
+            || startsWith(github.ref_name, '0.')
+            || startsWith(github.ref_name, '1.')
+            || startsWith(github.ref_name, '2.')
+            || startsWith(github.ref_name, '3.')
+            || startsWith(github.ref_name, '4.')
+            || startsWith(github.ref_name, '5.')
+            || startsWith(github.ref_name, '6.')
+            || startsWith(github.ref_name, '7.')
+            || startsWith(github.ref_name, '8.')
+            || startsWith(github.ref_name, '9.')
+          ))
         env:
           PACT_CLI_VERSION: v2.6.0
         run: |
