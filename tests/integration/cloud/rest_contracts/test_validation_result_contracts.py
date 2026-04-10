@@ -181,9 +181,7 @@ def test_get_validation_result_by_id(pact_test: Pact) -> None:
 
     # 2. GET /validation-results/{id}
     (
-        pact_test.upon_receiving(
-            "a request to get a validation result by id (client-driven)"
-        )
+        pact_test.upon_receiving("a request to get a validation result by id (client-driven)")
         .given("a validation result exists")
         .with_request("GET", VALIDATION_RESULT_BY_ID_PATH)
         .with_headers(headers)
@@ -260,9 +258,7 @@ def test_post_validation_result(pact_test: Pact) -> None:
                             "run_id": match.like(
                                 {
                                     "run_name": match.like("my_run"),
-                                    "run_time": match.like(
-                                        "2026-01-01T00:00:00.000000+00:00"
-                                    ),
+                                    "run_time": match.like("2026-01-01T00:00:00.000000+00:00"),
                                 }
                             ),
                         }
@@ -276,9 +272,7 @@ def test_post_validation_result(pact_test: Pact) -> None:
     post_response_body = {"data": match.like(_VALIDATION_RESULT_RESPONSE)}
 
     (
-        pact_test.upon_receiving(
-            "a request to create a validation result (client-driven)"
-        )
+        pact_test.upon_receiving("a request to create a validation result (client-driven)")
         .given("validation results are being created")
         .with_request("POST", VALIDATION_RESULTS_PATH)
         .with_headers(headers)
