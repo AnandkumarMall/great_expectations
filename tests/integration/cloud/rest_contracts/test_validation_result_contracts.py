@@ -70,25 +70,33 @@ VALIDATION_RESULT_BY_ID_PATH: Final[str] = (
 # Response body matchers
 # ---------------------------------------------------------------------------
 
-# Minimal ValidationResultResponseData returned by the V1 API.
+# Minimal ValidationResultResponseData returned by the V1 API for GET/LIST.
+# For seeded data the suite_name column is NULL (the name lives in the
+# result JSON's meta.expectation_suite_name, not the top-level field).
 _VALIDATION_RESULT_RESPONSE: Final[dict] = {
     "id": match.uuid(),
     "organization_id": match.uuid(),
     "created_by_id": match.uuid(),
     "results": match.like([]),
     "suite_name": match.like(None),
-    "suite_parameters": match.like(None),
+    "suite_parameters": match.like({}),
     "statistics": match.like({}),
     "meta": match.like(
         {
-            "run_id": match.like(None),
+            "run_id": match.like({}),
             "run_time": match.like("2026-01-01T00:00:00.000000Z"),
-            "run_name": match.like(None),
+            "run_name": match.like("pact_test_run"),
         }
     ),
     "batch_id": match.like(None),
-    "result_url": match.like(None),
+    "result_url": match.like("https://example.com/validation-results/placeholder"),
     "success": match.like(True),
+}
+
+# POST response echoes back suite_name from the request body (non-null).
+_VALIDATION_RESULT_POST_RESPONSE: Final[dict] = {
+    **_VALIDATION_RESULT_RESPONSE,
+    "suite_name": match.like("my_test_suite"),
 }
 
 # ---------------------------------------------------------------------------
@@ -296,6 +304,12 @@ def test_post_validation_result(pact_test: Pact) -> None:
                                 }
                             ),
                             "validation_id": match.uuid(EXISTING_VALIDATION_DEFINITION_ID),
+                            "active_batch_definition": match.like(
+                                {
+                                    "data_asset_name": match.like("pact_test_asset"),
+                                    "batch_identifiers": match.like({}),
+                                }
+                            ),
                         }
                     ),
                     "id": match.like(None),
@@ -304,7 +318,7 @@ def test_post_validation_result(pact_test: Pact) -> None:
         }
     )
 
-    post_response_body = {"data": match.like(_VALIDATION_RESULT_RESPONSE)}
+    post_response_body = {"data": match.like(_VALIDATION_RESULT_POST_RESPONSE)}
 
     (
         pact_test.upon_receiving("a request to create a validation result (client-driven)")
@@ -344,6 +358,10 @@ def test_post_validation_result(pact_test: Pact) -> None:
                     "run_time": "2026-01-01T00:00:00.000000+00:00",
                 },
                 "validation_id": EXISTING_VALIDATION_DEFINITION_ID,
+                "active_batch_definition": {
+                    "data_asset_name": "pact_test_asset",
+                    "batch_identifiers": {},
+                },
             },
         )
 
