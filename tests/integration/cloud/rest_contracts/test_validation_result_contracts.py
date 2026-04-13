@@ -54,6 +54,9 @@ from tests.integration.cloud.rest_contracts.conftest import (
 # ---------------------------------------------------------------------------
 
 EXISTING_VALIDATION_RESULT_ID: Final[str] = "77770001-0001-4aaa-8aaa-777700010001"
+# Validation definition ID — matches what the Mercury state handler seeds.
+# The real client sets meta["validation_id"] = validation_definition.id after running.
+EXISTING_VALIDATION_DEFINITION_ID: Final[str] = "ccccdddd-1234-4abc-8def-aabbccddeeff"
 
 VALIDATION_RESULTS_PATH: Final[str] = (
     f"/api/v1/organizations/{EXISTING_ORGANIZATION_ID}"
@@ -292,6 +295,7 @@ def test_post_validation_result(pact_test: Pact) -> None:
                                     "run_time": match.like("2026-01-01T00:00:00.000000+00:00"),
                                 }
                             ),
+                            "validation_id": match.uuid(EXISTING_VALIDATION_DEFINITION_ID),
                         }
                     ),
                     "id": match.like(None),
@@ -339,6 +343,7 @@ def test_post_validation_result(pact_test: Pact) -> None:
                     "run_name": "my_run",
                     "run_time": "2026-01-01T00:00:00.000000+00:00",
                 },
+                "validation_id": EXISTING_VALIDATION_DEFINITION_ID,
             },
         )
 
