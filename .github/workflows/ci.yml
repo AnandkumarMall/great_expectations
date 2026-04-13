@@ -586,6 +586,12 @@ jobs:
       - name: Run the tests
         run: invoke ci-tests 'cloud' --up-services --verbose  --reports -W default::great_expectations.datasource.fluent.GxInvalidDatasourceWarning
 
+      - name: Regenerate pact contracts with isolated org
+        env:
+          GX_CLOUD_ORGANIZATION_ID: "d2179c7d-685d-49ec-b1e2-85e54308e8b6"
+          GX_CLOUD_WORKSPACE_ID: "003e13da-9d39-47b3-8b9b-b290280ccc37"
+        run: pytest tests/integration/cloud/rest_contracts/ -x
+
       - name: Publish pact contracts to PactFlow
         if: env.PACT_BROKER_READ_WRITE_TOKEN != '' && !(github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
         env:
