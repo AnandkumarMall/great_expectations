@@ -171,10 +171,11 @@ def test_list_validation_results(pact_test: Pact) -> None:
             keys = ctx.validation_results_store.list_keys()
             http_interaction_made = True
             assert len(keys) >= 1
-        except Exception:
+        except (KeyError, TypeError):
             # The HTTP call was made (satisfying the Pact interaction)
-            # but client-side parsing of the response failed.  This is
-            # acceptable -- the contract (request/response shape) was
+            # but client-side parsing of the response failed.  The V1
+            # response lacks a top-level "name" field that list_keys()
+            # expects.  The contract (request/response shape) was
             # verified by Pact.
             http_interaction_made = True
 
@@ -243,7 +244,7 @@ def test_get_validation_result_by_id(pact_test: Pact) -> None:
             result = ctx.validation_results_store.get(key)
             http_interaction_made = True
             assert result is not None
-        except Exception:
+        except (KeyError, TypeError):
             # The HTTP call was made (satisfying the Pact interaction)
             # but gx_cloud_response_json_to_object_dict or deserialize
             # failed because the V1 response shape differs from what
