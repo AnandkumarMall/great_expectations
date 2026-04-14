@@ -150,7 +150,7 @@ The following table lists the available Data Asset metrics.
 
 ## View Data Asset history
 
-For an audit trail of who added or removed which Expectations and when, visit a Data Asset’s **History** tab.
+For an audit trail of who added, edited, or removed which Expectations and when, visit a Data Asset’s **History** tab.
 
 1. In GX Cloud, select the relevant **Workspace**, click **Data Assets**, and then select a Data Asset in the **Data Assets** list.
 2. Click the **History** tab.
@@ -158,7 +158,7 @@ For an audit trail of who added or removed which Expectations and when, visit a 
 Note that the report is limited to the last 100 changes. 
 
 :::tip Looking for changes to a specific Expectation?
-For an audit trail of edits to an Expectation’s configuration, such as changes in Expectation parameters or row conditions, [view the Expectation history](/cloud/expectations/manage_expectations.md#view-expectation-history).
+To focus on edits to a specific Expectation’s configuration, such as changes in Expectation parameters or row conditions, [view the Expectation history](/cloud/expectations/manage_expectations.md#view-expectation-history) for the Expectation of interest.
 :::
 
 ## Delete a Data Asset
