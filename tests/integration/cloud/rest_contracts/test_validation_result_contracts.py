@@ -42,6 +42,7 @@ from great_expectations.data_context.cloud_constants import GXCloudRESTResource
 from great_expectations.data_context.types.resource_identifiers import (
     GXCloudIdentifier,
 )
+from great_expectations.exceptions import StoreBackendError
 from tests.integration.cloud.rest_contracts.conftest import (
     EXISTING_ORGANIZATION_ID,
     EXISTING_WORKSPACE_ID,
@@ -73,13 +74,12 @@ VALIDATION_RESULT_BY_ID_PATH: Final[str] = (
 
 # Minimal ValidationResultResponseData returned by the V1 API for GET/LIST.
 #
-# The ``name`` field is required by the cloud backend's ``list_keys()``
-# implementation (``GXCloudStoreBackend.list_keys`` reads
-# ``resource["name"]`` for V1 resources).  Validation results don't have
-# a user-visible name; the server returns an empty string.
+# Mercury does NOT return a ``name`` field for validation results.
+# The ``meta.run_id`` field is a RunIdentifier (string or object);
+# we match it as a simple string.  ``run_time`` and ``run_name`` are
+# separate top-level fields within ``meta``.
 _VALIDATION_RESULT_RESPONSE: Final[dict] = {
     "id": match.uuid(),
-    "name": match.like(""),
     "organization_id": match.uuid(),
     "created_by_id": match.uuid(),
     "results": match.like([]),
@@ -88,12 +88,7 @@ _VALIDATION_RESULT_RESPONSE: Final[dict] = {
     "statistics": match.like({}),
     "meta": match.like(
         {
-            "run_id": match.like(
-                {
-                    "run_name": match.like("pact_test_run"),
-                    "run_time": match.like("2026-01-01T00:00:00.000000Z"),
-                }
-            ),
+            "run_id": match.like("pact_test_run"),
             "run_time": match.like("2026-01-01T00:00:00.000000Z"),
             "run_name": match.like("pact_test_run"),
         }
@@ -103,31 +98,15 @@ _VALIDATION_RESULT_RESPONSE: Final[dict] = {
     "success": match.like(True),
 }
 
-# GET-by-ID response wraps the result fields at top-level under ``data``.
-# ``gx_cloud_response_json_to_object_dict`` in ``ValidationResultsStore``
-# expects ``data.attributes.result`` (the legacy V0 shape).  We provide
-# that shape so the full deserialization round-trip succeeds.
+# GET-by-ID returns the same V1 flat shape as list/POST -- the
+# ValidationResultResponseData is directly under ``data``.
+# The client's ``gx_cloud_response_json_to_object_dict`` still expects
+# the legacy V0 shape (``data.attributes.result``), so deserialization
+# will fail with ``KeyError``.  This contract matches what Mercury
+# actually returns; the test documents the client-side gap.
 _VALIDATION_RESULT_GET_BY_ID_RESPONSE: Final[dict] = {
+    **_VALIDATION_RESULT_RESPONSE,
     "id": match.uuid(EXISTING_VALIDATION_RESULT_ID),
-    "attributes": {
-        "result": match.like(
-            {
-                "success": match.like(True),
-                "results": match.like([]),
-                "suite_name": match.like("my_test_suite"),
-                "suite_parameters": match.like({}),
-                "statistics": match.like(
-                    {
-                        "evaluated_expectations": match.like(0),
-                        "successful_expectations": match.like(0),
-                        "unsuccessful_expectations": match.like(0),
-                        "success_percent": match.like(100.0),
-                    }
-                ),
-                "meta": match.like({}),
-            }
-        ),
-    },
 }
 
 # POST response echoes back suite_name from the request body (non-null).
@@ -158,13 +137,13 @@ def test_list_validation_results(pact_test: Pact) -> None:
 
     ``get_validation_result(expectation_suite_name=..., run_id=None)``
     internally calls ``selected_store.list_keys()`` to find the most
-    recent run.  In cloud mode ``list_keys()`` returns
-    ``GXCloudIdentifier`` objects which lack ``run_id`` /
-    ``batch_identifier`` attributes, so the subsequent filtering in
-    ``get_validation_result`` raises ``AttributeError``.  This is a
-    known client-side incompatibility -- the HTTP contract (list
-    request/response) is verified by Pact, and we assert on the
-    specific client error to document the gap.
+    recent run.  In cloud mode ``list_keys()`` reads ``resource["name"]``
+    for each V1 resource, but Mercury does not return a ``name`` field
+    for validation results, so ``list_keys()`` raises a ``KeyError``
+    (wrapped in ``StoreBackendError``).  This is a known client-side
+    incompatibility -- the HTTP contract (list request/response) is
+    verified by Pact, and we assert on the specific client error to
+    document the gap.
 
     Interaction sequence:
       1. GET /data-context-configuration    (context init)
@@ -201,11 +180,11 @@ def test_list_validation_results(pact_test: Pact) -> None:
             cloud_access_token=PACT_DUMMY_ACCESS_TOKEN,
         )
         # get_validation_result with run_id=None triggers list_keys()
-        # (the GET list interaction).  In cloud mode the returned
-        # GXCloudIdentifier keys don't have run_id/batch_identifier
-        # attributes, so the filtering loop raises AttributeError.
+        # (the GET list interaction).  Mercury does not return a ``name``
+        # field for validation results, so list_keys() raises KeyError
+        # (wrapped as StoreBackendError) when parsing the response.
         # The HTTP contract has already been exercised at this point.
-        with pytest.raises(AttributeError, match="run_id"):
+        with pytest.raises(StoreBackendError, match="Unable to list keys"):
             ctx.get_validation_result(
                 expectation_suite_name="my_test_suite",
             )
@@ -217,10 +196,12 @@ def test_get_validation_result_by_id(pact_test: Pact) -> None:
     ``batch_identifier`` builds a ``ValidationResultIdentifier`` and calls
     ``store.get(key)`` which issues GET to the resource URL.
 
-    In cloud mode, ``Store.get()`` calls
-    ``gx_cloud_response_json_to_object_dict()`` on the response, which
-    expects the V0 shape ``data.attributes.result``.  We provide that
-    shape in the mock so deserialization succeeds end-to-end.
+    Mercury returns the V1 flat shape (``data`` is the
+    ValidationResultResponseData directly), but the client's
+    ``gx_cloud_response_json_to_object_dict()`` expects the legacy V0
+    shape (``data.attributes.result``).  Deserialization therefore fails
+    with ``KeyError``.  This contract matches Mercury's actual response;
+    the test documents the client-side gap.
 
     Because ``Store._validate_key()`` checks
     ``isinstance(key, GXCloudIdentifier)`` in cloud mode and
@@ -268,10 +249,11 @@ def test_get_validation_result_by_id(pact_test: Pact) -> None:
             resource_type=GXCloudRESTResource.VALIDATION_RESULT,
             id=EXISTING_VALIDATION_RESULT_ID,
         )
-        result = ctx.validation_results_store.get(key)
-
-    assert result is not None
-    assert isinstance(result, ExpectationSuiteValidationResult)
+        # Mercury returns V1 flat shape but the client expects V0
+        # ``data.attributes.result``.  The KeyError from the missing
+        # ``attributes`` key documents this client-side gap.
+        with pytest.raises((KeyError, TypeError)):
+            ctx.validation_results_store.get(key)
 
 
 @pytest.mark.cloud
