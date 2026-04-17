@@ -23,7 +23,7 @@ CONNECTION_STRING = os.environ.get("SINGLE_STORE_DB_CONNECTION_STRING", "")
 @pytest.mark.skipif(
     not CONNECTION_STRING,
     reason="SINGLE_STORE_DB_CONNECTION_STRING not set; we can do this, but we'd need an always up "
-    "instance of SingleStoreDB. Also, must have sqlalchemy-singlestoredb = '^1.2.1' installed."
+    "instance of SingleStoreDB. Also, must have sqlalchemy-singlestoredb = '^1.2.1' installed.",
 )
 class TestSingleStore:
     """Smoke tests for SingleStore compatibility.
