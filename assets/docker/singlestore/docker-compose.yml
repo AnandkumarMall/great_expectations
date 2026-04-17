@@ -8,7 +8,14 @@ services:
       - "3306:3306"
       - "8080:8080"
     healthcheck:
-      test: ["CMD", "singlestore", "-p${SINGLESTORE_ROOT_PASSWORD:-test_superuser}", "-e", "SELECT 1"]
+      test:
+        [
+          "CMD",
+          "singlestore",
+          "-p${SINGLESTORE_ROOT_PASSWORD:-test_superuser}",
+          "-e",
+          "SELECT 1",
+        ]
       interval: 5s
       timeout: 5s
       retries: 30
@@ -20,7 +27,15 @@ services:
     depends_on:
       singlestore_db:
         condition: service_healthy
-    entrypoint: ["singlestore", "-h", "singlestore_db", "-ptest_superuser", "-e", "source /init.sql"]
+    entrypoint:
+      [
+        "singlestore",
+        "-h",
+        "singlestore_db",
+        "-ptest_superuser",
+        "-e",
+        "source /init.sql",
+      ]
     volumes:
       - ./init.sql:/init.sql:ro
     networks:
