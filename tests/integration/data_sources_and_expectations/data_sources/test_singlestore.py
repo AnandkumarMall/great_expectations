@@ -1,9 +1,14 @@
 """Integration tests for SingleStore (formerly MemSQL).
 
 Validates GX functionality against a live SingleStore instance.
-"""
+Stand up the container with::
 
-import os
+    cd assets/docker/singlestore && docker compose up -d
+
+Then run::
+
+    pytest -v -m singlestore tests/integration/data_sources_and_expectations/data_sources/test_singlestore.py
+"""
 
 import pandas as pd
 import pytest
@@ -15,16 +20,11 @@ from tests.integration.test_utils.data_source_config.generic_sql import (
     GenericSQLDatasourceTestConfig,
 )
 
-pytestmark = pytest.mark.generic_sql
+pytestmark = pytest.mark.singlestore
 
-CONNECTION_STRING = os.environ.get("SINGLE_STORE_DB_CONNECTION_STRING", "")
+CONNECTION_STRING = "singlestoredb://root:test_superuser@127.0.0.1:3306/test_ci"
 
 
-@pytest.mark.skipif(
-    not CONNECTION_STRING,
-    reason="SINGLE_STORE_DB_CONNECTION_STRING not set; we can do this, but we'd need an always up "
-    "instance of SingleStoreDB. Also, must have sqlalchemy-singlestoredb = '^1.2.1' installed.",
-)
 class TestSingleStore:
     """Smoke tests for SingleStore compatibility.
 
