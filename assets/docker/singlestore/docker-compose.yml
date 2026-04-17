@@ -21,26 +21,6 @@ services:
     networks:
       - dbnet
 
-  singlestore_init:
-    image: ghcr.io/singlestore-labs/singlestoredb-dev:latest
-    depends_on:
-      singlestore_db:
-        condition: service_healthy
-    entrypoint:
-      [
-        "singlestore",
-        "-h",
-        "singlestore_db",
-        "-ptest_superuser",
-        "-e",
-        "source /init.sql",
-      ]
-    volumes:
-      - ./init.sql:/init.sql:ro
-    networks:
-      - dbnet
-    restart: "no"
-
 networks:
   dbnet:
     driver: bridge

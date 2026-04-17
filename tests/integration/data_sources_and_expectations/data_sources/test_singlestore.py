@@ -1,10 +1,18 @@
 """Integration tests for SingleStore (formerly MemSQL).
 
 Validates GX functionality against a live SingleStore instance.
+Stand up the container with::
+
+    cd assets/docker/singlestore && docker compose up -d
+
+Then run::
+
+    pytest -v -m singlestore tests/integration/data_sources_and_expectations/data_sources/test_singlestore.py
 """
 
 import pandas as pd
 import pytest
+import sqlalchemy as sa
 
 import great_expectations.expectations as gxe
 from great_expectations import get_context
@@ -15,7 +23,17 @@ from tests.integration.test_utils.data_source_config.generic_sql import (
 
 pytestmark = pytest.mark.singlestore
 
-CONNECTION_STRING = "singlestoredb://root:test_superuser@127.0.0.1:3306/test_ci"
+_BASE_CONNECTION_STRING = "singlestoredb://root:test_superuser@127.0.0.1:3306"
+CONNECTION_STRING = f"{_BASE_CONNECTION_STRING}/test_ci"
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _ensure_test_database() -> None:
+    """Create the test_ci database if it doesn't exist."""
+    engine = sa.create_engine(_BASE_CONNECTION_STRING)
+    with engine.connect() as conn:
+        conn.execute(sa.text("CREATE DATABASE IF NOT EXISTS test_ci"))
+    engine.dispose()
 
 
 class TestSingleStore:
