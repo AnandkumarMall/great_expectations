@@ -1,13 +1,6 @@
 """Integration tests for SingleStore (formerly MemSQL).
 
 Validates GX functionality against a live SingleStore instance.
-Stand up the container with::
-
-    cd assets/docker/singlestore && docker compose up -d
-
-Then run::
-
-    pytest -v -m singlestore tests/integration/data_sources_and_expectations/data_sources/test_singlestore.py
 """
 
 import pandas as pd
