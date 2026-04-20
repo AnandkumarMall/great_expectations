@@ -67,7 +67,7 @@ class ColumnValuesUnique(ColumnMapMetricProvider):
             compiled = source_query.compile(
                 dialect=sql_engine.dialect, compile_kwargs={"literal_binds": True}
             )
-            temp_table_stmt = f"CREATE TEMPORARY TABLE {temp_table_name} AS {compiled}"  # FIXME CoP
+            temp_table_stmt = f"CREATE TEMPORARY TABLE {temp_table_name} AS {compiled}"
             execution_engine.execute_query_in_transaction(sa.text(temp_table_stmt))
             dup_query = (
                 sa.select(column)
