@@ -303,8 +303,10 @@ If you edit the **Severity** of an Expectation, note that historical validation 
 ## View Expectation history
 
 **Expectation history** provides all workspace members with an audit trail of who took the following actions and when:
+
 - added or edited the Expectation
 - linked or unlinked Jira work items and a failure of the Expectation for incident management
+
 To view an Expectation’s history, follow the steps below:
 
 1. In GX Cloud, select the relevant **Workspace** and then click **Data Assets**.
