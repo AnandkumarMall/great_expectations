@@ -15,6 +15,7 @@ from great_expectations.expectations.metrics.map_metric_provider import (
     ColumnMapMetricProvider,
     column_condition_partial,
 )
+from great_expectations.util import generate_temporary_table_name
 
 
 class ColumnValuesUnique(ColumnMapMetricProvider):
@@ -43,10 +44,12 @@ class ColumnValuesUnique(ColumnMapMetricProvider):
         partial_fn_type=MetricPartialFunctionTypes.WINDOW_CONDITION_FN,
     )
     def _sqlalchemy_window(cls, column, _table, **kwargs):
-        # MySQL and SingleStore cannot reference a temp table more than once in the same
-        # query, and SingleStore disallows correlated subselects with GROUP BY/HAVING.
-        # Use a window function for these dialects to avoid both issues.
+        # MySQL and SingleStore cannot reference a temp table more than once in the
+        # same query, and SingleStore disallows correlated subselects with GROUP BY.
+        # Create a temp table copy of the column to avoid both issues.
         dialect = kwargs.get("_dialect")
+        sql_engine = kwargs.get("_sqlalchemy_engine")
+        execution_engine = kwargs.get("_execution_engine")
         try:
             dialect_name = dialect.dialect.name
         except AttributeError:
@@ -54,8 +57,24 @@ class ColumnValuesUnique(ColumnMapMetricProvider):
                 dialect_name = dialect.name
             except AttributeError:
                 dialect_name = ""
-        if dialect and dialect_name in ("mysql", "singlestoredb"):
-            return sa.func.count(column).over(partition_by=column) <= 1
+        if sql_engine and dialect and dialect_name in ("mysql", "singlestoredb"):
+            temp_table_name = generate_temporary_table_name()
+            if isinstance(_table, sa.Select):
+                from_clause = _table.subquery().alias("tmp")
+            else:
+                from_clause = _table
+            source_query = sa.select(sa.column(column.name)).select_from(from_clause)
+            compiled = source_query.compile(
+                dialect=sql_engine.dialect, compile_kwargs={"literal_binds": True}
+            )
+            temp_table_stmt = f"CREATE TEMPORARY TABLE {temp_table_name} AS {compiled}"  # noqa: E501 # FIXME CoP
+            execution_engine.execute_query_in_transaction(sa.text(temp_table_stmt))
+            dup_query = (
+                sa.select(column)
+                .select_from(sa.text(temp_table_name))
+                .group_by(column)
+                .having(sa.func.count(column) > 1)
+            )
         else:
             from_clause = _table.subquery() if isinstance(_table, sa.Select) else _table
             dup_query = (
