@@ -9,6 +9,7 @@ import sqlalchemy as sa
 
 import great_expectations.expectations as gxe
 from great_expectations import get_context
+from great_expectations.expectations.row_conditions import Column
 from tests.integration.test_utils.data_source_config.generic_sql import (
     GenericSQLBatchTestSetup,
     GenericSQLDatasourceTestConfig,
@@ -97,6 +98,29 @@ class TestSingleStore:
                 gxe.ExpectColumnValuesToMatchRegex(
                     column="name",
                     regex="^[A-Z].*",
+                )
+            )
+        assert result.success
+
+    def test_unique_values(self) -> None:
+        batch_setup = self._make_setup()
+
+        with batch_setup.batch_test_context() as batch:
+            result = batch.validate(
+                gxe.ExpectColumnValuesToBeUnique(
+                    column="name",
+                )
+            )
+        assert result.success
+
+    def test_row_condition(self) -> None:
+        batch_setup = self._make_setup()
+
+        with batch_setup.batch_test_context() as batch:
+            result = batch.validate(
+                gxe.ExpectColumnValuesToBeUnique(
+                    column="name",
+                    row_condition=Column("name").is_not_in(["Alice"]),
                 )
             )
         assert result.success
