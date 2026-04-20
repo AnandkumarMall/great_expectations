@@ -69,12 +69,16 @@ class ColumnValuesUnique(ColumnMapMetricProvider):
             )
             temp_table_stmt = f"CREATE TEMPORARY TABLE {temp_table_name} AS {compiled}"
             execution_engine.execute_query_in_transaction(sa.text(temp_table_stmt))
-            dup_query = (
-                sa.select(column)
-                .select_from(sa.text(temp_table_name))
-                .group_by(column)
-                .having(sa.func.count(column) > 1)
+            # SingleStore cannot handle subselects with GROUP BY/HAVING inside
+            # expressions, so materialize duplicate values into a second temp table.
+            dup_table_name = generate_temporary_table_name()
+            dup_stmt = (
+                f"CREATE TEMPORARY TABLE {dup_table_name} AS "
+                f"SELECT {column.name} FROM {temp_table_name} "
+                f"GROUP BY {column.name} HAVING count({column.name}) > 1"
             )
+            execution_engine.execute_query_in_transaction(sa.text(dup_stmt))
+            dup_query = sa.select(column).select_from(sa.text(dup_table_name))
         else:
             from_clause = _table.subquery() if isinstance(_table, sa.Select) else _table
             dup_query = (
