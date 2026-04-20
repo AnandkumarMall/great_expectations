@@ -305,7 +305,7 @@ If you edit the **Severity** of an Expectation, note that historical validation 
 **Expectation history** provides all workspace members with an audit trail of who took the following actions and when:
 
 - added or edited the Expectation
-- linked or unlinked Jira work items and a failure of the Expectation for incident management
+- linked or unlinked Jira work items to or from a failure of the Expectation for incident management
 
 To view an Expectation’s history, follow the steps below:
 
