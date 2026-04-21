@@ -1680,3 +1680,111 @@ def test_windowed_expectation_runs(
         result["expectation_config"]["rendered_content"][0].value.params["max_value"]["value"]
         == cloud_max
     )
+
+
+@pytest.mark.unit
+def test_prepare_checkpoint_run_passes_batch_definition_id_as_query_param(
+    empty_cloud_context_fluent: CloudDataContext,
+    mocker: MockerFixture,
+) -> None:
+    """When the first validation definition has a batch_definition id, it is sent
+    as a ``batch_definition_id`` query parameter on the GET /expectation-parameters request."""
+    context = empty_cloud_context_fluent
+
+    batch_def = (
+        context.data_sources.add_pandas("my_datasource")
+        .add_dataframe_asset("my_asset")
+        .add_batch_definition("my_batch_definition")
+    )
+    # The cloud fake assigns an id when add_batch_definition() is called
+    batch_def_id = batch_def.id
+    assert batch_def_id is not None, "expected cloud fake to assign a batch_def id"
+
+    suite = context.suites.add(gx.ExpectationSuite("my_suite"))
+    validation_def = context.validation_definitions.add(
+        gx.ValidationDefinition(name="my_validation_definition", suite=suite, data=batch_def)
+    )
+    checkpoint = context.checkpoints.add(
+        Checkpoint(name="my_checkpoint", validation_definitions=[validation_def])
+    )
+
+    # Patch so the windowed-expectations gate is open without needing real windowed expectations
+    mocker.patch.object(
+        type(context),
+        "_checkpoint_has_windowed_expectations",
+        return_value=True,
+    )
+
+    mock_session = mocker.MagicMock()
+    mock_session.__enter__.return_value.get.return_value.ok = True
+    mock_session.__enter__.return_value.get.return_value.json.return_value = {
+        "data": {"expectation_parameters": {}}
+    }
+    mocker.patch(
+        "great_expectations.data_context.data_context.cloud_data_context.create_session",
+        return_value=mock_session,
+    )
+
+    context.prepare_checkpoint_run(
+        checkpoint=checkpoint,
+        batch_parameters={},
+        expectation_parameters={},
+    )
+
+    call_kwargs = mock_session.__enter__.return_value.get.call_args
+    actual_url: str = call_kwargs[1]["url"] if call_kwargs[1] else call_kwargs[0][0]
+    assert f"batch_definition_id={batch_def_id}" in actual_url
+
+
+@pytest.mark.unit
+def test_prepare_checkpoint_run_without_batch_definition_id_omits_query_param(
+    mocker: MockerFixture,
+) -> None:
+    """When the batch definition has no id, the request is issued without a
+    ``batch_definition_id`` query parameter (backward-compatible with older Mercury versions)."""
+    # Build a minimal context mock so we can inject a batch_def with id=None
+    context = mocker.MagicMock()
+    context.ge_cloud_config.base_url = "https://api.greatexpectations.io"
+    context.ge_cloud_config.organization_id = str(uuid.uuid4())
+    context.ge_cloud_config.workspace_id = None
+    context.ge_cloud_config.access_token = "fake-token"
+
+    batch_def = mocker.MagicMock(spec=BatchDefinition)
+    batch_def.id = None
+
+    validation_def = mocker.MagicMock()
+    validation_def.data = batch_def
+
+    checkpoint = mocker.MagicMock(spec=Checkpoint)
+    checkpoint.id = str(uuid.uuid4())
+    checkpoint.validation_definitions = [validation_def]
+
+    # Use the real prepare_checkpoint_run implementation bound to our mock context
+    from great_expectations.data_context.data_context.cloud_data_context import CloudDataContext
+
+    mock_session = mocker.MagicMock()
+    mock_session.__enter__.return_value.get.return_value.ok = True
+    mock_session.__enter__.return_value.get.return_value.json.return_value = {
+        "data": {"expectation_parameters": {}}
+    }
+    mocker.patch(
+        "great_expectations.data_context.data_context.cloud_data_context.create_session",
+        return_value=mock_session,
+    )
+
+    # _checkpoint_has_windowed_expectations is called on self; patch it to return True
+    with mock.patch.object(
+        CloudDataContext,
+        "_checkpoint_has_windowed_expectations",
+        return_value=True,
+    ):
+        CloudDataContext.prepare_checkpoint_run(
+            context,  # type: ignore[arg-type]
+            checkpoint=checkpoint,
+            batch_parameters={},
+            expectation_parameters={},
+        )
+
+    call_kwargs = mock_session.__enter__.return_value.get.call_args
+    actual_url: str = call_kwargs[1]["url"] if call_kwargs[1] else call_kwargs[0][0]
+    assert "batch_definition_id" not in actual_url

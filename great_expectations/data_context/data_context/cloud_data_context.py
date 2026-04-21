@@ -14,7 +14,7 @@ from typing import (
     Optional,
     Union,
 )
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 
 from requests import HTTPError, Response
 
@@ -771,6 +771,16 @@ class CloudDataContext(SerializableDataContext):
                 base=base_url,
                 url=f"/api/v1/organizations/{org_id}/checkpoints/{checkpoint.id}/expectation-parameters",
             )
+
+        # Thread batch_definition_id as an optional query parameter so Mercury can serve
+        # pre-computed forecast bounds from the async store instead of training inline.
+        # Omitted when not available to preserve backward compatibility with older Mercury versions.
+        batch_definition_id: Optional[str] = None
+        if checkpoint.validation_definitions:
+            batch_definition_id = checkpoint.validation_definitions[0].data.id
+        if batch_definition_id:
+            query = urlencode({"batch_definition_id": batch_definition_id})
+            expectation_parameters_url = f"{expectation_parameters_url}?{query}"
 
         # temporarily extend expectation parameter timeout to 10 minutes
         # while a more robust solution is implemented
