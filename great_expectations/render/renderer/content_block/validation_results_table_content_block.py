@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import traceback
-import warnings
 from copy import deepcopy
 from typing import TYPE_CHECKING, Callable
 
@@ -91,10 +90,6 @@ class ValidationResultsTableContentBlockRenderer(ExpectationStringRenderer):
 
         expectation_string_fn = content_block_fn
         if expectation_string_fn is None:
-            expectation_string_fn = cls._get_legacy_v2_api_style_expectation_string_fn(
-                expectation_type
-            )
-        if expectation_string_fn is None:
             expectation_string_fn = cls._missing_content_block_fn
 
         # This function wraps expect_* methods from ExpectationStringRenderer to generate table classes  # noqa: E501 # FIXME CoP
@@ -172,11 +167,7 @@ diagnose and repair the underlying issue.  Detailed information follows:
                     renderer_type=LegacyDiagnosticRendererType.OBSERVED_VALUE,
                 )
                 observed_value = [
-                    observed_value_renderer[1](result=result)
-                    if observed_value_renderer
-                    else (
-                        cls._get_legacy_v2_api_observed_value(expectation_string_fn, result) or "--"
-                    )
+                    observed_value_renderer[1](result=result) if observed_value_renderer else "--"
                 ]
             except Exception as e:
                 exception_traceback = traceback.format_exc()
@@ -206,43 +197,3 @@ diagnose and repair the underlying issue.  Detailed information follows:
             return output_row
 
         return row_generator_fn
-
-    @classmethod
-    def _get_legacy_v2_api_style_expectation_string_fn(cls, expectation_type):
-        legacy_expectation_string_fn = getattr(cls, expectation_type, None)
-        if legacy_expectation_string_fn is None:
-            # With the V2 API, expectation rendering was implemented by defining a method with the same name as the expectation.  # noqa: E501 # FIXME CoP
-            # If no legacy rendering is present, return None.
-            return None
-
-        # deprecated-v0.13.28
-        warnings.warn(
-            "V2 API style custom rendering is deprecated as of v0.13.28 and is not fully supported anymore; "  # noqa: E501 # FIXME CoP
-            "As it will be removed in v0.16, please transition to V3 API and associated rendering style",  # noqa: E501 # FIXME CoP
-            DeprecationWarning,
-        )
-
-        def expectation_string_fn_with_legacy_translation(
-            configuration: ExpectationConfiguration, runtime_configuration: dict
-        ):
-            if runtime_configuration is None:
-                runtime_configuration = {}
-
-            # With the V2 API, the expectation string function had a different signature; the below translates from the new signature to the legacy signature.  # noqa: E501 # FIXME CoP
-            return legacy_expectation_string_fn(
-                expectation=configuration,
-                styling=runtime_configuration.get("styling", None),
-                include_column_name=runtime_configuration.get("include_column_name", True),
-            )
-
-        return expectation_string_fn_with_legacy_translation
-
-    @staticmethod
-    def _get_legacy_v2_api_observed_value(expectation_string_fn, result):
-        if expectation_string_fn.__name__ != "expectation_string_fn_with_legacy_translation":
-            # If legacy V2 API style rendering is used, "expectation_string_fn" will be the method defined in the above "_get_legacy_v2_api_style_expectation_string_fn".  # noqa: E501 # FIXME CoP
-            # If this isn't the case, return None, so we don't do any legacy logic.
-            return None
-
-        # With V2 API style rendering, the result had an "observed_value" entry that could be rendered.  # noqa: E501 # FIXME CoP
-        return result["result"].get("observed_value")
