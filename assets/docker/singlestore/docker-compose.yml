@@ -1,5 +1,5 @@
 services:
-  singlestore_db:
+  singlestore-db:
     image: ghcr.io/singlestore-labs/singlestoredb-dev:8.5.22
     environment:
       ROOT_PASSWORD: ${SINGLESTORE_ROOT_PASSWORD:-test_superuser}
@@ -18,6 +18,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
+    networks:
+      - dbnet
+
+  load-db:
+    image: ghcr.io/singlestore-labs/singlestoredb-dev:8.5.22
+    depends_on:
+      singlestore-db:
+        condition: service_healthy
+    command: >
+      sh -c 'singlestore -h singlestore-db -u root -p"${SINGLESTORE_ROOT_PASSWORD:-test_superuser}" -e "CREATE DATABASE IF NOT EXISTS test_ci;"'
     networks:
       - dbnet
 
