@@ -21,7 +21,6 @@ services:
     networks:
       - dbnet
 
-
 networks:
   dbnet:
     driver: bridge
