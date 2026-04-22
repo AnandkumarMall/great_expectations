@@ -473,7 +473,6 @@ class TestTableAsset:
             serialized = table_asset.dict()
             assert serialized["table_name"] == serialized_name
 
-
     @pytest.mark.parametrize(
         "schema_name,expect_warning",
         [
@@ -492,7 +491,9 @@ class TestTableAsset:
             TableAsset(name="my_asset", table_name="my_table", schema_name=schema_name)
 
         deprecation_warnings = [
-            w for w in caught if issubclass(w.category, DeprecationWarning) and "schema_name" in str(w.message)
+            w
+            for w in caught
+            if issubclass(w.category, DeprecationWarning) and "schema_name" in str(w.message)
         ]
         if expect_warning:
             assert len(deprecation_warnings) == 1
