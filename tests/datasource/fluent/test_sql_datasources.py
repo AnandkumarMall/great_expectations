@@ -14,6 +14,7 @@ from great_expectations.datasource.fluent import GxDatasourceWarning, SQLDatasou
 from great_expectations.datasource.fluent.sql_datasource import (
     DEFAULT_INITIAL_QUOTE_CHARACTERS,
     MISSING,
+    Missing,
     TableAsset,
     to_lower_if_not_quoted,
 )
@@ -474,42 +475,33 @@ class TestTableAsset:
             assert serialized["table_name"] == serialized_name
 
     @pytest.mark.parametrize(
-        "schema_name,expect_warning",
+        "schema_name",
         [
-            pytest.param(MISSING, False, id="MISSING-no-warning"),
-            pytest.param(None, False, id="None-no-warning"),
-            pytest.param("public", True, id="string-warns"),
+            pytest.param(MISSING, id="MISSING"),
+            pytest.param(None, id="None"),
         ],
     )
-    def test_schema_name_deprecation_warning_only_fires_for_user_provided_values(
+    def test_schema_name_non_string_values_normalize_to_missing_without_warning(
         self,
-        schema_name: str | None,
-        expect_warning: bool,
+        schema_name: Missing | None,
     ) -> None:
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            TableAsset(name="my_asset", table_name="my_table", schema_name=schema_name)
+            asset = TableAsset(name="my_asset", table_name="my_table", schema_name=schema_name)
 
         deprecation_warnings = [
             w
             for w in caught
             if issubclass(w.category, DeprecationWarning) and "schema_name" in str(w.message)
         ]
-        if expect_warning:
-            assert len(deprecation_warnings) == 1
-            assert "my_asset" in str(deprecation_warnings[0].message)
-        else:
-            assert len(deprecation_warnings) == 0
-
-    def test_schema_name_none_is_normalized_to_missing(self) -> None:
-        """Cloud configs store schema_name: null. Validator should normalize
-        None to MISSING so datasource-level schema fallback is preserved."""
-        asset = TableAsset(name="my_asset", table_name="my_table", schema_name=None)
+        assert len(deprecation_warnings) == 0
         assert asset.schema_name is MISSING
 
-    def test_schema_name_deprecation_warning_includes_asset_name(self) -> None:
-        with pytest.warns(DeprecationWarning, match=r"my_special_asset"):
-            TableAsset(name="my_special_asset", table_name="t", schema_name="public")
+    def test_schema_name_string_value_emits_deprecation_warning_with_asset_name(self) -> None:
+        with pytest.warns(DeprecationWarning, match=r"my_asset"):
+            asset = TableAsset(name="my_asset", table_name="my_table", schema_name="public")
+
+        assert asset.schema_name == "public"
 
 
 if __name__ == "__main__":
