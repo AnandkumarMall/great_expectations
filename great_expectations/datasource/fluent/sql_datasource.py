@@ -1055,12 +1055,15 @@ class TableAsset(_SQLAsset):
 
     @pydantic.validator("schema_name", pre=True, always=True)
     @classmethod
-    def _schema_name_deprecation_warning(cls, v: str | Missing | None) -> str | Missing | None:
-        if v is MISSING:
+    def _schema_name_deprecation_warning(
+        cls, v: str | Missing | None, values: dict
+    ) -> str | Missing | None:
+        if v is MISSING or v is None:
             return v
         # deprecated-v1.14.0
+        asset_name = values.get("name", "unknown")
         warnings.warn(
-            "`schema_name` is deprecated."
+            f"`schema_name` is deprecated on asset '{asset_name}'."
             " Pass the schema in your datasource's connection configuration instead.",
             category=DeprecationWarning,
         )

@@ -13,6 +13,7 @@ from great_expectations.compatibility import sqlalchemy
 from great_expectations.datasource.fluent import GxDatasourceWarning, SQLDatasource
 from great_expectations.datasource.fluent.sql_datasource import (
     DEFAULT_INITIAL_QUOTE_CHARACTERS,
+    MISSING,
     TableAsset,
     to_lower_if_not_quoted,
 )
@@ -471,6 +472,37 @@ class TestTableAsset:
         ):
             serialized = table_asset.dict()
             assert serialized["table_name"] == serialized_name
+
+
+    @pytest.mark.parametrize(
+        "schema_name,expect_warning",
+        [
+            pytest.param(MISSING, False, id="MISSING-no-warning"),
+            pytest.param(None, False, id="None-no-warning"),
+            pytest.param("public", True, id="string-warns"),
+        ],
+    )
+    def test_schema_name_deprecation_warning_only_fires_for_user_provided_values(
+        self,
+        schema_name: str | None,
+        expect_warning: bool,
+    ) -> None:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            TableAsset(name="my_asset", table_name="my_table", schema_name=schema_name)
+
+        deprecation_warnings = [
+            w for w in caught if issubclass(w.category, DeprecationWarning) and "schema_name" in str(w.message)
+        ]
+        if expect_warning:
+            assert len(deprecation_warnings) == 1
+            assert "my_asset" in str(deprecation_warnings[0].message)
+        else:
+            assert len(deprecation_warnings) == 0
+
+    def test_schema_name_deprecation_warning_includes_asset_name(self) -> None:
+        with pytest.warns(DeprecationWarning, match=r"my_special_asset"):
+            TableAsset(name="my_special_asset", table_name="t", schema_name="public")
 
 
 if __name__ == "__main__":
