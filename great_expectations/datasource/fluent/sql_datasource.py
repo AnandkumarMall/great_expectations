@@ -1059,7 +1059,7 @@ class TableAsset(_SQLAsset):
         cls, v: str | Missing | None, values: dict
     ) -> str | Missing | None:
         if v is MISSING or v is None:
-            return v
+            return MISSING
         # deprecated-v1.14.0
         asset_name = values.get("name", "unknown")
         warnings.warn(

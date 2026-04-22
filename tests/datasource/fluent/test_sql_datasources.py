@@ -501,6 +501,12 @@ class TestTableAsset:
         else:
             assert len(deprecation_warnings) == 0
 
+    def test_schema_name_none_is_normalized_to_missing(self) -> None:
+        """Cloud configs store schema_name: null. Validator should normalize
+        None to MISSING so datasource-level schema fallback is preserved."""
+        asset = TableAsset(name="my_asset", table_name="my_table", schema_name=None)
+        assert asset.schema_name is MISSING
+
     def test_schema_name_deprecation_warning_includes_asset_name(self) -> None:
         with pytest.warns(DeprecationWarning, match=r"my_special_asset"):
             TableAsset(name="my_special_asset", table_name="t", schema_name="public")
