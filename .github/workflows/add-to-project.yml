@@ -5,9 +5,9 @@ on:
     types: [opened]
 
 env:
-  PROJECT_ID: PVT_kwDOAeNBW84AYzQK                    # Core Issues project board
-  STATUS_FIELD_ID: PVTSSF_lADOAeNBW84AYzQKzgP22rg     # Status single-select field
-  TRIAGE_OPTION_ID: "8141bb89"                         # Status option: "Triage"
+  PROJECT_ID: PVT_kwDOAeNBW84AYzQK # Core Issues project board
+  STATUS_FIELD_ID: PVTSSF_lADOAeNBW84AYzQKzgP22rg # Status single-select field
+  TRIAGE_OPTION_ID: "8141bb89" # Status option: "Triage"
 
 jobs:
   add-to-project:
