@@ -4,15 +4,23 @@ on:
   issues:
     types: [opened]
 
+env:
+  PROJECT_ID: PVT_kwDOAeNBW84AYzQK                    # Core Issues project board
+  STATUS_FIELD_ID: PVTSSF_lADOAeNBW84AYzQKzgP22rg     # Status single-select field
+  TRIAGE_OPTION_ID: "8141bb89"                         # Status option: "Triage"
+
 jobs:
   add-to-project:
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Add issue and set Triage status
         env:
           GH_TOKEN: ${{ secrets.PROJECT_PAT }}
           ISSUE_NODE_ID: ${{ github.event.issue.node_id }}
         run: |
+          set -euo pipefail
+
           ITEM_ID=$(gh api graphql -f query='
             mutation($projectId: ID!, $contentId: ID!) {
               addProjectV2ItemById(input: {
@@ -22,7 +30,7 @@ jobs:
                 item { id }
               }
             }
-          ' -f projectId='PVT_kwDOAeNBW84AYzQK' \
+          ' -f projectId="$PROJECT_ID" \
             -f contentId="$ISSUE_NODE_ID" \
             --jq '.data.addProjectV2ItemById.item.id')
 
@@ -37,7 +45,7 @@ jobs:
                 projectV2Item { id }
               }
             }
-          ' -f projectId='PVT_kwDOAeNBW84AYzQK' \
+          ' -f projectId="$PROJECT_ID" \
             -f itemId="$ITEM_ID" \
-            -f fieldId='PVTSSF_lADOAeNBW84AYzQKzgP22rg' \
-            -f optionId='8141bb89'
+            -f fieldId="$STATUS_FIELD_ID" \
+            -f optionId="$TRIAGE_OPTION_ID"
