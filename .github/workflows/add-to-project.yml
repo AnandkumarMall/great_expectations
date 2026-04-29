@@ -1,0 +1,43 @@
+name: Add new issues to Core Issues board
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  add-to-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add issue and set Triage status
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_PAT }}
+          ISSUE_NODE_ID: ${{ github.event.issue.node_id }}
+        run: |
+          ITEM_ID=$(gh api graphql -f query='
+            mutation($projectId: ID!, $contentId: ID!) {
+              addProjectV2ItemById(input: {
+                projectId: $projectId
+                contentId: $contentId
+              }) {
+                item { id }
+              }
+            }
+          ' -f projectId='PVT_kwDOAeNBW84AYzQK' \
+            -f contentId="$ISSUE_NODE_ID" \
+            --jq '.data.addProjectV2ItemById.item.id')
+
+          gh api graphql -f query='
+            mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+              updateProjectV2ItemFieldValue(input: {
+                projectId: $projectId
+                itemId: $itemId
+                fieldId: $fieldId
+                value: { singleSelectOptionId: $optionId }
+              }) {
+                projectV2Item { id }
+              }
+            }
+          ' -f projectId='PVT_kwDOAeNBW84AYzQK' \
+            -f itemId="$ITEM_ID" \
+            -f fieldId='PVTSSF_lADOAeNBW84AYzQKzgP22rg' \
+            -f optionId='8141bb89'
