@@ -201,6 +201,52 @@ def test_success_with_suite_param_type_(
     assert result.success == expected_result
 
 
+@parameterize_batch_for_data_sources(
+    data_source_configs=[
+        SparkFilesystemCsvDatasourceTestConfig(
+            column_types=SPARK_COLUMN_TYPES,
+        )
+    ],
+    data=DATA,
+)
+def test_result_format_contains_map_fields_on_spark(batch_for_datasource: Batch) -> None:
+    """Reproduces community issue #11076.
+
+    ExpectColumnValuesToBeOfType is a ColumnMapExpectation, and per the public docs
+    (https://greatexpectations.io/expectations/expect_column_values_to_be_of_type/)
+    its result should contain the standard map-result fields: element_count,
+    unexpected_count, unexpected_percent, partial_unexpected_list, missing_count,
+    missing_percent, unexpected_percent_total, unexpected_percent_nonmissing.
+
+    On Spark/Databricks (and other non-Pandas-object backends) the result instead
+    only contains {"observed_value": ...} because _validate_spark / _validate_sqlalchemy
+    do not run the map-result formatting path.
+    """
+    expectation = gxe.ExpectColumnValuesToBeOfType(
+        column=INTEGER_COLUMN, type_="IntegerType"
+    )
+    result = batch_for_datasource.validate(
+        expectation, result_format=ResultFormat.SUMMARY
+    )
+    assert result.success
+    result_dict = result["result"]
+    expected_fields = {
+        "element_count",
+        "unexpected_count",
+        "unexpected_percent",
+        "partial_unexpected_list",
+        "missing_count",
+        "missing_percent",
+        "unexpected_percent_total",
+        "unexpected_percent_nonmissing",
+    }
+    missing = expected_fields - set(result_dict.keys())
+    assert not missing, (
+        f"ExpectColumnValuesToBeOfType result missing standard map fields {missing}; "
+        f"got result={result_dict}"
+    )
+
+
 @parameterize_batch_for_data_sources(data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA)
 def test_include_unexpected_rows_pandas(batch_for_datasource: Batch) -> None:
     """Test include_unexpected_rows for ExpectColumnValuesToBeOfType with pandas data sources."""
