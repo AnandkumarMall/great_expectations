@@ -222,12 +222,8 @@ def test_result_format_contains_map_fields_on_spark(batch_for_datasource: Batch)
     only contains {"observed_value": ...} because _validate_spark / _validate_sqlalchemy
     do not run the map-result formatting path.
     """
-    expectation = gxe.ExpectColumnValuesToBeOfType(
-        column=INTEGER_COLUMN, type_="IntegerType"
-    )
-    result = batch_for_datasource.validate(
-        expectation, result_format=ResultFormat.SUMMARY
-    )
+    expectation = gxe.ExpectColumnValuesToBeOfType(column=INTEGER_COLUMN, type_="IntegerType")
+    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.SUMMARY)
     assert result.success
     result_dict = result["result"]
     expected_fields = {
