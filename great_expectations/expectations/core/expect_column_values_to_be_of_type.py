@@ -21,6 +21,7 @@ from great_expectations.compatibility.typing_extensions import override
 from great_expectations.core.metric_function_types import (
     SummarizationMetricNameSuffixes,
 )
+from great_expectations.core.result_format import ResultFormat
 from great_expectations.core.suite_parameters import (
     SuiteParameterDict,  # noqa: TC001 # FIXME CoP
 )
@@ -721,7 +722,12 @@ class ExpectColumnValuesToBeOfType(ColumnMapExpectation):
             unexpected_list=[],
         )
 
-        if observed_value is not None:
+        # BOOLEAN_ONLY intentionally returns no `result` dict; preserve that contract by
+        # only attaching observed_value for richer result formats.
+        if (
+            observed_value is not None
+            and parsed_result_format["result_format"] != ResultFormat.BOOLEAN_ONLY
+        ):
             formatted.setdefault("result", {})["observed_value"] = observed_value
 
         return formatted

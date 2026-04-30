@@ -243,6 +243,25 @@ def test_result_format_contains_map_fields_on_spark(batch_for_datasource: Batch)
     )
 
 
+@parameterize_batch_for_data_sources(
+    data_source_configs=[
+        SparkFilesystemCsvDatasourceTestConfig(
+            column_types=SPARK_COLUMN_TYPES,
+        )
+    ],
+    data=DATA,
+)
+def test_boolean_only_result_format_on_spark(batch_for_datasource: Batch) -> None:
+    """BOOLEAN_ONLY must not populate `result` even though aggregate backends compute
+    an observed_value. Regression for the result-format contract on the aggregate path
+    introduced for issue #11076.
+    """
+    expectation = gxe.ExpectColumnValuesToBeOfType(column=INTEGER_COLUMN, type_="IntegerType")
+    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.BOOLEAN_ONLY)
+    assert result.success
+    assert result.result == {}
+
+
 @parameterize_batch_for_data_sources(data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA)
 def test_include_unexpected_rows_pandas(batch_for_datasource: Batch) -> None:
     """Test include_unexpected_rows for ExpectColumnValuesToBeOfType with pandas data sources."""
