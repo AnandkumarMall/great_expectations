@@ -583,11 +583,6 @@ class ExpectColumnValuesToBeOfType(ColumnMapExpectation):
             ),
         )
 
-        # Issue #11076: ExpectColumnValuesToBeOfType is a ColumnMapExpectation, so its
-        # result should include the standard map-result fields (element_count,
-        # unexpected_count, missing_count, etc.) regardless of backend. The aggregate
-        # paths (Spark, SqlAlchemy, non-object Pandas) need table.row_count and the
-        # column null count to populate those fields via _format_map_output.
         row_count_metric_kwargs = get_metric_kwargs(
             metric_name="table.row_count",
             configuration=configuration,
@@ -671,11 +666,6 @@ class ExpectColumnValuesToBeOfType(ColumnMapExpectation):
         else:
             return None
 
-        # Issue #11076: Augment the aggregate-style result with the standard
-        # ColumnMapExpectation map-result fields (element_count, unexpected_count,
-        # missing_count, etc.) so callers see a consistent result shape regardless of
-        # backend. The type check is column-aggregate, so either all non-null rows pass
-        # or all non-null rows are unexpected.
         return self._build_map_result(
             base_result=base_result,
             metrics=metrics,
