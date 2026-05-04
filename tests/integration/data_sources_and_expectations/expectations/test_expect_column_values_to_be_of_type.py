@@ -201,6 +201,126 @@ def test_success_with_suite_param_type_(
     assert result.success == expected_result
 
 
+NON_OBJECT_PANDAS_DATA = pd.DataFrame({INTEGER_COLUMN: [1, 2, 3, 4, 5]})
+
+
+def _assert_aggregate_map_result(
+    result,
+    *,
+    success: bool,
+    element_count: int,
+    unexpected_count: int,
+    missing_count: int,
+) -> None:
+    """Assert the aggregate-path ValidationResult matches the documented ColumnMapExpectation contract.
+
+    Issue #11076 covered the `_validate_spark` / `_validate_sqlalchemy` / non-object
+    `_validate_pandas` branches, all of which now flow through `_build_map_result`.
+    A correct result for those backends contains every standard map-result field with
+    consistent values regardless of which engine produced it.
+    """  # noqa: E501
+    assert result.success is success
+    result_dict = result["result"]
+
+    nonnull_count = element_count - missing_count
+    expected_unexpected_percent_total = (
+        (unexpected_count / element_count) * 100 if element_count else 0
+    )
+    expected_missing_percent = (missing_count / element_count) * 100 if element_count else 0
+    expected_unexpected_percent_nonmissing = (
+        (unexpected_count / nonnull_count) * 100 if nonnull_count else None
+    )
+
+    assert result_dict["element_count"] == element_count
+    assert result_dict["unexpected_count"] == unexpected_count
+    assert result_dict["missing_count"] == missing_count
+    assert result_dict["missing_percent"] == expected_missing_percent
+    assert result_dict["unexpected_percent_total"] == expected_unexpected_percent_total
+    assert result_dict["unexpected_percent_nonmissing"] == expected_unexpected_percent_nonmissing
+    assert result_dict["unexpected_percent"] == expected_unexpected_percent_nonmissing
+    # The aggregate path has no row-level samples; partial_unexpected_list is always empty.
+    assert result_dict["partial_unexpected_list"] == []
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=[PandasDataFrameDatasourceTestConfig()],
+    data=NON_OBJECT_PANDAS_DATA,
+)
+def test_aggregate_result_format_pandas_non_object(batch_for_datasource: Batch) -> None:
+    """Issue #11076 regression: non-object Pandas dtypes go through the aggregate
+    `_validate_pandas` path, which must now emit the full map-result contract.
+    """
+    success_result = batch_for_datasource.validate(
+        gxe.ExpectColumnValuesToBeOfType(column=INTEGER_COLUMN, type_="int64"),
+        result_format=ResultFormat.SUMMARY,
+    )
+    _assert_aggregate_map_result(
+        success_result,
+        success=True,
+        element_count=5,
+        unexpected_count=0,
+        missing_count=0,
+    )
+
+    failure_result = batch_for_datasource.validate(
+        gxe.ExpectColumnValuesToBeOfType(column=INTEGER_COLUMN, type_="float64"),
+        result_format=ResultFormat.SUMMARY,
+    )
+    _assert_aggregate_map_result(
+        failure_result,
+        success=False,
+        element_count=5,
+        unexpected_count=5,
+        missing_count=0,
+    )
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=[PostgreSQLDatasourceTestConfig()],
+    data=DATA,
+)
+def test_aggregate_result_format_postgres(batch_for_datasource: Batch) -> None:
+    """Issue #11076 regression: SqlAlchemy backends go through `_validate_sqlalchemy`,
+    which must now emit the full map-result contract. Also verifies missing_count is
+    populated correctly for a column containing nulls.
+    """
+    success_result = batch_for_datasource.validate(
+        gxe.ExpectColumnValuesToBeOfType(column=INTEGER_COLUMN, type_="INTEGER"),
+        result_format=ResultFormat.SUMMARY,
+    )
+    _assert_aggregate_map_result(
+        success_result,
+        success=True,
+        element_count=5,
+        unexpected_count=0,
+        missing_count=0,
+    )
+
+    success_with_nulls_result = batch_for_datasource.validate(
+        gxe.ExpectColumnValuesToBeOfType(column=INTEGER_AND_NULL_COLUMN, type_="INTEGER"),
+        result_format=ResultFormat.SUMMARY,
+    )
+    _assert_aggregate_map_result(
+        success_with_nulls_result,
+        success=True,
+        element_count=5,
+        unexpected_count=0,
+        missing_count=1,
+    )
+
+    failure_result = batch_for_datasource.validate(
+        gxe.ExpectColumnValuesToBeOfType(column=INTEGER_COLUMN, type_="VARCHAR"),
+        result_format=ResultFormat.SUMMARY,
+    )
+    _assert_aggregate_map_result(
+        failure_result,
+        success=False,
+        element_count=5,
+        unexpected_count=5,
+        missing_count=0,
+    )
+
+
 @parameterize_batch_for_data_sources(
     data_source_configs=[
         SparkFilesystemCsvDatasourceTestConfig(
@@ -209,37 +329,45 @@ def test_success_with_suite_param_type_(
     ],
     data=DATA,
 )
-def test_result_format_contains_map_fields_on_spark(batch_for_datasource: Batch) -> None:
-    """Reproduces community issue #11076.
-
-    ExpectColumnValuesToBeOfType is a ColumnMapExpectation, and per the public docs
-    (https://greatexpectations.io/expectations/expect_column_values_to_be_of_type/)
-    its result should contain the standard map-result fields: element_count,
-    unexpected_count, unexpected_percent, partial_unexpected_list, missing_count,
-    missing_percent, unexpected_percent_total, unexpected_percent_nonmissing.
-
-    On Spark/Databricks (and other non-Pandas-object backends) the result instead
-    only contains {"observed_value": ...} because _validate_spark / _validate_sqlalchemy
-    do not run the map-result formatting path.
+def test_aggregate_result_format_spark(batch_for_datasource: Batch) -> None:
+    """Issue #11076 regression: Spark goes through `_validate_spark`, which must now
+    emit the full map-result contract. Also verifies missing_count is populated
+    correctly for a column containing nulls.
     """
-    expectation = gxe.ExpectColumnValuesToBeOfType(column=INTEGER_COLUMN, type_="IntegerType")
-    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.SUMMARY)
-    assert result.success
-    result_dict = result["result"]
-    expected_fields = {
-        "element_count",
-        "unexpected_count",
-        "unexpected_percent",
-        "partial_unexpected_list",
-        "missing_count",
-        "missing_percent",
-        "unexpected_percent_total",
-        "unexpected_percent_nonmissing",
-    }
-    missing = expected_fields - set(result_dict.keys())
-    assert not missing, (
-        f"ExpectColumnValuesToBeOfType result missing standard map fields {missing}; "
-        f"got result={result_dict}"
+    success_result = batch_for_datasource.validate(
+        gxe.ExpectColumnValuesToBeOfType(column=INTEGER_COLUMN, type_="IntegerType"),
+        result_format=ResultFormat.SUMMARY,
+    )
+    _assert_aggregate_map_result(
+        success_result,
+        success=True,
+        element_count=5,
+        unexpected_count=0,
+        missing_count=0,
+    )
+
+    success_with_nulls_result = batch_for_datasource.validate(
+        gxe.ExpectColumnValuesToBeOfType(column=INTEGER_AND_NULL_COLUMN, type_="IntegerType"),
+        result_format=ResultFormat.SUMMARY,
+    )
+    _assert_aggregate_map_result(
+        success_with_nulls_result,
+        success=True,
+        element_count=5,
+        unexpected_count=0,
+        missing_count=1,
+    )
+
+    failure_result = batch_for_datasource.validate(
+        gxe.ExpectColumnValuesToBeOfType(column=INTEGER_COLUMN, type_="StringType"),
+        result_format=ResultFormat.SUMMARY,
+    )
+    _assert_aggregate_map_result(
+        failure_result,
+        success=False,
+        element_count=5,
+        unexpected_count=5,
+        missing_count=0,
     )
 
 
