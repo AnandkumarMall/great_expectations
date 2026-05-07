@@ -246,10 +246,12 @@ def as_typed(
     family = family_for(expectation_type)
     schema_cls = _FORMAT_MAP[family][result_format]
 
-    # Pass engine_hint into the model when it is known (allows root validators
-    # inside map schemas to enforce SQL-required fields).
+    # Pass engine_hint into the model only for map-family schemas.  Map schemas
+    # declare ``engine_hint`` as a field (MapResultBase) so that root validators
+    # can enforce SQL-required fields.  Aggregate schemas do not declare the field
+    # and use ``extra = Extra.forbid``, so injecting it would raise a ValidationError.
     data = dict(result_dict)
-    if eff_engine is not None:
+    if eff_engine is not None and family == "map":
         data["engine_hint"] = eff_engine
 
     try:
