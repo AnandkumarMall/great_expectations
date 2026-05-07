@@ -1,7 +1,7 @@
 """Matrix runner for validation result schema coverage.
 
 Runs every (expectation x result_format x data_source) combination and writes
-a structured findings JSON file.  Pandas-only in the initial slice (task 7.3).
+a structured findings JSON file.  Expanded to ALL_DATA_SOURCES (task 8.1).
 
 Abstract stubs (5 expectations whose ``__init__`` raises ``NotImplementedError``)
 cannot be validated; they produce ``status=failed`` findings and the corresponding
@@ -9,6 +9,12 @@ test cells are marked as failures — this is expected and documented here.
 
 Findings file location (relative to the worktree root):
     tests/_artifacts/validation_result_schemas/findings/<run_id>.json
+
+xdist note: this module uses a session-scoped FindingsWriter; parallelising
+within a single session would cause concurrent writes to the same JSON file.
+The ``no_xdist`` marker documents this constraint.  CI uses ``--dist loadfile``
+which naturally routes all cells from this file to a single worker, so the
+constraint is satisfied without extra conftest machinery.
 """
 from __future__ import annotations
 
@@ -38,16 +44,33 @@ from tests.integration.data_sources_and_expectations.expectations._validation_re
     summarize_raw_dict,
 )
 from tests.integration.data_sources_and_expectations.test_canonical_expectations import (
-    JUST_PANDAS_DATA_SOURCES,
+    ALL_DATA_SOURCES,
 )
 
 if TYPE_CHECKING:
     from great_expectations.datasource.fluent.interfaces import Batch
 
 # ---------------------------------------------------------------------------
-# Pandas-only slice — extend to ALL_DATA_SOURCES in a later task
+# Module-level marker: session-scoped FindingsWriter must not be split across
+# xdist workers.  CI uses --dist loadfile which enforces this automatically.
 # ---------------------------------------------------------------------------
-_PANDAS_DATA = pd.DataFrame(
+pytestmark = [pytest.mark.no_xdist]
+
+# ---------------------------------------------------------------------------
+# Shared fixture data — a superset DataFrame whose columns cover all cases.
+#
+# Per-case data-shape variance resolution (task 8.1):
+#   All EXPECTATION_CASES reference columns that exist in this DataFrame.
+#   Cases needing specific data shapes (dates, JSON strings, pure numerics)
+#   will run against this data; the expectation may fail validation (e.g.
+#   ExpectColumnValuesToBeDateutilParseable against integers), but that is
+#   fine — we are testing schema *parsing* of whatever result dict comes back,
+#   not expectation correctness.  SQL backends that cannot operate on a
+#   VARCHAR column for sum/numeric expectations will produce a batch.validate()
+#   error which is caught, recorded as status=failed, and surfaced to the
+#   curator exactly as designed.
+# ---------------------------------------------------------------------------
+_MATRIX_DATA = pd.DataFrame(
     {
         "col_a": [1, 2, 3, None, 5],
         "col_b": ["x", "y", "z", "w", None],
@@ -94,8 +117,8 @@ def _findings_writer(request: pytest.FixtureRequest) -> FindingsWriter:  # type:
 @pytest.mark.parametrize("case", EXPECTATION_CASES, ids=lambda c: c.id)
 @pytest.mark.parametrize("result_format", list(ResultFormat))
 @parameterize_batch_for_data_sources(
-    data_source_configs=JUST_PANDAS_DATA_SOURCES,
-    data=_PANDAS_DATA,
+    data_source_configs=ALL_DATA_SOURCES,
+    data=_MATRIX_DATA,
 )
 def test_validation_result_schema_matrix(
     batch_for_datasource: Batch,

@@ -703,6 +703,7 @@ markers = [
     "spark: mark a test as Spark-dependent.",
     "spark_connect: mark a test as Spark Connect-dependent.",
     "trino: mark a test as trino-dependent.",
+    "no_xdist: mark a test module that must not be split across xdist workers (session-scoped fixtures with shared state).",
     "unit: mark a test as a unit test.",
     "v2_api: mark test as specific to the v2 api (e.g. pre Data Connectors).",
 ]
