@@ -57,11 +57,19 @@ class AggregateBooleanOnlyResult(AggregateResultBase):
 
 
 class AggregateBasicResult(AggregateResultBase):
-    """ResultFormat.BASIC — counts, percents, and partial lists."""
+    """ResultFormat.BASIC — counts, percents, and partial lists.
+
+    Note: ``unexpected_count`` is included here because a subset of aggregate
+    expectations (e.g. ``expect_column_distinct_values_to_equal_set``) emit
+    it alongside the standard aggregate fields.  It is Optional so that the
+    majority of aggregate expectations — which do *not* emit it — continue to
+    validate cleanly.
+    """
 
     element_count: Optional[int] = None
     missing_count: Optional[int] = None
     missing_percent: Optional[float] = None
+    unexpected_count: Optional[int] = None
     partial_unexpected_list: Optional[List[Any]] = None
     partial_missing_list: Optional[List[Any]] = None
 

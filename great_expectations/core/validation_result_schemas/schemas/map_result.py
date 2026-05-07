@@ -63,7 +63,15 @@ class MapBooleanOnlyResult(MapResultBase):
 
 
 class MapBasicResult(MapResultBase):
-    """ResultFormat.BASIC — counts, percents, and the partial unexpected list."""
+    """ResultFormat.BASIC — counts, percents, and the partial unexpected list.
+
+    Note: ``observed_value`` is included here because a small set of map
+    expectations (e.g. ``expect_column_values_to_be_of_type``,
+    ``expect_column_values_to_be_in_type_list``) emit it alongside the
+    standard map fields on the pandas engine path.  It is Optional so that
+    the majority of map expectations — which do *not* emit it — continue to
+    validate cleanly.
+    """
 
     element_count: Optional[int] = None
     unexpected_count: Optional[int] = None
@@ -73,6 +81,9 @@ class MapBasicResult(MapResultBase):
     unexpected_percent_total: Optional[float] = None
     unexpected_percent_nonmissing: Optional[float] = None
     partial_unexpected_list: Optional[List[Any]] = None
+    # Some map expectations (e.g. expect_column_values_to_be_of_type on pandas)
+    # emit observed_value alongside the standard map fields.
+    observed_value: Optional[Any] = None
     # engine-typed; classified at runtime, not validated by type
     unexpected_rows: Any = None
 

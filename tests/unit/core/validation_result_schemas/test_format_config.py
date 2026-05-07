@@ -160,7 +160,7 @@ def test_partial_unexpected_count_preserved_when_supplied() -> None:
 
 @pytest.mark.unit
 def test_result_format_config_required_is_typeddict() -> None:
-    """Confirm ResultFormatConfigRequired is a TypedDict class (not a runtime check, but importable)."""
+    """Confirm ResultFormatConfigRequired is a TypedDict (not a runtime check, but importable)."""
     # Verify the class exists and has the expected annotations
     annotations = ResultFormatConfigRequired.__annotations__
     assert "result_format" in annotations
