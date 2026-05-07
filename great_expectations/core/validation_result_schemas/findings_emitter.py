@@ -84,9 +84,9 @@ class FindingsWriter:
         sorted_findings: List[Finding] = sorted(
             self._findings,
             key=lambda f: (
-                f.get("expectation_type", ""),  # type: ignore[call-overload]
-                f.get("engine", ""),  # type: ignore[call-overload]
-                f.get("result_format", ""),  # type: ignore[call-overload]
+                f.get("expectation_type", ""),
+                f.get("engine", ""),
+                f.get("result_format", ""),
             ),
         )
 
