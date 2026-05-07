@@ -9,6 +9,7 @@ Covers:
 All tests are marked @pytest.mark.unit and run via:
     pytest tests/unit/core/validation_result_schemas/test_field_validators.py -m unit
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -34,9 +35,9 @@ class _PartialCountsModel(pydantic.BaseModel):
 
     partial_unexpected_counts: Optional[List[Any]] = None
 
-    _validate_counts = pydantic.validator(
-        "partial_unexpected_counts", pre=True, allow_reuse=True
-    )(validate_partial_unexpected_counts_fallback)
+    _validate_counts = pydantic.validator("partial_unexpected_counts", pre=True, allow_reuse=True)(
+        validate_partial_unexpected_counts_fallback
+    )
 
 
 class _PassthroughModel(pydantic.BaseModel):
@@ -63,9 +64,7 @@ class _EngineHintModel(pydantic.BaseModel):
     return_unexpected_index_query: Optional[bool] = None
     unexpected_index_query: Optional[str] = None
 
-    _root_validate = pydantic.root_validator(allow_reuse=True)(
-        root_validate_engine_required_fields
-    )
+    _root_validate = pydantic.root_validator(allow_reuse=True)(root_validate_engine_required_fields)
 
 
 # ---------------------------------------------------------------------------
@@ -128,6 +127,7 @@ def test_classify_pandas_dataframe() -> None:
 def test_classify_spark_dataframe_other_when_pyspark_unavailable() -> None:
     """When pyspark is unavailable, a mock object named DataFrame from pyspark should
     be classified as DATAFRAME_SPARK if it looks like pyspark, or OTHER otherwise."""
+
     # Without actual pyspark, we simulate the check using a mock
     # The classifier should detect pyspark via module path inspection
     class _FakeSparkDataFrame:
@@ -154,6 +154,7 @@ def test_classify_other_for_unknown_type() -> None:
 @pytest.mark.unit
 def test_classify_never_raises() -> None:
     """classify_runtime_type must never raise regardless of input."""
+
     # Includes edge cases: class instances, iterators, generators
     class _WeirdObject:
         def __class_getitem__(cls, item: Any) -> Any:

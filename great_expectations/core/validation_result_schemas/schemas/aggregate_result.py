@@ -16,6 +16,7 @@ Import rules (enforced by ruff banned-api):
 - No PEP 604 unions (``X | Y``); use ``Optional[X]`` or ``Union[X, Y]``.
 - No direct ``import pydantic``.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Union

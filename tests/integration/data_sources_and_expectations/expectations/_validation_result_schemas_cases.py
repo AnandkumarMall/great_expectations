@@ -10,6 +10,7 @@ they are not part of the public ``gxe`` API).  We represent them with a
 lightweight ``_AbstractStub`` object that carries the correct
 ``expectation_type`` string so that the ``family_for`` lookup test still passes.
 """
+
 from __future__ import annotations
 
 from typing import List, Mapping, NamedTuple, Optional
@@ -142,9 +143,7 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     ),
     ExpectationCase(
         id="expect_column_values_to_be_between",
-        expectation=gxe.ExpectColumnValuesToBeBetween(
-            column="col_a", min_value=0, max_value=10
-        ),
+        expectation=gxe.ExpectColumnValuesToBeBetween(column="col_a", min_value=0, max_value=10),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
@@ -159,9 +158,7 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     ),
     ExpectationCase(
         id="expect_column_values_to_be_in_set",
-        expectation=gxe.ExpectColumnValuesToBeInSet(
-            column="col_a", value_set=[1, 2, 3, None, 5]
-        ),
+        expectation=gxe.ExpectColumnValuesToBeInSet(column="col_a", value_set=[1, 2, 3, None, 5]),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
@@ -205,9 +202,7 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     ),
     ExpectationCase(
         id="expect_column_values_to_match_like_pattern",
-        expectation=gxe.ExpectColumnValuesToMatchLikePattern(
-            column="col_b", like_pattern="%"
-        ),
+        expectation=gxe.ExpectColumnValuesToMatchLikePattern(column="col_b", like_pattern="%"),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
@@ -219,9 +214,7 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     ),
     ExpectationCase(
         id="expect_column_values_to_match_regex",
-        expectation=gxe.ExpectColumnValuesToMatchRegex(
-            column="col_b", regex="^[a-z]$"
-        ),
+        expectation=gxe.ExpectColumnValuesToMatchRegex(column="col_b", regex="^[a-z]$"),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
@@ -240,9 +233,7 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     ),
     ExpectationCase(
         id="expect_column_values_to_not_be_in_set",
-        expectation=gxe.ExpectColumnValuesToNotBeInSet(
-            column="col_a", value_set=[99, 100]
-        ),
+        expectation=gxe.ExpectColumnValuesToNotBeInSet(column="col_a", value_set=[99, 100]),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
@@ -266,9 +257,7 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     ),
     ExpectationCase(
         id="expect_column_values_to_not_match_regex",
-        expectation=gxe.ExpectColumnValuesToNotMatchRegex(
-            column="col_b", regex="^[0-9]+$"
-        ),
+        expectation=gxe.ExpectColumnValuesToNotMatchRegex(column="col_b", regex="^[0-9]+$"),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
@@ -283,16 +272,12 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     # ------------------------------------------------------------------
     ExpectationCase(
         id="expect_column_pair_values_a_to_be_greater_than_b",
-        expectation=gxe.ExpectColumnPairValuesAToBeGreaterThanB(
-            column_A="col_a", column_B="col_b"
-        ),
+        expectation=gxe.ExpectColumnPairValuesAToBeGreaterThanB(column_A="col_a", column_B="col_b"),
         data=_PAIR_DATA,
     ),
     ExpectationCase(
         id="expect_column_pair_values_to_be_equal",
-        expectation=gxe.ExpectColumnPairValuesToBeEqual(
-            column_A="col_a", column_B="col_b"
-        ),
+        expectation=gxe.ExpectColumnPairValuesToBeEqual(column_A="col_a", column_B="col_b"),
         data=_PAIR_DATA,
     ),
     ExpectationCase(
@@ -309,16 +294,12 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     # ------------------------------------------------------------------
     ExpectationCase(
         id="expect_compound_columns_to_be_unique",
-        expectation=gxe.ExpectCompoundColumnsToBeUnique(
-            column_list=["col_a", "col_b"]
-        ),
+        expectation=gxe.ExpectCompoundColumnsToBeUnique(column_list=["col_a", "col_b"]),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
         id="expect_multicolumn_sum_to_equal",
-        expectation=gxe.ExpectMulticolumnSumToEqual(
-            column_list=["col_a", "col_b"], sum_total=3
-        ),
+        expectation=gxe.ExpectMulticolumnSumToEqual(column_list=["col_a", "col_b"], sum_total=3),
         data=pd.DataFrame(
             {
                 "col_a": [1, 2, 3, None, 2],
@@ -347,17 +328,13 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     ExpectationCase(
         id="expect_column_bootstrapped_ks_test_p_value_to_be_greater_than",
         # This expectation is not yet migrated; __init__ raises NotImplementedError.
-        expectation=_AbstractStub(
-            "expect_column_bootstrapped_ks_test_p_value_to_be_greater_than"
-        ),
+        expectation=_AbstractStub("expect_column_bootstrapped_ks_test_p_value_to_be_greater_than"),
         data=_NUMERIC_DATA,
     ),
     ExpectationCase(
         id="expect_column_chisquare_test_p_value_to_be_greater_than",
         # Not yet migrated; __init__ raises NotImplementedError.
-        expectation=_AbstractStub(
-            "expect_column_chisquare_test_p_value_to_be_greater_than"
-        ),
+        expectation=_AbstractStub("expect_column_chisquare_test_p_value_to_be_greater_than"),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
@@ -369,9 +346,7 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     ),
     ExpectationCase(
         id="expect_column_distinct_values_to_contain_set",
-        expectation=gxe.ExpectColumnDistinctValuesToContainSet(
-            column="col_a", value_set=[1, 2]
-        ),
+        expectation=gxe.ExpectColumnDistinctValuesToContainSet(column="col_a", value_set=[1, 2]),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
@@ -394,46 +369,34 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     ),
     ExpectationCase(
         id="expect_column_max_to_be_between",
-        expectation=gxe.ExpectColumnMaxToBeBetween(
-            column="col_a", min_value=0, max_value=10
-        ),
+        expectation=gxe.ExpectColumnMaxToBeBetween(column="col_a", min_value=0, max_value=10),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
         id="expect_column_mean_to_be_between",
-        expectation=gxe.ExpectColumnMeanToBeBetween(
-            column="col_a", min_value=0, max_value=10
-        ),
+        expectation=gxe.ExpectColumnMeanToBeBetween(column="col_a", min_value=0, max_value=10),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
         id="expect_column_median_to_be_between",
-        expectation=gxe.ExpectColumnMedianToBeBetween(
-            column="col_a", min_value=0, max_value=10
-        ),
+        expectation=gxe.ExpectColumnMedianToBeBetween(column="col_a", min_value=0, max_value=10),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
         id="expect_column_min_to_be_between",
-        expectation=gxe.ExpectColumnMinToBeBetween(
-            column="col_a", min_value=0, max_value=10
-        ),
+        expectation=gxe.ExpectColumnMinToBeBetween(column="col_a", min_value=0, max_value=10),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
         id="expect_column_most_common_value_to_be_in_set",
-        expectation=gxe.ExpectColumnMostCommonValueToBeInSet(
-            column="col_a", value_set=[1, 2, 3]
-        ),
+        expectation=gxe.ExpectColumnMostCommonValueToBeInSet(column="col_a", value_set=[1, 2, 3]),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
         id="expect_column_pair_cramers_phi_value_to_be_less_than",
         # Uses column_A / column_B (not in the public gxe API as of this version;
         # import directly from the core module).
-        expectation=_AbstractStub(
-            "expect_column_pair_cramers_phi_value_to_be_less_than"
-        ),
+        expectation=_AbstractStub("expect_column_pair_cramers_phi_value_to_be_less_than"),
         data=_PAIR_DATA,
     ),
     ExpectationCase(
@@ -471,16 +434,12 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     ),
     ExpectationCase(
         id="expect_column_stdev_to_be_between",
-        expectation=gxe.ExpectColumnStdevToBeBetween(
-            column="col_a", min_value=0, max_value=10
-        ),
+        expectation=gxe.ExpectColumnStdevToBeBetween(column="col_a", min_value=0, max_value=10),
         data=_NUMERIC_DATA,
     ),
     ExpectationCase(
         id="expect_column_sum_to_be_between",
-        expectation=gxe.ExpectColumnSumToBeBetween(
-            column="col_a", min_value=0, max_value=100
-        ),
+        expectation=gxe.ExpectColumnSumToBeBetween(column="col_a", min_value=0, max_value=100),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
@@ -526,9 +485,7 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     ),
     ExpectationCase(
         id="expect_table_columns_to_match_set",
-        expectation=gxe.ExpectTableColumnsToMatchSet(
-            column_set=["col_a", "col_b", "col_c"]
-        ),
+        expectation=gxe.ExpectTableColumnsToMatchSet(column_set=["col_a", "col_b", "col_c"]),
         data=_DEFAULT_DATA,
     ),
     ExpectationCase(
@@ -543,9 +500,7 @@ EXPECTATION_CASES: List[ExpectationCase] = [
     ),
     ExpectationCase(
         id="expect_table_row_count_to_equal_other_table",
-        expectation=gxe.ExpectTableRowCountToEqualOtherTable(
-            other_table_name="other_table"
-        ),
+        expectation=gxe.ExpectTableRowCountToEqualOtherTable(other_table_name="other_table"),
         data=_DEFAULT_DATA,
     ),
 ]

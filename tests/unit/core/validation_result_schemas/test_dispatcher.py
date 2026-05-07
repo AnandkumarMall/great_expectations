@@ -11,6 +11,7 @@ Covers:
 All tests are marked @pytest.mark.unit and run via:
     pytest tests/unit/core/validation_result_schemas/test_dispatcher.py -m unit -v
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -369,14 +370,18 @@ class TestParseError:
 def test_family_table_covers_core_expectations():
     """Every expect_*.py file in expectations/core/ must appear in _FAMILY_TABLE."""
     core_dir = (
-        Path(__file__).parent / ".." / ".." / ".." / ".."
-        / "great_expectations" / "expectations" / "core"
+        Path(__file__).parent
+        / ".."
+        / ".."
+        / ".."
+        / ".."
+        / "great_expectations"
+        / "expectations"
+        / "core"
     )
     core_files = list(core_dir.glob("expect_*.py"))
     expectation_names = {
-        f.name.replace(".py", "")
-        for f in core_files
-        if not f.name.startswith("__")
+        f.name.replace(".py", "") for f in core_files if not f.name.startswith("__")
     }
     missing = expectation_names - set(_FAMILY_TABLE.keys())
     assert not missing, f"Missing from _FAMILY_TABLE: {sorted(missing)}"

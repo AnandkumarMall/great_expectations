@@ -11,6 +11,7 @@ Covers:
 All tests are marked @pytest.mark.unit and run via:
     pytest tests/unit/core/validation_result_schemas/test_runner_helpers.py -m unit
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Optional

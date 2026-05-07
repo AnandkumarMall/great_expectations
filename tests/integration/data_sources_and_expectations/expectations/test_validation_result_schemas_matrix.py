@@ -16,6 +16,7 @@ The ``no_xdist`` marker documents this constraint.  CI uses ``--dist loadfile``
 which naturally routes all cells from this file to a single worker, so the
 constraint is satisfied without extra conftest machinery.
 """
+
 from __future__ import annotations
 
 import datetime
@@ -149,15 +150,14 @@ def test_validation_result_schema_matrix(
                 "error_summary": "AbstractStub: expectation not yet implemented",
             }
         )
-        pytest.skip(
-            f"[{case.id}][{result_format.value}][{engine_hint}]: abstract stub — skipped"
-        )
+        pytest.skip(f"[{case.id}][{result_format.value}][{engine_hint}]: abstract stub — skipped")
 
     expectation_type: str = case.expectation.expectation_type  # type: ignore[union-attr]
 
     try:
         raw_evr = batch_for_datasource.validate(
-            case.expectation, result_format=result_format  # type: ignore[arg-type]
+            case.expectation,
+            result_format=result_format,  # type: ignore[arg-type]
         )
     except Exception as exc:
         _findings_writer.write_finding(
@@ -221,9 +221,7 @@ def test_validation_result_schema_matrix(
                 "error_summary": str(exc),
             }
         )
-        pytest.fail(
-            f"[{case.id}][{result_format.value}][{engine_hint}]: {exc}"
-        )
+        pytest.fail(f"[{case.id}][{result_format.value}][{engine_hint}]: {exc}")
 
     # Success path — record parsed finding
     model_dict: dict = typed.dict()

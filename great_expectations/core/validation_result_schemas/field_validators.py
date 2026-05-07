@@ -9,6 +9,7 @@ Import rules (enforced by ruff banned-api):
 - ``RuntimeTypeName`` comes from ``validation_result_schemas.types``.
 - No direct ``import pydantic``, no PEP 604 unions.
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -87,9 +88,7 @@ def validate_unexpected_rows_passthrough(cls: Any, v: Any) -> Any:
     return v
 
 
-def validate_partial_unexpected_counts_fallback(
-    cls: Any, v: Optional[list]
-) -> Optional[list]:
+def validate_partial_unexpected_counts_fallback(cls: Any, v: Optional[list]) -> Optional[list]:
     """v1 validator for ``partial_unexpected_counts``.
 
     Accepts the two documented shapes:

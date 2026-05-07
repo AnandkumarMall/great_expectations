@@ -13,6 +13,7 @@ Covers:
 All tests are marked @pytest.mark.unit and run via:
     pytest tests/unit/core/validation_result_schemas/test_schemas_map.py -m unit
 """
+
 from __future__ import annotations
 
 import pytest

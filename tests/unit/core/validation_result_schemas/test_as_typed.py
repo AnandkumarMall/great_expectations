@@ -11,6 +11,7 @@ Covers requirements 2.1-2.6 and 6.1-6.5:
 All tests are marked @pytest.mark.unit and run via:
     pytest tests/unit/core/validation_result_schemas/test_as_typed.py -m unit -v
 """
+
 from __future__ import annotations
 
 import json

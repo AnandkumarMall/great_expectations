@@ -419,9 +419,7 @@ class ExpectationValidationResult(SerializableDictDot):
         else:
             result_format = result_format_value
 
-        expectation_type = (
-            self.expectation_config.type if self.expectation_config else "unknown"
-        )
+        expectation_type = self.expectation_config.type if self.expectation_config else "unknown"
 
         return as_typed(
             self.result or {},

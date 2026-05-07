@@ -13,6 +13,7 @@ then ``Path.replace``). Within a file, findings are sorted by
 ``(expectation_type, engine, result_format)`` for deterministic diffs across
 runs.
 """
+
 from __future__ import annotations
 
 import json
@@ -57,9 +58,7 @@ class FindingsWriter:
     def __init__(self, run_id: str, output_dir: Optional[Path] = None) -> None:
         self._run_id = run_id
         self._findings: List[Finding] = []
-        self._started_at_utc: str = datetime.now(timezone.utc).strftime(
-            "%Y-%m-%dT%H:%M:%SZ"
-        )
+        self._started_at_utc: str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         # Directory resolution: arg → env var → _DEFAULT_DIR
         if output_dir is not None:
@@ -79,9 +78,7 @@ class FindingsWriter:
 
     def close(self) -> None:
         """Sort findings and write them atomically to the output file."""
-        completed_at_utc: str = datetime.now(timezone.utc).strftime(
-            "%Y-%m-%dT%H:%M:%SZ"
-        )
+        completed_at_utc: str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         # Sort deterministically by (expectation_type, engine, result_format)
         sorted_findings: List[Finding] = sorted(

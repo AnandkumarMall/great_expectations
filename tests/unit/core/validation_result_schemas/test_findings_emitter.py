@@ -9,6 +9,7 @@ Covers:
 All tests are marked @pytest.mark.unit and run via:
     pytest tests/unit/core/validation_result_schemas/test_findings_emitter.py -m unit
 """
+
 from __future__ import annotations
 
 import json
@@ -204,9 +205,7 @@ def test_explicit_output_dir_overrides_env_var(
 
 
 @pytest.mark.unit
-def test_default_dir_used_when_no_env_var(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_default_dir_used_when_no_env_var(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """When neither arg nor env var is set, _DEFAULT_DIR is used."""
     monkeypatch.delenv(_ENV_VAR, raising=False)
 

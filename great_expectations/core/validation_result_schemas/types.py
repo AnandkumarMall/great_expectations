@@ -3,6 +3,7 @@
 Defines the enumeration types and TypedDicts used across the
 validation_result_schemas package.
 """
+
 from __future__ import annotations
 
 from enum import Enum

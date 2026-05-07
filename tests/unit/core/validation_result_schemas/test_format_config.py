@@ -3,6 +3,7 @@
 Round-trips parse_result_format() output under each ResultFormat value,
 asserting required keys are present and optional keys behave correctly.
 """
+
 from __future__ import annotations
 
 import pytest

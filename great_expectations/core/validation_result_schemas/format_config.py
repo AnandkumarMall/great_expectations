@@ -3,6 +3,7 @@
 These types are not part of the public API and must not be exported via
 great_expectations/__init__.py or decorated with @public_api.
 """
+
 from __future__ import annotations
 
 from typing import TypedDict

@@ -6,6 +6,7 @@ These helpers are imported by the matrix runner and its unit tests.
 They are intentionally free of test framework dependencies so they can
 be used in both pytest fixtures and standalone scripts.
 """
+
 from __future__ import annotations
 
 from great_expectations.core.validation_result_schemas.field_validators import (
@@ -58,9 +59,7 @@ def assert_field_set_covered(raw_result_dict: dict, parsed_model) -> None:
     """
     model_dict = parsed_model.dict()
     missing = [k for k in raw_result_dict if k not in model_dict]
-    assert not missing, (
-        f"Fields in raw_result_dict not covered by parsed model: {missing}"
-    )
+    assert not missing, f"Fields in raw_result_dict not covered by parsed model: {missing}"
 
 
 def summarize_raw_dict(raw: dict) -> dict:

@@ -13,6 +13,7 @@ Import rules (enforced by ruff banned-api):
 - No PEP 604 unions (``X | Y``); use ``Optional[X]`` or ``Union[X, Y]``.
 - No direct ``import pydantic``.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Optional, Union
@@ -68,19 +69,13 @@ class ParseError(Exception):
 def _override_parse_error_msg(
     expectation_type: str, eff_engine: Optional[str], cls_name: str, exc: object
 ) -> str:
-    return (
-        f"Failed to parse {expectation_type!r} with engine={eff_engine!r} "
-        f"as {cls_name}: {exc}"
-    )
+    return f"Failed to parse {expectation_type!r} with engine={eff_engine!r} as {cls_name}: {exc}"
 
 
 def _family_parse_error_msg(
     expectation_type: str, fmt_value: str, cls_name: str, exc: object
 ) -> str:
-    return (
-        f"Failed to parse {expectation_type!r} ({fmt_value}) "
-        f"as {cls_name}: {exc}"
-    )
+    return f"Failed to parse {expectation_type!r} ({fmt_value}) as {cls_name}: {exc}"
 
 
 # ---------------------------------------------------------------------------
@@ -258,7 +253,5 @@ def as_typed(
         return schema_cls(**data)
     except pydantic.ValidationError as exc:
         raise ParseError(
-            _family_parse_error_msg(
-                expectation_type, result_format.value, schema_cls.__name__, exc
-            )
+            _family_parse_error_msg(expectation_type, result_format.value, schema_cls.__name__, exc)
         ) from exc

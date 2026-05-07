@@ -16,6 +16,7 @@ Import rules (enforced by ruff banned-api):
 - No PEP 604 unions (``X | Y``); use ``Optional[X]`` or ``Union[X, Y]``.
 - No direct ``import pydantic``.
 """
+
 from __future__ import annotations
 
 from typing import Any, List, Optional
@@ -98,9 +99,9 @@ class MapSummaryResult(MapBasicResult):
     partial_unexpected_counts: Optional[List[Any]] = None
     partial_unexpected_index_list: Optional[List[Any]] = None
 
-    _validate_counts = pydantic.validator(
-        "partial_unexpected_counts", pre=True, allow_reuse=True
-    )(validate_partial_unexpected_counts_fallback)
+    _validate_counts = pydantic.validator("partial_unexpected_counts", pre=True, allow_reuse=True)(
+        validate_partial_unexpected_counts_fallback
+    )
 
 
 class MapCompleteResult(MapSummaryResult):
@@ -114,6 +115,4 @@ class MapCompleteResult(MapSummaryResult):
     unexpected_list: Optional[List[Any]] = None
     unexpected_index_list: Optional[List[Any]] = None
 
-    _root_validate = pydantic.root_validator(allow_reuse=True)(
-        root_validate_engine_required_fields
-    )
+    _root_validate = pydantic.root_validator(allow_reuse=True)(root_validate_engine_required_fields)
