@@ -166,3 +166,6 @@ assets/docker/mercury/volume/
 
 # mise
 mise.toml
+
+# Test artifact output (validation result schemas findings, etc.)
+/tests/_artifacts/
