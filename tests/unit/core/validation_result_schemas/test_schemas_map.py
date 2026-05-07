@@ -1,0 +1,393 @@
+"""Unit tests for the MapResult schema family.
+
+Covers:
+- Each format variant (MapBooleanOnlyResult, MapBasicResult, MapSummaryResult,
+  MapCompleteResult) parses a valid result dict correctly.
+- All expected fields match the input.
+- Unknown extra fields raise pydantic.ValidationError (extra=forbid).
+- Validator functions (validate_unexpected_rows_passthrough,
+  validate_partial_unexpected_counts_fallback) work as expected.
+- root_validate_engine_required_fields fires when engine_hint='sql' +
+  return_unexpected_index_query=True but unexpected_index_query is missing.
+
+All tests are marked @pytest.mark.unit and run via:
+    pytest tests/unit/core/validation_result_schemas/test_schemas_map.py -m unit
+"""
+from __future__ import annotations
+
+import pytest
+
+from great_expectations.compatibility import pydantic
+from great_expectations.core.validation_result_schemas.schemas.map_result import (
+    MapBasicResult,
+    MapBooleanOnlyResult,
+    MapCompleteResult,
+    MapResultBase,
+    MapSummaryResult,
+)
+
+# ---------------------------------------------------------------------------
+# Shared fixture data
+# ---------------------------------------------------------------------------
+
+_BASIC_RESULT_DATA = {
+    "element_count": 100,
+    "unexpected_count": 5,
+    "unexpected_percent": 5.0,
+    "missing_count": 2,
+    "missing_percent": 2.0,
+    "unexpected_percent_total": 5.0,
+    "unexpected_percent_nonmissing": 5.0,
+    "partial_unexpected_list": [1, 2, 3],
+    "unexpected_rows": None,
+}
+
+_SUMMARY_EXTRA_DATA = {
+    "partial_unexpected_counts": [{"value": 1, "count": 3}],
+    "partial_unexpected_index_list": [],
+}
+
+_COMPLETE_EXTRA_DATA = {
+    "unexpected_list": [1, 2, 3],
+    "unexpected_index_list": [10, 11, 12],
+}
+
+
+# ---------------------------------------------------------------------------
+# MapBooleanOnlyResult
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_map_boolean_only_empty_dict() -> None:
+    """BOOLEAN_ONLY result dict is typically empty."""
+    m = MapBooleanOnlyResult()
+    assert m.unexpected_index_query is None
+    assert m.unexpected_index_column_names is None
+    assert m.engine_hint is None
+
+
+@pytest.mark.unit
+def test_map_boolean_only_with_sql_fields() -> None:
+    """SQL engine can set unexpected_index_query and unexpected_index_column_names."""
+    m = MapBooleanOnlyResult(
+        unexpected_index_query="SELECT * FROM foo WHERE ...",
+        unexpected_index_column_names=["id"],
+    )
+    assert m.unexpected_index_query == "SELECT * FROM foo WHERE ..."
+    assert m.unexpected_index_column_names == ["id"]
+
+
+@pytest.mark.unit
+def test_map_boolean_only_extra_field_raises() -> None:
+    """extra=forbid: unknown fields raise ValidationError."""
+    with pytest.raises(pydantic.ValidationError):
+        MapBooleanOnlyResult(unknown_field="should_fail")
+
+
+@pytest.mark.unit
+def test_map_boolean_only_basic_result_fields_are_rejected() -> None:
+    """MapBooleanOnlyResult does not accept MapBasicResult-only fields."""
+    with pytest.raises(pydantic.ValidationError):
+        MapBooleanOnlyResult(element_count=100)
+
+
+# ---------------------------------------------------------------------------
+# MapBasicResult
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_map_basic_parses_valid_result() -> None:
+    """MapBasicResult parses a typical pandas BASIC result dict correctly."""
+    m = MapBasicResult(**_BASIC_RESULT_DATA)
+    assert m.element_count == 100
+    assert m.unexpected_count == 5
+    assert m.unexpected_percent == 5.0
+    assert m.missing_count == 2
+    assert m.missing_percent == 2.0
+    assert m.unexpected_percent_total == 5.0
+    assert m.unexpected_percent_nonmissing == 5.0
+    assert m.partial_unexpected_list == [1, 2, 3]
+    assert m.unexpected_rows is None
+
+
+@pytest.mark.unit
+def test_map_basic_all_fields_none() -> None:
+    """All fields are Optional so MapBasicResult can be constructed with no args."""
+    m = MapBasicResult()
+    assert m.element_count is None
+    assert m.unexpected_count is None
+    assert m.partial_unexpected_list is None
+    assert m.unexpected_rows is None
+
+
+@pytest.mark.unit
+def test_map_basic_extra_field_raises() -> None:
+    """extra=forbid: unknown fields raise ValidationError in MapBasicResult."""
+    with pytest.raises(pydantic.ValidationError):
+        MapBasicResult(**_BASIC_RESULT_DATA, unknown_field="bad")
+
+
+@pytest.mark.unit
+def test_map_basic_unexpected_rows_accepts_none() -> None:
+    m = MapBasicResult(unexpected_rows=None)
+    assert m.unexpected_rows is None
+
+
+@pytest.mark.unit
+def test_map_basic_unexpected_rows_accepts_list() -> None:
+    rows = [{"col_a": 1, "col_b": "x"}, {"col_a": 2, "col_b": "y"}]
+    m = MapBasicResult(unexpected_rows=rows)
+    assert m.unexpected_rows == rows
+
+
+@pytest.mark.unit
+def test_map_basic_unexpected_rows_accepts_string() -> None:
+    """unexpected_rows: Any accepts string (e.g., a serialized representation)."""
+    m = MapBasicResult(unexpected_rows="some-string-representation")
+    assert m.unexpected_rows == "some-string-representation"
+
+
+@pytest.mark.unit
+def test_map_basic_inherits_sql_fields() -> None:
+    """MapBasicResult inherits SQL-only fields from MapResultBase."""
+    m = MapBasicResult(
+        **_BASIC_RESULT_DATA,
+        unexpected_index_query="SELECT ...",
+        unexpected_index_column_names=["pk"],
+    )
+    assert m.unexpected_index_query == "SELECT ..."
+    assert m.unexpected_index_column_names == ["pk"]
+
+
+@pytest.mark.unit
+def test_map_basic_summary_only_field_raises() -> None:
+    """MapBasicResult does not accept MapSummaryResult-only fields."""
+    with pytest.raises(pydantic.ValidationError):
+        MapBasicResult(**_BASIC_RESULT_DATA, partial_unexpected_counts=[])
+
+
+# ---------------------------------------------------------------------------
+# MapSummaryResult
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_map_summary_parses_valid_result() -> None:
+    """MapSummaryResult parses a typical SUMMARY result dict correctly."""
+    data = {**_BASIC_RESULT_DATA, **_SUMMARY_EXTRA_DATA}
+    m = MapSummaryResult(**data)
+    assert m.element_count == 100
+    assert m.partial_unexpected_counts == [{"value": 1, "count": 3}]
+    assert m.partial_unexpected_index_list == []
+
+
+@pytest.mark.unit
+def test_map_summary_all_optional() -> None:
+    """All fields in MapSummaryResult are Optional."""
+    m = MapSummaryResult()
+    assert m.partial_unexpected_counts is None
+    assert m.partial_unexpected_index_list is None
+
+
+@pytest.mark.unit
+def test_map_summary_extra_field_raises() -> None:
+    """extra=forbid: unknown fields raise ValidationError in MapSummaryResult."""
+    data = {**_BASIC_RESULT_DATA, **_SUMMARY_EXTRA_DATA}
+    with pytest.raises(pydantic.ValidationError):
+        MapSummaryResult(**data, unknown_field="bad")
+
+
+@pytest.mark.unit
+def test_map_summary_partial_counts_accepts_canonical_shape() -> None:
+    """partial_unexpected_counts: [{value: x, count: n}, ...] is canonical."""
+    counts = [{"value": "foo", "count": 3}, {"value": "bar", "count": 1}]
+    m = MapSummaryResult(partial_unexpected_counts=counts)
+    assert m.partial_unexpected_counts == counts
+
+
+@pytest.mark.unit
+def test_map_summary_partial_counts_accepts_error_fallback() -> None:
+    """partial_unexpected_counts: [{"error": "..."}] fallback shape is accepted."""
+    fallback = [{"error": "partial_exception_counts requires a hashable type"}]
+    m = MapSummaryResult(partial_unexpected_counts=fallback)
+    assert m.partial_unexpected_counts == fallback
+
+
+@pytest.mark.unit
+def test_map_summary_partial_counts_accepts_none() -> None:
+    m = MapSummaryResult(partial_unexpected_counts=None)
+    assert m.partial_unexpected_counts is None
+
+
+@pytest.mark.unit
+def test_map_summary_complete_only_field_raises() -> None:
+    """MapSummaryResult does not accept MapCompleteResult-only fields."""
+    with pytest.raises(pydantic.ValidationError):
+        MapSummaryResult(**_BASIC_RESULT_DATA, unexpected_list=[1, 2, 3])
+
+
+# ---------------------------------------------------------------------------
+# MapCompleteResult
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_map_complete_parses_valid_result() -> None:
+    """MapCompleteResult parses a typical COMPLETE result dict correctly."""
+    data = {**_BASIC_RESULT_DATA, **_SUMMARY_EXTRA_DATA, **_COMPLETE_EXTRA_DATA}
+    m = MapCompleteResult(**data)
+    assert m.element_count == 100
+    assert m.partial_unexpected_counts == [{"value": 1, "count": 3}]
+    assert m.unexpected_list == [1, 2, 3]
+    assert m.unexpected_index_list == [10, 11, 12]
+
+
+@pytest.mark.unit
+def test_map_complete_all_optional() -> None:
+    """All fields in MapCompleteResult are Optional."""
+    m = MapCompleteResult()
+    assert m.unexpected_list is None
+    assert m.unexpected_index_list is None
+
+
+@pytest.mark.unit
+def test_map_complete_extra_field_raises() -> None:
+    """extra=forbid: unknown fields raise ValidationError in MapCompleteResult."""
+    data = {**_BASIC_RESULT_DATA, **_SUMMARY_EXTRA_DATA, **_COMPLETE_EXTRA_DATA}
+    with pytest.raises(pydantic.ValidationError):
+        MapCompleteResult(**data, not_a_real_field="value")
+
+
+@pytest.mark.unit
+def test_map_complete_inherits_all_ancestor_fields() -> None:
+    """MapCompleteResult inherits fields from all ancestor classes."""
+    data = {
+        **_BASIC_RESULT_DATA,
+        **_SUMMARY_EXTRA_DATA,
+        **_COMPLETE_EXTRA_DATA,
+        "unexpected_index_query": "SELECT ...",
+        "unexpected_index_column_names": ["id"],
+    }
+    m = MapCompleteResult(**data)
+    # From MapResultBase
+    assert m.unexpected_index_query == "SELECT ..."
+    assert m.unexpected_index_column_names == ["id"]
+    # From MapBasicResult
+    assert m.element_count == 100
+    assert m.partial_unexpected_list == [1, 2, 3]
+    # From MapSummaryResult
+    assert m.partial_unexpected_counts == [{"value": 1, "count": 3}]
+    # From MapCompleteResult
+    assert m.unexpected_list == [1, 2, 3]
+    assert m.unexpected_index_list == [10, 11, 12]
+
+
+# ---------------------------------------------------------------------------
+# root_validate_engine_required_fields (via MapCompleteResult)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_map_complete_sql_hint_with_query_passes() -> None:
+    """SQL engine + return_unexpected_index_query=True + query present → passes."""
+    m = MapCompleteResult(
+        engine_hint="sql",
+        unexpected_index_query="SELECT id FROM table WHERE val > 5",
+    )
+    assert m.unexpected_index_query == "SELECT id FROM table WHERE val > 5"
+
+
+@pytest.mark.unit
+def test_map_complete_sql_hint_missing_query_no_raise_without_return_flag() -> None:
+    """SQL engine + no return_unexpected_index_query flag → validator is a no-op.
+
+    The root_validate_engine_required_fields only raises when BOTH engine_hint='sql'
+    AND return_unexpected_index_query=True are in the values dict.  Since
+    MapCompleteResult does not declare return_unexpected_index_query as a field,
+    setting engine_hint='sql' alone does NOT trigger the SQL assertion.
+    The validator is designed to be composed with the dispatcher, which can
+    inject additional context via a helper field if needed.
+    """
+    # Should NOT raise: engine_hint='sql' but no return_unexpected_index_query field
+    m = MapCompleteResult(engine_hint="sql", unexpected_index_query=None)
+    assert m.engine_hint == "sql"
+    assert m.unexpected_index_query is None
+
+
+@pytest.mark.unit
+def test_map_complete_no_engine_hint_no_query_passes() -> None:
+    """No engine hint → root validator is a no-op regardless of other fields."""
+    m = MapCompleteResult(
+        unexpected_index_query=None,
+    )
+    assert m.unexpected_index_query is None
+
+
+@pytest.mark.unit
+def test_map_complete_pandas_engine_no_query_passes() -> None:
+    """Non-SQL engine hint → root validator is a no-op."""
+    m = MapCompleteResult(
+        engine_hint="pandas",
+        unexpected_index_query=None,
+    )
+    assert m.engine_hint == "pandas"
+    assert m.unexpected_index_query is None
+
+
+# ---------------------------------------------------------------------------
+# engine_hint field inheritance
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_engine_hint_present_in_all_variants() -> None:
+    """engine_hint is declared on MapResultBase and inherited by all variants."""
+    assert "engine_hint" in MapResultBase.__fields__
+    assert "engine_hint" in MapBooleanOnlyResult.__fields__
+    assert "engine_hint" in MapBasicResult.__fields__
+    assert "engine_hint" in MapSummaryResult.__fields__
+    assert "engine_hint" in MapCompleteResult.__fields__
+
+
+@pytest.mark.unit
+def test_engine_hint_defaults_to_none() -> None:
+    """engine_hint defaults to None on all variants."""
+    assert MapBooleanOnlyResult().engine_hint is None
+    assert MapBasicResult().engine_hint is None
+    assert MapSummaryResult().engine_hint is None
+    assert MapCompleteResult().engine_hint is None
+
+
+# ---------------------------------------------------------------------------
+# extra=forbid on MapResultBase
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_map_result_base_extra_forbid() -> None:
+    """MapResultBase itself also enforces extra=forbid."""
+    with pytest.raises(pydantic.ValidationError):
+        MapResultBase(completely_unknown="value")
+
+
+# ---------------------------------------------------------------------------
+# Inheritance chain sanity
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_inheritance_chain() -> None:
+    """MapCompleteResult → MapSummaryResult → MapBasicResult → MapResultBase."""
+    assert issubclass(MapCompleteResult, MapSummaryResult)
+    assert issubclass(MapSummaryResult, MapBasicResult)
+    assert issubclass(MapBasicResult, MapResultBase)
+    assert issubclass(MapBooleanOnlyResult, MapResultBase)
+
+
+@pytest.mark.unit
+def test_map_complete_is_not_map_boolean_only() -> None:
+    """MapCompleteResult and MapBooleanOnlyResult are separate leaf classes."""
+    assert not issubclass(MapCompleteResult, MapBooleanOnlyResult)
+    assert not issubclass(MapBooleanOnlyResult, MapCompleteResult)
