@@ -1,0 +1,11 @@
+name: Upload VRS Findings
+description: Upload validation result schema findings artifact
+runs:
+  using: composite
+  steps:
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: validation-result-schemas-findings
+        path: tests/_artifacts/validation_result_schemas/findings/
+        if-no-files-found: ignore

@@ -370,6 +370,10 @@ jobs:
         # TODO: revert the timeout back to 1.5 or lower after resolving arc issues
         run: invoke ci-tests -m "unit" --xdist --slowest=10 --timeout=2.0 --reports
 
+      - name: Upload validation result schema findings
+        if: always()
+        uses: ./.github/actions/upload-validation-result-schemas-findings
+
       # upload coverage report to codecov
       - name: Upload coverage reports to Codecov
         continue-on-error: true
@@ -843,6 +847,10 @@ jobs:
           esac
           invoke ci-tests '${{ matrix.markers }}' --up-services --verbose --reports $FLAGS
 
+      - name: Upload validation result schema findings
+        if: always()
+        uses: ./.github/actions/upload-validation-result-schemas-findings
+
       # upload coverage report to codecov
       - name: Upload coverage reports to Codecov
         continue-on-error: true
@@ -942,6 +950,10 @@ jobs:
             --splits="$SPLITS" --group="$GROUP"
         env:
           SHARD: ${{ matrix.shard }}
+
+      - name: Upload validation result schema findings
+        if: always()
+        uses: ./.github/actions/upload-validation-result-schemas-findings
 
       # upload coverage report to codecov
       - name: Upload coverage reports to Codecov
