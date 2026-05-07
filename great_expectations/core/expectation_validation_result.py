@@ -386,6 +386,50 @@ class ExpectationValidationResult(SerializableDictDot):
         """JSON string description of this ExpectationValidationResult"""
         return json.dumps(self.describe_dict(), indent=4)
 
+    def as_typed(self, *, engine_hint: Optional[str] = None):
+        """Return a typed view of self.result without mutating anything.
+
+        Lazy-imports the dispatcher to avoid an import cycle at module load.
+        Reads expectation_type from self.expectation_config.type and ResultFormat
+        from self.expectation_config.kwargs.get('result_format', DEFAULT_RESULT_FORMAT).
+        Returns the parsed model. Raises ParseError on validation failure.
+
+        engine_hint: optional 'pandas' | 'spark' | 'sql'. When supplied, the
+            dispatcher uses it directly. When None, the dispatcher sniffs from the
+            result dict shape.
+        """
+        from great_expectations.core.result_format import (
+            DEFAULT_RESULT_FORMAT,
+            ResultFormat,
+        )
+        from great_expectations.core.validation_result_schemas.dispatcher import (
+            as_typed,
+        )
+
+        result_format_value = (
+            self.expectation_config.kwargs.get("result_format", DEFAULT_RESULT_FORMAT)
+            if self.expectation_config
+            else DEFAULT_RESULT_FORMAT
+        )
+        # ResultFormat may be string or enum; normalize
+        if isinstance(result_format_value, str):
+            result_format = ResultFormat(result_format_value)
+        elif isinstance(result_format_value, dict):
+            result_format = ResultFormat(result_format_value["result_format"])
+        else:
+            result_format = result_format_value
+
+        expectation_type = (
+            self.expectation_config.type if self.expectation_config else "unknown"
+        )
+
+        return as_typed(
+            self.result or {},
+            expectation_type=expectation_type,
+            result_format=result_format,
+            engine_hint=engine_hint,
+        )
+
 
 class ExpectationValidationResultSchema(Schema):
     success = fields.Bool(required=False, allow_none=True)
