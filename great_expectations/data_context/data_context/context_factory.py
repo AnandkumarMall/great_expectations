@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -426,6 +427,38 @@ class ProjectManager:
 project_manager = ProjectManager()
 
 
+def _get_context_resolves_to_cloud(
+    mode: ContextModes | None,
+    cloud_mode: bool | None,
+    cloud_base_url: str | None,
+    cloud_access_token: str | None,
+    cloud_organization_id: str | None,
+    cloud_workspace_id: str | None,
+) -> bool:
+    """Return True iff a ``get_context`` call with these arguments would resolve to a CloudDataContext.
+
+    Mirrors ``ProjectManager._build_context`` / ``_get_cloud_context`` so the
+    ``get_context`` deprecation warning cannot drift from the actual delegation (Req 2.5).
+    """  # noqa: E501 # FIXME CoP
+    if mode in ("file", "ephemeral"):
+        return False
+    if mode == "cloud":
+        return True
+    # mode is None: mirror ProjectManager._get_cloud_context
+    if cloud_mode is False:
+        return False
+    if cloud_mode is True:
+        return True
+    from great_expectations.data_context.data_context import CloudDataContext
+
+    return CloudDataContext.is_cloud_config_available(
+        cloud_base_url=cloud_base_url,
+        cloud_access_token=cloud_access_token,
+        cloud_organization_id=cloud_organization_id,
+        cloud_workspace_id=cloud_workspace_id,
+    )
+
+
 @overload
 def get_context(
     project_config: DataContextConfig | Mapping | None = ...,
@@ -607,6 +640,43 @@ def get_context(  # noqa: PLR0913 # FIXME CoP
     Raises:
         GXCloudConfigurationError: Cloud mode enabled, but missing configuration.
     """  # noqa: E501 # FIXME CoP
+    if _get_context_resolves_to_cloud(
+        mode=mode,
+        cloud_mode=cloud_mode,
+        cloud_base_url=cloud_base_url,
+        cloud_access_token=cloud_access_token,
+        cloud_organization_id=cloud_organization_id,
+        cloud_workspace_id=cloud_workspace_id,
+    ):
+        warnings.warn(
+            'The GX Cloud branch of get_context() (mode="cloud", the cloud_* parameters, '
+            "and the equivalent GX_CLOUD_* environment configuration) is deprecated and will "
+            "be removed in great_expectations v2.0. get_context() itself is not deprecated.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )  # deprecated-v1.17.2
+        from great_expectations.data_context.data_context.cloud_data_context import (
+            _SUPPRESS_CONSTRUCTION_DEPRECATION,
+        )
+
+        token = _SUPPRESS_CONSTRUCTION_DEPRECATION.set(True)
+        try:
+            return project_manager.get_project(
+                project_config=project_config,
+                context_root_dir=context_root_dir,
+                project_root_dir=project_root_dir,
+                runtime_environment=runtime_environment,
+                cloud_base_url=cloud_base_url,
+                cloud_access_token=cloud_access_token,
+                cloud_organization_id=cloud_organization_id,
+                cloud_workspace_id=cloud_workspace_id,
+                cloud_mode=cloud_mode,
+                user_agent_str=user_agent_str,
+                mode=mode,
+            )
+        finally:
+            _SUPPRESS_CONSTRUCTION_DEPRECATION.reset(token)
+
     return project_manager.get_project(
         project_config=project_config,
         context_root_dir=context_root_dir,
