@@ -12,6 +12,15 @@ from great_expectations.data_context.data_context.cloud_data_context import (
 from great_expectations.exceptions import GXCloudError
 from great_expectations.exceptions.exceptions import GXCloudConfigurationError
 
+pytestmark = [
+    pytest.mark.filterwarnings(
+        "ignore:CloudDataContext is deprecated:DeprecationWarning"
+    ),
+    pytest.mark.filterwarnings(
+        "ignore:The GX Cloud branch of get_context:DeprecationWarning"
+    ),
+]
+
 
 @pytest.mark.cloud
 def test_data_context_ge_cloud_mode_with_incomplete_cloud_config_should_throw_error():

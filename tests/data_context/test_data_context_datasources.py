@@ -20,6 +20,15 @@ if TYPE_CHECKING:
         GXCloudConfig,
     )
 
+pytestmark = [
+    pytest.mark.filterwarnings(
+        "ignore:CloudDataContext is deprecated:DeprecationWarning"
+    ),
+    pytest.mark.filterwarnings(
+        "ignore:The GX Cloud branch of get_context:DeprecationWarning"
+    ),
+]
+
 
 @pytest.fixture
 def pandas_enabled_datasource_config() -> dict:

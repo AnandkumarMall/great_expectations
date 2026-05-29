@@ -43,6 +43,15 @@ if TYPE_CHECKING:
         ConfigurationIdentifier,
     )
 
+pytestmark = [
+    pytest.mark.filterwarnings(
+        "ignore:CloudDataContext is deprecated:DeprecationWarning"
+    ),
+    pytest.mark.filterwarnings(
+        "ignore:The GX Cloud branch of get_context:DeprecationWarning"
+    ),
+]
+
 yaml = YAMLHandler()
 
 

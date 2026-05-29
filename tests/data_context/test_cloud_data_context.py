@@ -1,5 +1,6 @@
 import json
 import uuid
+import warnings
 from typing import Any, Dict, List, Tuple
 from urllib.parse import parse_qs, urlparse
 
@@ -12,6 +13,15 @@ from great_expectations.core.batch_definition import BatchDefinition
 from great_expectations.core.expectation_suite import ExpectationSuite
 from great_expectations.core.validation_definition import ValidationDefinition
 from great_expectations.data_context.data_context.cloud_data_context import CloudDataContext
+
+pytestmark = [
+    pytest.mark.filterwarnings(
+        "ignore:CloudDataContext is deprecated:DeprecationWarning"
+    ),
+    pytest.mark.filterwarnings(
+        "ignore:The GX Cloud branch of get_context:DeprecationWarning"
+    ),
+]
 
 CLOUD_BASE_URL = "https://api.greatexpectations.io/fake"
 ACCESS_TOKEN = "my-secret-access-token"
@@ -177,8 +187,16 @@ def test_warns_when_workspace_id_env_var_unset(unset_gx_env_variables: None):
         status=200,
     )
 
-    # Capture warnings and instantiate CloudDataContext
+    # Capture warnings and instantiate CloudDataContext. The cloud-deprecation
+    # DeprecationWarning is suppressed locally so this assertion stays focused
+    # on the workspace-id UserWarning under test (the deprecation warning is
+    # exercised by the dedicated behavior tests).
     with pytest.warns(UserWarning) as warning_info:
+        warnings.filterwarnings(
+            "ignore",
+            message="CloudDataContext is deprecated",
+            category=DeprecationWarning,
+        )
         CloudDataContext(
             cloud_base_url=CLOUD_BASE_URL,
             cloud_access_token=ACCESS_TOKEN,

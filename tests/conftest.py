@@ -1844,14 +1844,25 @@ def empty_base_data_context_in_cloud_mode(
     project_path = tmp_path / "empty_data_context"
     project_path.mkdir(exist_ok=True)
 
-    context = CloudDataContext(
-        project_config=empty_ge_cloud_data_context_config,
-        context_root_dir=project_path,
-        cloud_base_url=ge_cloud_config.base_url,
-        cloud_access_token=ge_cloud_config.access_token,
-        cloud_organization_id=ge_cloud_config.organization_id,
-        cloud_workspace_id=ge_cloud_config.workspace_id,
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="CloudDataContext is deprecated",
+            category=DeprecationWarning,
+        )
+        warnings.filterwarnings(
+            "ignore",
+            message="The GX Cloud branch of get_context",
+            category=DeprecationWarning,
+        )
+        context = CloudDataContext(
+            project_config=empty_ge_cloud_data_context_config,
+            context_root_dir=project_path,
+            cloud_base_url=ge_cloud_config.base_url,
+            cloud_access_token=ge_cloud_config.access_token,
+            cloud_organization_id=ge_cloud_config.organization_id,
+            cloud_workspace_id=ge_cloud_config.workspace_id,
+        )
     set_context(context)
     return context
 
@@ -1886,7 +1897,18 @@ def empty_data_context_in_cloud_mode(
             autospec=True,
             side_effect=mocked_get_cloud_config,
         ),
+        warnings.catch_warnings(),
     ):
+        warnings.filterwarnings(
+            "ignore",
+            message="CloudDataContext is deprecated",
+            category=DeprecationWarning,
+        )
+        warnings.filterwarnings(
+            "ignore",
+            message="The GX Cloud branch of get_context",
+            category=DeprecationWarning,
+        )
         context = CloudDataContext(context_root_dir=project_path)
 
     context._datasources = {}  # type: ignore[assignment] # Basic in-memory mock for DatasourceDict to avoid HTTP calls
@@ -1904,14 +1926,25 @@ def empty_cloud_data_context(
     project_path.mkdir()
     project_path_name: str = str(project_path)
 
-    context = CloudDataContext(
-        project_config=empty_ge_cloud_data_context_config,
-        context_root_dir=project_path_name,
-        cloud_base_url=ge_cloud_config.base_url,
-        cloud_access_token=ge_cloud_config.access_token,
-        cloud_organization_id=ge_cloud_config.organization_id,
-        cloud_workspace_id=ge_cloud_config.workspace_id,
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="CloudDataContext is deprecated",
+            category=DeprecationWarning,
+        )
+        warnings.filterwarnings(
+            "ignore",
+            message="The GX Cloud branch of get_context",
+            category=DeprecationWarning,
+        )
+        context = CloudDataContext(
+            project_config=empty_ge_cloud_data_context_config,
+            context_root_dir=project_path_name,
+            cloud_base_url=ge_cloud_config.base_url,
+            cloud_access_token=ge_cloud_config.access_token,
+            cloud_organization_id=ge_cloud_config.organization_id,
+            cloud_workspace_id=ge_cloud_config.workspace_id,
+        )
     set_context(context)
     return context
 
@@ -1939,13 +1972,24 @@ def cloud_api_fake(cloud_details: CloudDetails):
 
 @pytest.fixture
 def empty_cloud_context_fluent(cloud_api_fake, cloud_details: CloudDetails) -> CloudDataContext:
-    context = gx.get_context(
-        cloud_access_token=cloud_details.access_token,
-        cloud_organization_id=cloud_details.org_id,
-        cloud_workspace_id=cloud_details.workspace_id,
-        cloud_base_url=cloud_details.base_url,
-        cloud_mode=True,
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="CloudDataContext is deprecated",
+            category=DeprecationWarning,
+        )
+        warnings.filterwarnings(
+            "ignore",
+            message="The GX Cloud branch of get_context",
+            category=DeprecationWarning,
+        )
+        context = gx.get_context(
+            cloud_access_token=cloud_details.access_token,
+            cloud_organization_id=cloud_details.org_id,
+            cloud_workspace_id=cloud_details.workspace_id,
+            cloud_base_url=cloud_details.base_url,
+            cloud_mode=True,
+        )
     set_context(context)
     return context
 
@@ -1969,14 +2013,25 @@ def empty_base_data_context_in_cloud_mode_custom_base_url(
     custom_ge_cloud_config = copy.deepcopy(ge_cloud_config)
     custom_ge_cloud_config.base_url = custom_base_url
 
-    context = CloudDataContext(
-        project_config=empty_ge_cloud_data_context_config,
-        context_root_dir=project_path,
-        cloud_base_url=custom_ge_cloud_config.base_url,
-        cloud_access_token=custom_ge_cloud_config.access_token,
-        cloud_organization_id=custom_ge_cloud_config.organization_id,
-        cloud_workspace_id=custom_ge_cloud_config.workspace_id,
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="CloudDataContext is deprecated",
+            category=DeprecationWarning,
+        )
+        warnings.filterwarnings(
+            "ignore",
+            message="The GX Cloud branch of get_context",
+            category=DeprecationWarning,
+        )
+        context = CloudDataContext(
+            project_config=empty_ge_cloud_data_context_config,
+            context_root_dir=project_path,
+            cloud_base_url=custom_ge_cloud_config.base_url,
+            cloud_access_token=custom_ge_cloud_config.access_token,
+            cloud_organization_id=custom_ge_cloud_config.organization_id,
+            cloud_workspace_id=custom_ge_cloud_config.workspace_id,
+        )
     assert context.list_datasources() == []
     assert context.ge_cloud_config.base_url != ge_cloud_config.base_url
     assert context.ge_cloud_config.base_url == custom_base_url
