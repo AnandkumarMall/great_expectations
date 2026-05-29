@@ -22,7 +22,10 @@ from requests import HTTPError, Response
 
 import great_expectations.exceptions as gx_exceptions
 from great_expectations import __version__
-from great_expectations._docs_decorators import public_api
+from great_expectations._docs_decorators import (
+    deprecated_method_or_class,
+    public_api,
+)
 from great_expectations.compatibility.typing_extensions import override
 from great_expectations.core.batch_definition import BatchDefinition
 from great_expectations.core.config_provider import (
@@ -131,6 +134,12 @@ _SUPPRESS_CONSTRUCTION_DEPRECATION: contextvars.ContextVar[bool] = contextvars.C
 )
 
 
+@deprecated_method_or_class(
+    version="1.17.2",
+    message="Scheduled for removal in great_expectations v2.0. Use ``get_context()`` with "
+    'cloud parameters (``mode="cloud"`` or ``cloud_*`` arguments) as the equivalent entry '
+    "point during the deprecation period.",
+)
 @public_api
 class CloudDataContext(SerializableDataContext):
     """Subclass of AbstractDataContext that contains functionality necessary to work in a GX Cloud-backed environment."""  # noqa: E501 # FIXME CoP

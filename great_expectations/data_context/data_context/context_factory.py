@@ -15,7 +15,7 @@ from typing import (
 )
 
 import great_expectations.exceptions as gx_exceptions
-from great_expectations._docs_decorators import public_api
+from great_expectations._docs_decorators import deprecated_argument, public_api
 from great_expectations.exceptions import (
     GXCloudConfigurationError,
 )
@@ -554,6 +554,13 @@ def get_context(
 ) -> EphemeralDataContext | FileDataContext | CloudDataContext: ...
 
 
+@deprecated_argument(
+    argument_name="cloud_mode",
+    version="1.17.2",
+    message="The GX Cloud branch of ``get_context()`` (``mode=\"cloud\"`` and the "
+    "``cloud_*`` arguments) is scheduled for removal in great_expectations v2.0. "
+    "``get_context()`` itself is not deprecated.",
+)
 @public_api
 def get_context(  # noqa: PLR0913 # FIXME CoP
     project_config: DataContextConfig | Mapping | None = None,
