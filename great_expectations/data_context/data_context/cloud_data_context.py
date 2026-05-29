@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextvars
 import logging
 import os
 import uuid
@@ -121,6 +122,15 @@ class CloudUserInfo:
     workspaces: list[Workspace]
 
 
+# Dedupe guard (Req 1.5): set by get_context() around its cloud-branch delegation so that
+# CloudDataContext.__init__ does not double-fire the deprecation warning for a single
+# user-initiated construction. ContextVar is thread- and async-safe; this is private state,
+# not a new constructor parameter (Req 6.1).
+_SUPPRESS_CONSTRUCTION_DEPRECATION: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "_SUPPRESS_CONSTRUCTION_DEPRECATION", default=False
+)
+
+
 @public_api
 class CloudDataContext(SerializableDataContext):
     """Subclass of AbstractDataContext that contains functionality necessary to work in a GX Cloud-backed environment."""  # noqa: E501 # FIXME CoP
@@ -146,6 +156,14 @@ class CloudDataContext(SerializableDataContext):
                 config_variables.yml and the environment
             cloud_config (GXCloudConfig): GXCloudConfig corresponding to current CloudDataContext
         """  # noqa: E501 # FIXME CoP
+        if not _SUPPRESS_CONSTRUCTION_DEPRECATION.get():
+            warnings.warn(
+                "CloudDataContext is deprecated and will be removed in great_expectations v2.0. "
+                'Use get_context() with cloud parameters (mode="cloud" or cloud_* arguments) as '
+                "the equivalent entry point during the deprecation period.",
+                category=DeprecationWarning,
+                stacklevel=2,
+            )  # deprecated-v1.17.2
         self._check_if_latest_version()
         self._cloud_user_info: CloudUserInfo | None = None
 
