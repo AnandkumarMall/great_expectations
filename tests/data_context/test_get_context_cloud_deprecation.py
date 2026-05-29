@@ -163,9 +163,7 @@ def test_env_var_only_path_emits_branch_deprecation_warning(
         GXCloudEnvironmentVariable.ORGANIZATION_ID,
         "bd20fead-2c31-4392-bcd1-f1e87ad5a79c",
     )
-    monkeypatch.setenv(
-        GXCloudEnvironmentVariable.BASE_URL, "https://app.greatexpectations.io/"
-    )
+    monkeypatch.setenv(GXCloudEnvironmentVariable.BASE_URL, "https://app.greatexpectations.io/")
 
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
@@ -201,9 +199,7 @@ def test_ephemeral_mode_emits_no_cloud_warning_even_with_env_set(
         GXCloudEnvironmentVariable.ORGANIZATION_ID,
         "bd20fead-2c31-4392-bcd1-f1e87ad5a79c",
     )
-    monkeypatch.setenv(
-        GXCloudEnvironmentVariable.BASE_URL, "https://app.greatexpectations.io/"
-    )
+    monkeypatch.setenv(GXCloudEnvironmentVariable.BASE_URL, "https://app.greatexpectations.io/")
 
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")

@@ -557,7 +557,7 @@ def get_context(
 @deprecated_argument(
     argument_name="cloud_mode",
     version="1.17.2",
-    message="The GX Cloud branch of ``get_context()`` (``mode=\"cloud\"`` and the "
+    message='The GX Cloud branch of ``get_context()`` (``mode="cloud"`` and the '
     "``cloud_*`` arguments) is scheduled for removal in great_expectations v2.0. "
     "``get_context()`` itself is not deprecated.",
 )

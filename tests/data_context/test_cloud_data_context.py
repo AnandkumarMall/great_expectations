@@ -15,12 +15,8 @@ from great_expectations.core.validation_definition import ValidationDefinition
 from great_expectations.data_context.data_context.cloud_data_context import CloudDataContext
 
 pytestmark = [
-    pytest.mark.filterwarnings(
-        "ignore:CloudDataContext is deprecated:DeprecationWarning"
-    ),
-    pytest.mark.filterwarnings(
-        "ignore:The GX Cloud branch of get_context:DeprecationWarning"
-    ),
+    pytest.mark.filterwarnings("ignore:CloudDataContext is deprecated:DeprecationWarning"),
+    pytest.mark.filterwarnings("ignore:The GX Cloud branch of get_context:DeprecationWarning"),
 ]
 
 CLOUD_BASE_URL = "https://api.greatexpectations.io/fake"

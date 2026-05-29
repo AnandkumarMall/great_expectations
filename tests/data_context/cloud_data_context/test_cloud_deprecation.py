@@ -84,9 +84,7 @@ def test_direct_construction_emits_exactly_one_deprecation_warning(
 
     assert isinstance(context, CloudDataContext)
 
-    cloud_warnings = [
-        w for w in record if _CLOUD_DEPRECATION_SUBSTR in str(w.message)
-    ]
+    cloud_warnings = [w for w in record if _CLOUD_DEPRECATION_SUBSTR in str(w.message)]
     # Req 1.1: exactly one per instance (the dedupe guard must not let it double-fire,
     # and the warning must actually be emitted).
     assert len(cloud_warnings) == 1, (
@@ -121,9 +119,7 @@ def test_warning_surfaces_caller_frame_not_internal_frame(
             cloud_config=ge_cloud_config,
         )
 
-    cloud_warnings = [
-        w for w in record if _CLOUD_DEPRECATION_SUBSTR in str(w.message)
-    ]
+    cloud_warnings = [w for w in record if _CLOUD_DEPRECATION_SUBSTR in str(w.message)]
     assert len(cloud_warnings) == 1
     filename = cloud_warnings[0].filename
 
