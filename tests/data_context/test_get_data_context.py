@@ -334,9 +334,9 @@ def test_errors_if_context_root_dir_and_project_root_dir_are_both_provided_for_f
 
     with pytest.raises(
         TypeError,
-        match="'project_root_dir' and 'context_root_dir' are conflicting args; please only provide one",  # noqa: E501
+        match="'project_root_dir' and 'context_root_dir' are conflicting args; please only provide one",  # noqa: E501 # long expected-error-message match string
     ):
-        gx.get_context(  # type: ignore[call-overload]
+        gx.get_context(  # type: ignore[call-overload] # intentionally passing conflicting args to exercise the error path
             mode="file",
             context_root_dir=context_root_dir,
             project_root_dir=context_root_dir.parent,

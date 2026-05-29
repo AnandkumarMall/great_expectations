@@ -209,7 +209,7 @@ class TestCloudDataContextDirectInstantiationWithoutWorkspaceId:
         sample_user_with_one_workspace: CloudUserInfo,
         mock_project_config: dict[str, Any],
     ):
-        """Test that CloudDataContext succeeds and auto-sets workspace_id when user has 1 workspace."""  # noqa: E501
+        """Test that CloudDataContext succeeds and auto-sets workspace_id when user has 1 workspace."""  # noqa: E501 # long descriptive test docstring
         with (
             patch(
                 "great_expectations.data_context.data_context.cloud_data_context.CloudDataContext._get_cloud_user_info",

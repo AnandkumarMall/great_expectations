@@ -98,7 +98,7 @@ def test_cloud_trigger_forms_emit_branch_deprecation_warning(
     """
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
-        with pytest.raises(Exception):  # noqa: B017 -- raise origin varies (config vs connection); the warning, not the raise, is under test
+        with pytest.raises(Exception):  # noqa: B017 # post-warning failure type varies (config vs connection); the warning, not the raise, is under test
             gx.get_context(**call_kwargs)
 
     cloud_warnings = _cloud_warnings(record)
@@ -127,7 +127,7 @@ def test_branch_warning_surfaces_caller_frame_not_internal_frame(
     """
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
-        with pytest.raises(Exception):  # noqa: B017
+        with pytest.raises(Exception):  # noqa: B017 # post-warning failure type varies; the warning, not the raise, is under test
             gx.get_context(mode="cloud")
 
     cloud_warnings = _cloud_warnings(record)
@@ -167,7 +167,7 @@ def test_env_var_only_path_emits_branch_deprecation_warning(
 
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
-        with pytest.raises(Exception):  # noqa: B017
+        with pytest.raises(Exception):  # noqa: B017 # post-warning failure type varies; the warning, not the raise, is under test
             gx.get_context()  # no kwargs -- env config is the sole trigger
 
     cloud_warnings = _cloud_warnings(record)
@@ -314,7 +314,7 @@ def test_guard_is_reset_after_factory_cloud_path_raises(
     # build fails).
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("always")
-        with pytest.raises(Exception):  # noqa: B017
+        with pytest.raises(Exception):  # noqa: B017 # post-warning failure type varies; the warning, not the raise, is under test
             gx.get_context(mode="cloud")
 
     # Now a direct construction (mocked backend so it succeeds). If the guard had

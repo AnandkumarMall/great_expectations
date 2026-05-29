@@ -427,7 +427,7 @@ class ProjectManager:
 project_manager = ProjectManager()
 
 
-def _get_context_resolves_to_cloud(
+def _get_context_resolves_to_cloud(  # noqa: PLR0913 # FIXME CoP
     mode: ContextModes | None,
     cloud_mode: bool | None,
     cloud_base_url: str | None,
