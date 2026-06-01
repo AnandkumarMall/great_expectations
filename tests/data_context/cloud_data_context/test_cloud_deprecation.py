@@ -1,8 +1,9 @@
 """Tests for the direct-construction DeprecationWarning on ``CloudDataContext``.
 
 Verifies that constructing a ``CloudDataContext`` directly emits exactly one
-``DeprecationWarning`` naming the class and the v2.0 removal target, that the
-warning surfaces the caller's frame, and that it is purely additive -- the
+``DeprecationWarning`` stating that GX Cloud has been shut down and naming the
+2.0 removal target, that the warning surfaces the caller's frame, and that it is
+purely additive -- the
 constructor's signature, return shape, observable behavior, and cloud-specific
 public-API surface are all unchanged when the warning is suppressed.
 
@@ -32,8 +33,8 @@ if TYPE_CHECKING:
 # module level markers
 pytestmark = pytest.mark.cloud
 
-# The substring that uniquely identifies the CloudDataContext construction warning.
-_CLOUD_DEPRECATION_SUBSTR = "CloudDataContext is deprecated"
+# The substring that uniquely identifies the cloud-deprecation warning.
+_CLOUD_DEPRECATION_SUBSTR = "GX Cloud has been shut down"
 
 
 def _construct_cloud_data_context(
@@ -70,8 +71,8 @@ def test_direct_construction_emits_exactly_one_deprecation_warning(
     empty_ge_cloud_data_context_config: DataContextConfig,
     ge_cloud_config: GXCloudConfig,
 ):
-    """Direct construction emits exactly one CloudDataContext DeprecationWarning
-    whose message names ``CloudDataContext`` and states v2.0.
+    """Direct construction emits exactly one DeprecationWarning whose message
+    states that GX Cloud has been shut down and names 2.0 as the removal target.
 
     ``pytest.warns(DeprecationWarning)`` overrides the autouse suppression so the
     warning is observable. The count assertion filters to the cloud-deprecation
@@ -95,9 +96,9 @@ def test_direct_construction_emits_exactly_one_deprecation_warning(
     )
 
     message = str(cloud_warnings[0].message)
-    # Names CloudDataContext explicitly and states the v2.0 removal target.
-    assert "CloudDataContext" in message
-    assert "v2.0" in message
+    # States that GX Cloud no longer functions and names the 2.0 removal target.
+    assert _CLOUD_DEPRECATION_SUBSTR in message
+    assert "2.0" in message
     assert cloud_warnings[0].category is DeprecationWarning
 
 

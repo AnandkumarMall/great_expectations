@@ -38,9 +38,10 @@ if TYPE_CHECKING:
         GXCloudConfig,
     )
 
-# Substrings that uniquely identify the two cloud-deprecation warnings.
-_FACTORY_DEPRECATION_SUBSTR = "The GX Cloud branch of get_context"
-_INIT_DEPRECATION_SUBSTR = "CloudDataContext is deprecated"
+# The substring that uniquely identifies the cloud-deprecation warning. Both the
+# get_context() cloud branch and CloudDataContext.__init__ emit the same message, so
+# a single substring matches whichever site fired.
+_CLOUD_DEPRECATION_SUBSTR = "GX Cloud has been shut down"
 
 # Realistic dummy cloud kwargs (no real backend) used to trigger the kwargs branch.
 _CLOUD_KWARGS = {
@@ -63,11 +64,7 @@ def _no_cloud_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _cloud_warnings(record) -> list:
-    return [w for w in record if _FACTORY_DEPRECATION_SUBSTR in str(w.message)]
-
-
-def _init_warnings(record) -> list:
-    return [w for w in record if _INIT_DEPRECATION_SUBSTR in str(w.message)]
+    return [w for w in record if _CLOUD_DEPRECATION_SUBSTR in str(w.message)]
 
 
 # ---------------------------------------------------------------------------
@@ -92,12 +89,11 @@ def test_cloud_trigger_forms_emit_branch_deprecation_warning(
     call_kwargs: dict,
 ):
     """Each of the three cloud trigger forms emits a ``DeprecationWarning``
-    identifying the GX Cloud *branch* of ``get_context()`` (not ``get_context``
-    itself) and naming v2.0 as the removal target.
+    stating that GX Cloud has been shut down and naming 2.0 as the removal target.
 
     The warning fires BEFORE delegation, so even though the call ultimately
     raises (no real cloud backend), the warning is recorded. This test fails if
-    the gate is removed (no warning) or the message stops naming the branch/v2.0.
+    the gate is removed (no warning) or the message stops naming the 2.0 target.
     """
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
@@ -111,11 +107,9 @@ def test_cloud_trigger_forms_emit_branch_deprecation_warning(
     )
     message = str(cloud_warnings[0].message)
     assert cloud_warnings[0].category is DeprecationWarning
-    # Identifies the branch, names v2.0, and explicitly disclaims that
-    # get_context() itself is deprecated.
-    assert _FACTORY_DEPRECATION_SUBSTR in message
-    assert "v2.0" in message
-    assert "get_context() itself is not deprecated" in message
+    # States that GX Cloud no longer functions and names the 2.0 removal target.
+    assert _CLOUD_DEPRECATION_SUBSTR in message
+    assert "2.0" in message
 
 
 @pytest.mark.cloud
@@ -178,7 +172,7 @@ def test_env_var_only_path_emits_branch_deprecation_warning(
         "Env-var-only cloud config should still trigger the branch warning; got "
         f"{[str(w.message) for w in record]}"
     )
-    assert "v2.0" in str(cloud_warnings[0].message)
+    assert "2.0" in str(cloud_warnings[0].message)
 
 
 # ---------------------------------------------------------------------------
@@ -213,8 +207,6 @@ def test_ephemeral_mode_emits_no_cloud_warning_even_with_env_set(
         "mode='ephemeral' must not emit a cloud deprecation warning even with "
         f"GX_CLOUD_* env vars set; got {[str(w.message) for w in record]}"
     )
-    # Belt and suspenders: the __init__ warning must not fire either.
-    assert _init_warnings(record) == []
 
 
 @pytest.mark.unit
@@ -237,13 +229,12 @@ def test_plain_get_context_with_no_cloud_config_emits_no_cloud_warning(
         "Non-cloud get_context() must not emit a cloud deprecation warning; got "
         f"{[str(w.message) for w in record]}"
     )
-    assert _init_warnings(record) == []
 
 
 # ---------------------------------------------------------------------------
 # Exactly-one-per-construction on the FACTORY cloud path. Uses the mocked cloud
-# backend so construction SUCCEEDS, then asserts exactly one branch warning and
-# ZERO __init__ warnings (the guard suppressed the latter).
+# backend so construction SUCCEEDS, then asserts exactly one cloud-deprecation
+# warning total (the guard prevents the __init__ warning from also firing).
 # ---------------------------------------------------------------------------
 
 
@@ -254,12 +245,11 @@ def test_factory_cloud_path_emits_exactly_one_cloud_warning(
     ge_cloud_config: GXCloudConfig,
 ):
     """A single factory-path cloud construction emits EXACTLY ONE cloud-deprecation
-    warning -- the ``get_context()`` branch warning -- and the
-    ``CloudDataContext.__init__`` warning does NOT also fire (the dedupe guard
-    suppressed it).
+    warning -- ``get_context()`` emits it and the dedupe guard suppresses the
+    ``CloudDataContext.__init__`` warning that would otherwise also fire.
 
-    Fails if the guard were removed (then BOTH warnings would fire) or if the
-    branch warning were removed (then zero -- or only the __init__ one -- fire).
+    Fails if the guard were removed (then BOTH sites would fire -- two warnings)
+    or if the warning were removed entirely (then zero).
     """
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
@@ -274,17 +264,13 @@ def test_factory_cloud_path_emits_exactly_one_cloud_warning(
 
     assert isinstance(context, CloudDataContext)
 
-    branch_warnings = _cloud_warnings(record)
-    init_warnings = _init_warnings(record)
-    # Exactly one branch warning fired...
-    assert len(branch_warnings) == 1, (
-        "Expected exactly one get_context() cloud-branch deprecation warning, got "
-        f"{[str(w.message) for w in branch_warnings]}"
-    )
-    # ...and the CloudDataContext.__init__ warning was suppressed by the guard.
-    assert init_warnings == [], (
-        "The CloudDataContext.__init__ warning must not fire on the factory path "
-        f"(guard should have suppressed it); got {[str(w.message) for w in init_warnings]}"
+    cloud_warnings = _cloud_warnings(record)
+    # Exactly one cloud-deprecation warning total: get_context() emits it and the
+    # dedupe guard suppresses the CloudDataContext.__init__ warning. Without the
+    # guard, both sites would fire (two warnings).
+    assert len(cloud_warnings) == 1, (
+        "Expected exactly one cloud-deprecation warning on the factory path, got "
+        f"{[str(w.message) for w in cloud_warnings]}"
     )
 
 
@@ -305,8 +291,7 @@ def test_guard_is_reset_after_factory_cloud_path_raises(
 ):
     """A ``get_context(mode="cloud")`` that raises inside the cloud branch must
     reset the dedupe guard (set in a try/finally), so a subsequent DIRECT
-    ``CloudDataContext(...)`` STILL emits its own ``CloudDataContext is deprecated``
-    warning.
+    ``CloudDataContext(...)`` STILL emits its own cloud-deprecation warning.
 
     Fails if the guard reset were dropped from the ``finally`` -- the leaked
     ``True`` guard would silently suppress the direct-construction warning.
@@ -335,10 +320,10 @@ def test_guard_is_reset_after_factory_cloud_path_raises(
         )
 
     assert isinstance(context, CloudDataContext)
-    init_warnings = _init_warnings(record)
-    assert len(init_warnings) == 1, (
+    direct_warnings = _cloud_warnings(record)
+    assert len(direct_warnings) == 1, (
         "Direct construction after a raised factory cloud call must still warn "
         "(guard must have been reset in the finally); got "
-        f"{[str(w.message) for w in init_warnings]}"
+        f"{[str(w.message) for w in direct_warnings]}"
     )
-    assert "v2.0" in str(init_warnings[0].message)
+    assert "2.0" in str(direct_warnings[0].message)

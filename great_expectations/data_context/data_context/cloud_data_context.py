@@ -138,9 +138,8 @@ _SUPPRESS_CONSTRUCTION_DEPRECATION: contextvars.ContextVar[bool] = contextvars.C
 
 @deprecated_method_or_class(
     version="1.17.2",
-    message="Scheduled for removal in great_expectations v2.0. Use ``get_context()`` with "
-    'cloud parameters (``mode="cloud"`` or ``cloud_*`` arguments) as the equivalent entry '
-    "point during the deprecation period.",
+    message="GX Cloud has been shut down, so this no longer functions and will be "
+    "removed in great_expectations 2.0.",
 )
 @public_api
 class CloudDataContext(SerializableDataContext):
@@ -169,9 +168,8 @@ class CloudDataContext(SerializableDataContext):
         """  # noqa: E501 # FIXME CoP
         if not _SUPPRESS_CONSTRUCTION_DEPRECATION.get():
             warnings.warn(
-                "CloudDataContext is deprecated and will be removed in great_expectations v2.0. "
-                'Use get_context() with cloud parameters (mode="cloud" or cloud_* arguments) as '
-                "the equivalent entry point during the deprecation period.",
+                "GX Cloud has been shut down, so this no longer functions and will be "
+                "removed in great_expectations 2.0.",
                 category=DeprecationWarning,
                 stacklevel=2,
             )  # deprecated-v1.17.2

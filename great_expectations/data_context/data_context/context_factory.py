@@ -559,9 +559,8 @@ def get_context(
 @deprecated_argument(
     argument_name="cloud_mode",
     version="1.17.2",
-    message='The GX Cloud branch of ``get_context()`` (``mode="cloud"`` and the '
-    "``cloud_*`` arguments) is scheduled for removal in great_expectations v2.0. "
-    "``get_context()`` itself is not deprecated.",
+    message="GX Cloud has been shut down, so this no longer functions and will be "
+    "removed in great_expectations 2.0.",
 )
 @public_api
 def get_context(  # noqa: PLR0913 # FIXME CoP
@@ -658,9 +657,8 @@ def get_context(  # noqa: PLR0913 # FIXME CoP
         cloud_workspace_id=cloud_workspace_id,
     ):
         warnings.warn(
-            'The GX Cloud branch of get_context() (mode="cloud", the cloud_* parameters, '
-            "and the equivalent GX_CLOUD_* environment configuration) is deprecated and will "
-            "be removed in great_expectations v2.0. get_context() itself is not deprecated.",
+            "GX Cloud has been shut down, so this no longer functions and will be "
+            "removed in great_expectations 2.0.",
             category=DeprecationWarning,
             stacklevel=2,
         )  # deprecated-v1.17.2

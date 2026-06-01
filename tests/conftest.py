@@ -1847,12 +1847,7 @@ def empty_base_data_context_in_cloud_mode(
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
-            message="CloudDataContext is deprecated",
-            category=DeprecationWarning,
-        )
-        warnings.filterwarnings(
-            "ignore",
-            message="The GX Cloud branch of get_context",
+            message="GX Cloud has been shut down",
             category=DeprecationWarning,
         )
         context = CloudDataContext(
@@ -1901,12 +1896,7 @@ def empty_data_context_in_cloud_mode(
     ):
         warnings.filterwarnings(
             "ignore",
-            message="CloudDataContext is deprecated",
-            category=DeprecationWarning,
-        )
-        warnings.filterwarnings(
-            "ignore",
-            message="The GX Cloud branch of get_context",
+            message="GX Cloud has been shut down",
             category=DeprecationWarning,
         )
         context = CloudDataContext(context_root_dir=project_path)
@@ -1929,12 +1919,7 @@ def empty_cloud_data_context(
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
-            message="CloudDataContext is deprecated",
-            category=DeprecationWarning,
-        )
-        warnings.filterwarnings(
-            "ignore",
-            message="The GX Cloud branch of get_context",
+            message="GX Cloud has been shut down",
             category=DeprecationWarning,
         )
         context = CloudDataContext(
@@ -1975,12 +1960,7 @@ def empty_cloud_context_fluent(cloud_api_fake, cloud_details: CloudDetails) -> C
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
-            message="CloudDataContext is deprecated",
-            category=DeprecationWarning,
-        )
-        warnings.filterwarnings(
-            "ignore",
-            message="The GX Cloud branch of get_context",
+            message="GX Cloud has been shut down",
             category=DeprecationWarning,
         )
         context = gx.get_context(
@@ -2016,12 +1996,7 @@ def empty_base_data_context_in_cloud_mode_custom_base_url(
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
-            message="CloudDataContext is deprecated",
-            category=DeprecationWarning,
-        )
-        warnings.filterwarnings(
-            "ignore",
-            message="The GX Cloud branch of get_context",
+            message="GX Cloud has been shut down",
             category=DeprecationWarning,
         )
         context = CloudDataContext(

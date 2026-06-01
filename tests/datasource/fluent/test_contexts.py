@@ -55,8 +55,7 @@ LOGGER = logging.getLogger(__name__)
 # warnings-as-errors test posture doesn't fail otherwise-passing cloud tests. The filters are
 # message-scoped and narrow, so unrelated DeprecationWarnings still surface as failures.
 pytestmark = [
-    pytest.mark.filterwarnings("ignore:CloudDataContext is deprecated:DeprecationWarning"),
-    pytest.mark.filterwarnings("ignore:The GX Cloud branch of get_context:DeprecationWarning"),
+    pytest.mark.filterwarnings("ignore:GX Cloud has been shut down:DeprecationWarning"),
 ]
 
 

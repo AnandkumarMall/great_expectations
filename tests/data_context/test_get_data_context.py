@@ -27,8 +27,7 @@ from great_expectations.exceptions.exceptions import (
 from tests.test_utils import working_directory
 
 pytestmark = [
-    pytest.mark.filterwarnings("ignore:CloudDataContext is deprecated:DeprecationWarning"),
-    pytest.mark.filterwarnings("ignore:The GX Cloud branch of get_context:DeprecationWarning"),
+    pytest.mark.filterwarnings("ignore:GX Cloud has been shut down:DeprecationWarning"),
 ]
 
 GX_CLOUD_PARAMS_ALL = {

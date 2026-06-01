@@ -21,8 +21,7 @@ if TYPE_CHECKING:
     )
 
 pytestmark = [
-    pytest.mark.filterwarnings("ignore:CloudDataContext is deprecated:DeprecationWarning"),
-    pytest.mark.filterwarnings("ignore:The GX Cloud branch of get_context:DeprecationWarning"),
+    pytest.mark.filterwarnings("ignore:GX Cloud has been shut down:DeprecationWarning"),
 ]
 
 

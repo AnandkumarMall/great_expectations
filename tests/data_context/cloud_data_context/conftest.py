@@ -8,12 +8,7 @@ def _suppress_cloud_deprecation_warnings():
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
-            message="CloudDataContext is deprecated",
-            category=DeprecationWarning,
-        )
-        warnings.filterwarnings(
-            "ignore",
-            message="The GX Cloud branch of get_context",
+            message="GX Cloud has been shut down",
             category=DeprecationWarning,
         )
         yield
