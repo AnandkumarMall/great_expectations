@@ -51,9 +51,9 @@ yaml = YAMLHandler()
 LOGGER = logging.getLogger(__name__)
 
 # This module's cloud tests construct cloud contexts directly (e.g. get_context(cloud_*=...)),
-# which emit the GX Cloud deprecation warnings added by the deprecate-gx-cloud spec. Suppress only
-# those two messages so the warnings-as-errors posture doesn't fail otherwise-passing cloud tests
-# (Req 4.5; narrow, message-scoped — unrelated DeprecationWarnings still surface).
+# which emit the GX Cloud deprecation warnings. Suppress only those two messages so the
+# warnings-as-errors test posture doesn't fail otherwise-passing cloud tests. The filters are
+# message-scoped and narrow, so unrelated DeprecationWarnings still surface as failures.
 pytestmark = [
     pytest.mark.filterwarnings("ignore:CloudDataContext is deprecated:DeprecationWarning"),
     pytest.mark.filterwarnings("ignore:The GX Cloud branch of get_context:DeprecationWarning"),

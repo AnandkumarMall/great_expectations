@@ -74,10 +74,10 @@ from tests.integration.test_definitions.trino.integration_tests import (
 )
 
 # Cloud doc-snippet scripts call the get_context() cloud branch / construct CloudDataContext,
-# which emit the GX Cloud deprecation warnings added by the deprecate-gx-cloud spec. The runner
-# execs snippets in-process, so under the warnings-as-errors posture those warnings would fail the
-# run. Suppress only those two messages (narrow, message-scoped; Req 4.5) without touching the
-# docs/docusaurus snippet content itself (Req 5.3). Unrelated DeprecationWarnings still surface.
+# which emit the GX Cloud deprecation warnings. The runner execs snippets in-process, so under
+# the warnings-as-errors test posture those warnings would fail the run. Suppress only those two
+# messages (narrow, message-scoped) here in the harness rather than editing the published snippet
+# content. Unrelated DeprecationWarnings still surface as failures.
 pytestmark = [
     pytest.mark.docs,
     pytest.mark.filterwarnings("ignore:CloudDataContext is deprecated:DeprecationWarning"),

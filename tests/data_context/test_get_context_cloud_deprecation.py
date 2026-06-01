@@ -1,9 +1,12 @@
 """Tests for the cloud-branch DeprecationWarning emitted by ``get_context()``.
 
-Covers Req 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 1.5, 6.2 (deprecate-gx-cloud spec) and the
-design's Testing Strategy -> Unit/behavior items 2 (factory cloud-branch warning),
-3 (env-var-only path), 4 (no spurious warning), 5 (exactly-one-per-construction on
-the factory path) and 6 (guard reset on error).
+Verifies that ``get_context()`` warns when (and only when) the call resolves to a
+``CloudDataContext`` -- across the ``mode="cloud"``, ``cloud_mode=True``, ``cloud_*``
+kwargs, and env-var-only trigger forms -- that it does NOT warn on non-cloud calls,
+that the warning surfaces the caller's frame, that exactly one cloud-deprecation
+warning fires per construction (the dedupe guard prevents the ``__init__`` warning
+from also firing on the factory path), and that the guard is reset even when cloud
+delegation raises.
 
 This module lives OUTSIDE the ``tests/data_context/cloud_data_context/`` directory,
 so the autouse ``_suppress_cloud_deprecation_warnings`` conftest fixture does NOT
@@ -35,7 +38,7 @@ if TYPE_CHECKING:
         GXCloudConfig,
     )
 
-# Substrings that uniquely identify the two cloud-deprecation warnings this spec adds.
+# Substrings that uniquely identify the two cloud-deprecation warnings.
 _FACTORY_DEPRECATION_SUBSTR = "The GX Cloud branch of get_context"
 _INIT_DEPRECATION_SUBSTR = "CloudDataContext is deprecated"
 
@@ -68,10 +71,10 @@ def _init_warnings(record) -> list:
 
 
 # ---------------------------------------------------------------------------
-# Item 2: factory cloud-branch warning on the three trigger forms
-# (Req 2.1, 2.3, 2.4). Each form emits the warning BEFORE the cloud context is
-# built; with no real cloud config the call raises AFTER the warning, so we
-# capture the warning and assert it fired even though construction failed.
+# Factory cloud-branch warning on the three trigger forms. Each form emits the
+# warning BEFORE the cloud context is built; with no real cloud config the call
+# raises AFTER the warning, so we capture the warning and assert it fired even
+# though construction failed.
 # ---------------------------------------------------------------------------
 
 
@@ -88,9 +91,9 @@ def test_cloud_trigger_forms_emit_branch_deprecation_warning(
     _no_cloud_env: None,
     call_kwargs: dict,
 ):
-    """Req 2.1/2.3: each of the three cloud trigger forms emits a
-    ``DeprecationWarning`` identifying the GX Cloud *branch* of ``get_context()``
-    (not ``get_context`` itself) and naming v2.0 as the removal target.
+    """Each of the three cloud trigger forms emits a ``DeprecationWarning``
+    identifying the GX Cloud *branch* of ``get_context()`` (not ``get_context``
+    itself) and naming v2.0 as the removal target.
 
     The warning fires BEFORE delegation, so even though the call ultimately
     raises (no real cloud backend), the warning is recorded. This test fails if
@@ -108,7 +111,7 @@ def test_cloud_trigger_forms_emit_branch_deprecation_warning(
     )
     message = str(cloud_warnings[0].message)
     assert cloud_warnings[0].category is DeprecationWarning
-    # Req 2.3: identifies the branch, names v2.0, and explicitly disclaims that
+    # Identifies the branch, names v2.0, and explicitly disclaims that
     # get_context() itself is deprecated.
     assert _FACTORY_DEPRECATION_SUBSTR in message
     assert "v2.0" in message
@@ -119,7 +122,7 @@ def test_cloud_trigger_forms_emit_branch_deprecation_warning(
 def test_branch_warning_surfaces_caller_frame_not_internal_frame(
     _no_cloud_env: None,
 ):
-    """Req 2.4 (stacklevel=2): the recorded warning's ``filename`` is THIS test
+    """With ``stacklevel=2`` the recorded warning's ``filename`` is THIS test
     module (the caller's ``get_context(...)`` site), not ``context_factory.py``.
 
     Fails if the stacklevel is dropped/wrong -- the warning would then point at
@@ -142,9 +145,9 @@ def test_branch_warning_surfaces_caller_frame_not_internal_frame(
 
 
 # ---------------------------------------------------------------------------
-# Item 3: env-var-only path still warns (Req 2.5). Proves the gate reuses the
-# same resolution predicate (is_cloud_config_available) as delegation -- a
-# kwarg-only gate would miss this path.
+# Env-var-only path still warns. Proves the gate reuses the same resolution
+# predicate (is_cloud_config_available) as delegation -- a kwarg-only gate would
+# miss this path.
 # ---------------------------------------------------------------------------
 
 
@@ -152,8 +155,8 @@ def test_branch_warning_surfaces_caller_frame_not_internal_frame(
 def test_env_var_only_path_emits_branch_deprecation_warning(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    """Req 2.5: with ``GX_CLOUD_*`` env vars set and NO cloud kwargs,
-    ``get_context()`` still resolves to cloud and emits the branch warning.
+    """With ``GX_CLOUD_*`` env vars set and NO cloud kwargs, ``get_context()``
+    still resolves to cloud and emits the branch warning.
 
     This fails if the gate were re-derived from kwargs alone instead of reusing
     the factory's ``is_cloud_config_available`` predicate.
@@ -179,7 +182,7 @@ def test_env_var_only_path_emits_branch_deprecation_warning(
 
 
 # ---------------------------------------------------------------------------
-# Item 4: no spurious warning (Req 2.2).
+# No spurious warning: non-cloud calls must stay silent.
 # ---------------------------------------------------------------------------
 
 
@@ -187,9 +190,9 @@ def test_env_var_only_path_emits_branch_deprecation_warning(
 def test_ephemeral_mode_emits_no_cloud_warning_even_with_env_set(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    """Req 2.2: ``mode="ephemeral"`` resolves non-cloud even WITH ``GX_CLOUD_*``
-    env vars set, so NO cloud deprecation warning fires (mode short-circuits
-    before the env-based predicate). Returns an ``EphemeralDataContext``.
+    """``mode="ephemeral"`` resolves non-cloud even WITH ``GX_CLOUD_*`` env vars
+    set, so NO cloud deprecation warning fires (mode short-circuits before the
+    env-based predicate). Returns an ``EphemeralDataContext``.
 
     Fails if the gate fired on the env config regardless of the explicit
     non-cloud mode.
@@ -219,8 +222,8 @@ def test_plain_get_context_with_no_cloud_config_emits_no_cloud_warning(
     _no_cloud_env: None,
     tmp_path: pathlib.Path,
 ):
-    """Req 2.2: a plain ``get_context()`` with no cloud kwargs and no cloud env
-    config emits no cloud deprecation warning and returns a non-cloud context.
+    """A plain ``get_context()`` with no cloud kwargs and no cloud env config
+    emits no cloud deprecation warning and returns a non-cloud context.
     """
     project_path = tmp_path / "empty_data_context"
     project_path.mkdir()
@@ -238,10 +241,9 @@ def test_plain_get_context_with_no_cloud_config_emits_no_cloud_warning(
 
 
 # ---------------------------------------------------------------------------
-# Item 5: exactly-one-per-construction on the FACTORY cloud path (Req 1.5).
-# Uses the mocked cloud backend so construction SUCCEEDS, then asserts exactly
-# one branch warning and ZERO __init__ warnings (the guard suppressed the
-# latter).
+# Exactly-one-per-construction on the FACTORY cloud path. Uses the mocked cloud
+# backend so construction SUCCEEDS, then asserts exactly one branch warning and
+# ZERO __init__ warnings (the guard suppressed the latter).
 # ---------------------------------------------------------------------------
 
 
@@ -251,8 +253,8 @@ def test_factory_cloud_path_emits_exactly_one_cloud_warning(
     empty_ge_cloud_data_context_config: DataContextConfig,
     ge_cloud_config: GXCloudConfig,
 ):
-    """Req 1.5: a single factory-path cloud construction emits EXACTLY ONE
-    cloud-deprecation warning -- the ``get_context()`` branch warning -- and the
+    """A single factory-path cloud construction emits EXACTLY ONE cloud-deprecation
+    warning -- the ``get_context()`` branch warning -- and the
     ``CloudDataContext.__init__`` warning does NOT also fire (the dedupe guard
     suppressed it).
 
@@ -287,9 +289,9 @@ def test_factory_cloud_path_emits_exactly_one_cloud_warning(
 
 
 # ---------------------------------------------------------------------------
-# Item 6: guard reset on error (Req 1.5 / Error Handling). After a cloud-branch
-# get_context() that RAISES inside delegation, the try/finally must have reset
-# the guard so a subsequent DIRECT CloudDataContext(...) still warns.
+# Guard reset on error. After a cloud-branch get_context() that RAISES inside
+# delegation, the try/finally must have reset the guard so a subsequent DIRECT
+# CloudDataContext(...) still warns.
 # ---------------------------------------------------------------------------
 
 
@@ -301,10 +303,10 @@ def test_guard_is_reset_after_factory_cloud_path_raises(
     empty_ge_cloud_data_context_config: DataContextConfig,
     ge_cloud_config: GXCloudConfig,
 ):
-    """Req 1.5 / Error Handling: a ``get_context(mode="cloud")`` that raises
-    inside the cloud branch must reset the dedupe guard (set in a try/finally),
-    so a subsequent DIRECT ``CloudDataContext(...)`` STILL emits its own
-    ``CloudDataContext is deprecated`` warning.
+    """A ``get_context(mode="cloud")`` that raises inside the cloud branch must
+    reset the dedupe guard (set in a try/finally), so a subsequent DIRECT
+    ``CloudDataContext(...)`` STILL emits its own ``CloudDataContext is deprecated``
+    warning.
 
     Fails if the guard reset were dropped from the ``finally`` -- the leaked
     ``True`` guard would silently suppress the direct-construction warning.

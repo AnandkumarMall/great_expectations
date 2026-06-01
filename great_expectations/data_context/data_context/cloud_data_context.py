@@ -125,10 +125,12 @@ class CloudUserInfo:
     workspaces: list[Workspace]
 
 
-# Dedupe guard (Req 1.5): set by get_context() around its cloud-branch delegation so that
+# Dedupe guard: set by get_context() around its cloud-branch delegation so that
 # CloudDataContext.__init__ does not double-fire the deprecation warning for a single
-# user-initiated construction. ContextVar is thread- and async-safe; this is private state,
-# not a new constructor parameter (Req 6.1).
+# user-initiated construction (exactly one warning per construction, whether the user
+# calls CloudDataContext(...) directly or reaches it via get_context()). ContextVar is
+# thread- and async-safe; this is private state, not a new constructor parameter, so the
+# public signature is unchanged.
 _SUPPRESS_CONSTRUCTION_DEPRECATION: contextvars.ContextVar[bool] = contextvars.ContextVar(
     "_SUPPRESS_CONSTRUCTION_DEPRECATION", default=False
 )

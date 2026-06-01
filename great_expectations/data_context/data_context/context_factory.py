@@ -438,7 +438,9 @@ def _get_context_resolves_to_cloud(  # noqa: PLR0913 # FIXME CoP
     """Return True iff a ``get_context`` call with these arguments would resolve to a CloudDataContext.
 
     Mirrors ``ProjectManager._build_context`` / ``_get_cloud_context`` so the
-    ``get_context`` deprecation warning cannot drift from the actual delegation (Req 2.5).
+    ``get_context`` deprecation warning cannot drift from the actual delegation: the
+    warning must fire if and only if the call really builds a CloudDataContext, otherwise
+    callers would see spurious warnings (or miss real ones) as the resolution logic evolves.
     """  # noqa: E501 # FIXME CoP
     if mode in ("file", "ephemeral"):
         return False

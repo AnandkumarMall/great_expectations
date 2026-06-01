@@ -1,7 +1,10 @@
 """Tests for the direct-construction DeprecationWarning on ``CloudDataContext``.
 
-Covers Req 1.1, 1.2, 1.3, 1.4, 6.1, 6.3, 6.6 (deprecate-gx-cloud spec) and the
-design's Testing Strategy -> Unit/behavior items 1, 5 (direct path), and 7.
+Verifies that constructing a ``CloudDataContext`` directly emits exactly one
+``DeprecationWarning`` naming the class and the v2.0 removal target, that the
+warning surfaces the caller's frame, and that it is purely additive -- the
+constructor's signature, return shape, observable behavior, and cloud-specific
+public-API surface are all unchanged when the warning is suppressed.
 
 The autouse ``_suppress_cloud_deprecation_warnings`` fixture in this directory's
 ``conftest.py`` ignores the cloud-deprecation warnings by message prefix.
@@ -29,8 +32,7 @@ if TYPE_CHECKING:
 # module level markers
 pytestmark = pytest.mark.cloud
 
-# The substring that uniquely identifies the CloudDataContext construction warning
-# introduced by this spec (Req 1.2 wording).
+# The substring that uniquely identifies the CloudDataContext construction warning.
 _CLOUD_DEPRECATION_SUBSTR = "CloudDataContext is deprecated"
 
 
@@ -68,8 +70,8 @@ def test_direct_construction_emits_exactly_one_deprecation_warning(
     empty_ge_cloud_data_context_config: DataContextConfig,
     ge_cloud_config: GXCloudConfig,
 ):
-    """Req 1.1, 1.2: direct construction emits exactly one CloudDataContext
-    DeprecationWarning whose message names ``CloudDataContext`` and states v2.0.
+    """Direct construction emits exactly one CloudDataContext DeprecationWarning
+    whose message names ``CloudDataContext`` and states v2.0.
 
     ``pytest.warns(DeprecationWarning)`` overrides the autouse suppression so the
     warning is observable. The count assertion filters to the cloud-deprecation
@@ -85,15 +87,15 @@ def test_direct_construction_emits_exactly_one_deprecation_warning(
     assert isinstance(context, CloudDataContext)
 
     cloud_warnings = [w for w in record if _CLOUD_DEPRECATION_SUBSTR in str(w.message)]
-    # Req 1.1: exactly one per instance (the dedupe guard must not let it double-fire,
-    # and the warning must actually be emitted).
+    # Exactly one per instance: the dedupe guard must not let it double-fire, and the
+    # warning must actually be emitted.
     assert len(cloud_warnings) == 1, (
         "Expected exactly one CloudDataContext deprecation warning, got "
         f"{[str(w.message) for w in cloud_warnings]}"
     )
 
     message = str(cloud_warnings[0].message)
-    # Req 1.2: names CloudDataContext explicitly and states v2.0 removal.
+    # Names CloudDataContext explicitly and states the v2.0 removal target.
     assert "CloudDataContext" in message
     assert "v2.0" in message
     assert cloud_warnings[0].category is DeprecationWarning
@@ -105,7 +107,7 @@ def test_warning_surfaces_caller_frame_not_internal_frame(
     empty_ge_cloud_data_context_config: DataContextConfig,
     ge_cloud_config: GXCloudConfig,
 ):
-    """Req 1.3: the warning is emitted with a stacklevel that surfaces the caller's
+    """The warning is emitted with a stacklevel that surfaces the caller's
     frame (this test module), not an internal great_expectations frame.
 
     With ``stacklevel=2`` the recorded warning's ``filename`` must be THIS test
@@ -139,8 +141,8 @@ def test_suppressed_warning_yields_identical_observable_behavior(
     empty_ge_cloud_data_context_config: DataContextConfig,
     ge_cloud_config: GXCloudConfig,
 ):
-    """Req 1.4, 6.1, 6.6: the warning is additive only. With the warning suppressed,
-    construction yields the same observable result (same type, same key attributes,
+    """The warning is additive only. With the warning suppressed, construction
+    yields the same observable result (same type, same key attributes,
     ``mode == "cloud"``) as without the warning -- the warning changes nothing but
     emission.
     """
@@ -171,10 +173,9 @@ def test_cloud_public_api_surface_intact(
     empty_ge_cloud_data_context_config: DataContextConfig,
     ge_cloud_config: GXCloudConfig,
 ):
-    """Req 6.3: the cloud-specific ``@public_api`` surface is unchanged by the
-    deprecation. ``cloud_user_info``, ``ge_cloud_config``, ``mode`` and
-    ``prepare_checkpoint_run`` must all still be present, and ``mode`` returns
-    ``"cloud"``.
+    """The cloud-specific ``@public_api`` surface is unchanged by the deprecation.
+    ``cloud_user_info``, ``ge_cloud_config``, ``mode`` and ``prepare_checkpoint_run``
+    must all still be present, and ``mode`` returns ``"cloud"``.
     """
     with warnings.catch_warnings():
         warnings.filterwarnings(
