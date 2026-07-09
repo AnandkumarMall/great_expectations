@@ -82,6 +82,7 @@ def test_tail_weight_holdout_covers_unexpected_values(batch_for_datasource: Batc
     )
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
     assert result.success
-    details = result.to_json_dict()["result"]["details"]
+    assert result.result is not None
+    details = result.result["details"]
     # C is folded into the expected partition via the holdout rather than being dropped.
     assert "C" in details["expected_partition"]["values"]

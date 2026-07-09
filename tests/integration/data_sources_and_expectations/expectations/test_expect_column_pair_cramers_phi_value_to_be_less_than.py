@@ -150,10 +150,10 @@ def test_numeric_columns_small_magnitude(batch_for_datasource: Batch) -> None:
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
     # Perfectly associated numeric columns -> phi ~ 1.0, well above the threshold.
     assert not result.success
-    result_dict = result.to_json_dict()["result"]
-    assert result_dict["observed_value"] == pytest.approx(1.0)
+    assert result.result is not None
+    assert result.result["observed_value"] == pytest.approx(1.0)
     # Default n_bins=10 -> a 10x10 contingency table; the small bin width must not collapse labels.
-    crosstab = result_dict["details"]["crosstab"]
+    crosstab = result.result["details"]["crosstab"]
     assert len(crosstab["rows"]) == 10
     assert len(crosstab["columns"]) == 10
 
@@ -171,7 +171,8 @@ def test_numeric_columns_with_explicit_bins_and_n_bins(batch_for_datasource: Bat
     )
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
     assert not result.success
-    assert result.to_json_dict()["result"]["observed_value"] == pytest.approx(1.0)
+    assert result.result is not None
+    assert result.result["observed_value"] == pytest.approx(1.0)
 
 
 @parameterize_batch_for_data_sources(
@@ -183,7 +184,8 @@ def test_numeric_columns_with_nulls(batch_for_datasource: Batch) -> None:
     )
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
     assert not result.success
-    crosstab = result.to_json_dict()["result"]["details"]["crosstab"]
+    assert result.result is not None
+    crosstab = result.result["details"]["crosstab"]
     # Nulls are collected into a dedicated "(missing)" bucket on both axes.
     assert "(missing)" in crosstab["rows"]
     assert "(missing)" in crosstab["columns"]
@@ -198,7 +200,8 @@ def test_category_dtype_columns_with_nulls(batch_for_datasource: Batch) -> None:
     )
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
     assert not result.success
-    assert result.to_json_dict()["result"]["observed_value"] == pytest.approx(1.0)
-    crosstab = result.to_json_dict()["result"]["details"]["crosstab"]
+    assert result.result is not None
+    assert result.result["observed_value"] == pytest.approx(1.0)
+    crosstab = result.result["details"]["crosstab"]
     assert "(missing)" in crosstab["rows"]
     assert "(missing)" in crosstab["columns"]
