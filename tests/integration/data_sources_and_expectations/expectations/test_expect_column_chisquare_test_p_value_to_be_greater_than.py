@@ -68,3 +68,20 @@ def test_success_with_suite_param_partition_object_(
         expectation, expectation_parameters={suite_param_key: suite_param_value}
     )
     assert result.success == expected_result
+
+
+@parameterize_batch_for_data_sources(data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA)
+def test_tail_weight_holdout_covers_unexpected_values(batch_for_datasource: Batch) -> None:
+    # The partition only lists A and B, but the data also contains C. tail_weight_holdout reserves
+    # probability mass for such unexpected values so the test does not treat C as impossible.
+    expectation = gxe.ExpectColumnChisquareTestPValueToBeGreaterThan(
+        column=COL_NAME,
+        partition_object={"values": ["A", "B"], "weights": [0.6, 0.4]},
+        p=0.05,
+        tail_weight_holdout=0.25,
+    )
+    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
+    assert result.success
+    details = result.to_json_dict()["result"]["details"]
+    # C is folded into the expected partition via the holdout rather than being dropped.
+    assert "C" in details["expected_partition"]["values"]

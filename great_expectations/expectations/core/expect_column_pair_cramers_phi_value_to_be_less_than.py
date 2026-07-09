@@ -77,7 +77,11 @@ def _get_binned_values(  # noqa: C901, PLR0912 # FIXME CoP
     if n_bins is None:
         n_bins = 10
 
-    if series.dtype in ["int", "float", "int64", "float64"]:
+    # Bin any real-valued numeric column into intervals. Use is_numeric_dtype so that width-specific
+    # dtypes (int32/float32) and pandas nullable dtypes (Int64/Float64) are treated as numeric too;
+    # a hardcoded dtype list silently routed those to the categorical branch. Booleans are excluded
+    # so they stay categorical (a two-value column is more meaningful ungrouped than binned).
+    if pd.api.types.is_numeric_dtype(series) and not pd.api.types.is_bool_dtype(series):
         if bins is not None:
             sorted_bins = sorted(np.unique(bins))
             if np.min(series) < sorted_bins[0]:
@@ -93,8 +97,12 @@ def _get_binned_values(  # noqa: C901, PLR0912 # FIXME CoP
         # Make sure max of series is included in rightmost bin
         edges[-1] = np.nextafter(edges[-1], edges[-1] + 1)
 
-        # Create labels for the returned series
-        precision = int(np.log10(min(edges[1:] - edges[:-1]))) + 2
+        # Create labels for the returned series. Round each edge to enough decimal places that
+        # narrow bins stay distinguishable: the smaller the bin width, the more decimals we need.
+        # (A naive int(log10(width)) + 2 inverts this and collapses sub-0.01 bins to identical
+        # labels, which makes Categorical.from_codes raise on duplicate categories.)
+        min_width = float(min(edges[1:] - edges[:-1]))
+        precision = max(2, 2 - int(np.floor(np.log10(min_width))))
         labels = [
             f"[{round(lower, precision)}, {round(upper, precision)})"
             for lower, upper in itertools.pairwise(edges)
@@ -110,10 +118,15 @@ def _get_binned_values(  # noqa: C901, PLR0912 # FIXME CoP
         )
 
     else:
+        # Cast to object first: fillna/replace below introduce the "(missing)" and "(other)"
+        # sentinels, and adding a value that isn't an existing category to a categorical-dtype
+        # series in place raises. Casting to object (a no-op for string/object columns) lets the
+        # sentinels through; we re-cast to category at the end.
+        series = series.astype(object)
         if bins is None:
             value_counts = series.value_counts(sort=True)
             if len(value_counts) < n_bins + 1:
-                return series.fillna("(missing)")
+                return series.fillna("(missing)").astype("category")
             else:
                 other_values = sorted(value_counts.index[n_bins:])
                 replace = dict.fromkeys(other_values, "(other)")
@@ -231,7 +244,13 @@ class ExpectColumnPairCramersPhiValueToBeLessThan(BatchExpectation):
                 }}
 
         Failing Case:
-            Input:
+            Input (test2 is fully determined by test, so the columns are perfectly associated):
+                test 	test2
+            0 	"A"     "X"
+            1 	"A"     "X"
+            2 	"B"     "Y"
+            3   "B"     "Y"
+
                 ExpectColumnPairCramersPhiValueToBeLessThan(
                     column_A="test",
                     column_B="test2",
@@ -434,6 +453,10 @@ class ExpectColumnPairCramersPhiValueToBeLessThan(BatchExpectation):
             # See e.g. https://en.wikipedia.org/wiki/Cram%C3%A9r%27s_V
             cramers_phi = float(max(min(np.sqrt(chi2_statistic / n / (min_dimension - 1)), 1), 0))
 
+        # Success is inclusive at the boundary (phi == threshold passes), matching the legacy V2
+        # behavior of this expectation and the sibling ExpectColumnKlDivergenceToBeLessThan. This is
+        # deliberate: phi is clamped to exactly 0.0 for degenerate tables (n == 0 or a constant
+        # column), and threshold=0 must still succeed in that case.
         return {
             "success": bool(cramers_phi <= threshold),
             "result": {

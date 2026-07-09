@@ -34,6 +34,17 @@ def test_success(batch_for_datasource: Batch) -> None:
     )
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
     assert result.success
+    # The full metric details are surfaced so a user can inspect why the test passed or failed:
+    # bootstrap settings plus the observed/expected partitions and CDFs.
+    details = result.to_json_dict()["result"]["details"]
+    assert set(details) >= {
+        "bootstrap_samples",
+        "bootstrap_sample_size",
+        "observed_partition",
+        "expected_partition",
+        "observed_cdf",
+        "expected_cdf",
+    }
 
 
 @parameterize_batch_for_data_sources(data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA)

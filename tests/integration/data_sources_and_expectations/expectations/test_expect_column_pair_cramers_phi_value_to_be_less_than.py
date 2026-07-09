@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -28,6 +29,41 @@ ASSOCIATED_DATA = pd.DataFrame(
     {
         COL_A: ["A"] * 50 + ["B"] * 50,
         COL_B: ["X"] * 50 + ["Y"] * 50,
+    }
+)
+
+# Small-magnitude numeric columns (bin width ~0.001) that are perfectly associated. This exercises
+# the numeric interval-binning branch and, because the bin widths are far below 0.01, guards against
+# the interval-label rounding collapsing adjacent edges into duplicate categories.
+SMALL_MAGNITUDE_NUMERIC_DATA = pd.DataFrame(
+    {
+        COL_A: np.linspace(0, 0.01, 100),
+        COL_B: np.linspace(0, 0.01, 100),
+    }
+)
+
+# Wider numeric columns for exercising explicit bin edges (bins_A) and a bin count (n_bins_B).
+NUMERIC_ASSOCIATED_DATA = pd.DataFrame(
+    {
+        COL_A: np.linspace(0, 10, 100),
+        COL_B: np.linspace(0, 10, 100),
+    }
+)
+
+# Numeric columns containing nulls, to exercise the "(missing)" bucket in the numeric branch.
+NUMERIC_WITH_NULLS_DATA = pd.DataFrame(
+    {
+        COL_A: [1.0, 2.0, 3.0, None, 5.0] * 10,
+        COL_B: [1.0, 2.0, 3.0, 4.0, None] * 10,
+    }
+)
+
+# Columns that are already ``category`` dtype and contain nulls, to exercise the categorical branch:
+# introducing the "(missing)" sentinel must not raise on a categorical-dtype series.
+CATEGORY_WITH_NULLS_DATA = pd.DataFrame(
+    {
+        COL_A: pd.Series(["A"] * 40 + ["B"] * 40 + [None] * 20, dtype="category"),
+        COL_B: pd.Series(["X"] * 40 + ["Y"] * 40 + [None] * 20, dtype="category"),
     }
 )
 
@@ -102,3 +138,67 @@ def test_success_with_suite_param_threshold_(
         expectation, expectation_parameters={suite_param_key: suite_param_value}
     )
     assert result.success == expected_result
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=JUST_PANDAS_DATA_SOURCES, data=SMALL_MAGNITUDE_NUMERIC_DATA
+)
+def test_numeric_columns_small_magnitude(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectColumnPairCramersPhiValueToBeLessThan(
+        column_A=COL_A, column_B=COL_B, threshold=0.1
+    )
+    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
+    # Perfectly associated numeric columns -> phi ~ 1.0, well above the threshold.
+    assert not result.success
+    result_dict = result.to_json_dict()["result"]
+    assert result_dict["observed_value"] == pytest.approx(1.0)
+    # Default n_bins=10 -> a 10x10 contingency table; the small bin width must not collapse labels.
+    crosstab = result_dict["details"]["crosstab"]
+    assert len(crosstab["rows"]) == 10
+    assert len(crosstab["columns"]) == 10
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=JUST_PANDAS_DATA_SOURCES, data=NUMERIC_ASSOCIATED_DATA
+)
+def test_numeric_columns_with_explicit_bins_and_n_bins(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectColumnPairCramersPhiValueToBeLessThan(
+        column_A=COL_A,
+        column_B=COL_B,
+        threshold=0.1,
+        bins_A=[2.5, 5.0, 7.5],
+        n_bins_B=4,
+    )
+    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
+    assert not result.success
+    assert result.to_json_dict()["result"]["observed_value"] == pytest.approx(1.0)
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=JUST_PANDAS_DATA_SOURCES, data=NUMERIC_WITH_NULLS_DATA
+)
+def test_numeric_columns_with_nulls(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectColumnPairCramersPhiValueToBeLessThan(
+        column_A=COL_A, column_B=COL_B, threshold=0.1
+    )
+    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
+    assert not result.success
+    crosstab = result.to_json_dict()["result"]["details"]["crosstab"]
+    # Nulls are collected into a dedicated "(missing)" bucket on both axes.
+    assert "(missing)" in crosstab["rows"]
+    assert "(missing)" in crosstab["columns"]
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=JUST_PANDAS_DATA_SOURCES, data=CATEGORY_WITH_NULLS_DATA
+)
+def test_category_dtype_columns_with_nulls(batch_for_datasource: Batch) -> None:
+    expectation = gxe.ExpectColumnPairCramersPhiValueToBeLessThan(
+        column_A=COL_A, column_B=COL_B, threshold=0.1
+    )
+    result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
+    assert not result.success
+    assert result.to_json_dict()["result"]["observed_value"] == pytest.approx(1.0)
+    crosstab = result.to_json_dict()["result"]["details"]["crosstab"]
+    assert "(missing)" in crosstab["rows"]
+    assert "(missing)" in crosstab["columns"]

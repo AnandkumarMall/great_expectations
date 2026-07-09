@@ -332,6 +332,9 @@ class ExpectColumnParameterizedDistributionKsTestPValueToBeGreaterThan(ColumnAgg
         observed_statistic = float(ks_result[0])
         observed_p_value = float(ks_result[1])
 
+        # Success is inclusive at the boundary (p-value == p_value passes), matching the legacy V2
+        # behavior of this expectation. (The sibling chi-square and bootstrapped-KS expectations use
+        # a strict comparison, each preserving its own legacy behavior.)
         return {
             "success": bool(observed_p_value >= p_value),
             "result": {

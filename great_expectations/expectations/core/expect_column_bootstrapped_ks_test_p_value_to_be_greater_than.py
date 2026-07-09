@@ -345,13 +345,13 @@ class ExpectColumnBootstrappedKsTestPValueToBeGreaterThan(ColumnAggregateExpecta
         observed_value = float(metric_result["observed_value"])
         details = metric_result.get("details", {})
 
+        # Forward the metric's details verbatim: alongside the bootstrap settings, they carry the
+        # observed/expected partitions and CDFs, which are what a user needs to see why the test
+        # failed (and which the legacy V2 result and the sibling chi-square expectation surface).
         return {
             "success": bool(observed_value > p),
             "result": {
                 "observed_value": observed_value,
-                "details": {
-                    "bootstrap_samples": details.get("bootstrap_samples"),
-                    "bootstrap_sample_size": details.get("bootstrap_sample_size"),
-                },
+                "details": details,
             },
         }
