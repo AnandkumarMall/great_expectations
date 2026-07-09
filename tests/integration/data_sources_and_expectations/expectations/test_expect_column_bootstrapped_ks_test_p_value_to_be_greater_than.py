@@ -12,7 +12,8 @@ from tests.integration.data_sources_and_expectations.test_canonical_expectations
 # This Expectation relies on a Pandas-only metric (scipy.stats.kstest + numpy bootstrapping), so it
 # is exercised against the Pandas data source only. Because it draws random bootstrap samples, the
 # observed_value is not deterministic; tests assert on success rather than the exact statistic, and
-# use a large bootstrap_sample_size so the pass/fail outcome is stable.
+# use a large bootstrap_sample_size so the pass/fail outcome is stable. bootstrap_samples is kept
+# small so each validation stays well under the unit-test timeout while remaining stable.
 
 COL_NAME = "my_col"
 
@@ -28,6 +29,7 @@ def test_success(batch_for_datasource: Batch) -> None:
         column=COL_NAME,
         partition_object=MATCHING_PARTITION,
         p=0.05,
+        bootstrap_samples=100,
         bootstrap_sample_size=100,
     )
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
@@ -40,6 +42,7 @@ def test_failure(batch_for_datasource: Batch) -> None:
         column=COL_NAME,
         partition_object=SKEWED_PARTITION,
         p=0.05,
+        bootstrap_samples=100,
         bootstrap_sample_size=100,
     )
     result = batch_for_datasource.validate(expectation)
@@ -62,6 +65,7 @@ def test_success_with_suite_param_partition_object_(
         column=COL_NAME,
         partition_object={"$PARAMETER": suite_param_key},
         p=0.05,
+        bootstrap_samples=100,
         bootstrap_sample_size=100,
         result_format=ResultFormat.SUMMARY,
     )
