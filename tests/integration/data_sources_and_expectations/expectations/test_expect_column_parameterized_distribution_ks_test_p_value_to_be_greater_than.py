@@ -27,7 +27,15 @@ def test_success(batch_for_datasource: Batch) -> None:
     )
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
     assert result.success
-    assert result.to_json_dict()["result"]["observed_value"] == pytest.approx(0.9998742840646804)
+    assert result.to_json_dict()["result"] == {
+        "observed_value": pytest.approx(0.9998742840646804),
+        "details": {
+            "observed_ks_result": {
+                "statistic": pytest.approx(0.1),
+                "pvalue": pytest.approx(0.9998742840646804),
+            }
+        },
+    }
 
 
 @parameterize_batch_for_data_sources(data_source_configs=JUST_PANDAS_DATA_SOURCES, data=DATA)

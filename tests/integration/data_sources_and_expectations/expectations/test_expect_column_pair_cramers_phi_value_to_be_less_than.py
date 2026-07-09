@@ -41,7 +41,18 @@ def test_success(batch_for_datasource: Batch) -> None:
     )
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
     assert result.success
-    assert result.to_json_dict()["result"]["observed_value"] == pytest.approx(0.0)
+    assert result.to_json_dict()["result"] == {
+        "observed_value": pytest.approx(0.0),
+        "details": {
+            "crosstab": {
+                "row_variable": "col_a",
+                "column_variable": "col_b",
+                "rows": ["A", "B"],
+                "columns": ["X", "Y"],
+                "counts": [[25, 25], [25, 25]],
+            }
+        },
+    }
 
 
 @parameterize_batch_for_data_sources(
@@ -53,7 +64,18 @@ def test_failure(batch_for_datasource: Batch) -> None:
     )
     result = batch_for_datasource.validate(expectation, result_format=ResultFormat.COMPLETE)
     assert not result.success
-    assert result.to_json_dict()["result"]["observed_value"] == pytest.approx(0.98)
+    assert result.to_json_dict()["result"] == {
+        "observed_value": pytest.approx(0.98),
+        "details": {
+            "crosstab": {
+                "row_variable": "col_a",
+                "column_variable": "col_b",
+                "rows": ["A", "B"],
+                "columns": ["X", "Y"],
+                "counts": [[50, 0], [0, 50]],
+            }
+        },
+    }
 
 
 @pytest.mark.parametrize(
