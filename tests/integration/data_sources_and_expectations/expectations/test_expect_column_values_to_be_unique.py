@@ -11,6 +11,7 @@ from great_expectations.core.expectation_validation_result import (
     ExpectationValidationResult,
 )
 from great_expectations.core.result_format import ResultFormat
+from great_expectations.datasource.fluent import SQLDatasource
 from great_expectations.datasource.fluent.interfaces import Batch
 from great_expectations.expectations.row_conditions import Column
 from tests.integration.conftest import parameterize_batch_for_data_sources
@@ -337,7 +338,9 @@ def test_unexpected_index_query_is_executable_sql(
     unexpected_index_query = result.result["unexpected_index_query"]
     assert unexpected_index_query
 
-    with batch_for_datasource.datasource.get_engine().connect() as connection:
+    datasource = batch_for_datasource.datasource
+    assert isinstance(datasource, SQLDatasource)
+    with datasource.get_engine().connect() as connection:
         query_results = connection.execute(sa.text(unexpected_index_query.rstrip(";"))).fetchall()
 
     # Query selects the index column(s) followed by the expectation's column.
@@ -377,6 +380,7 @@ def test_exclude_unexpected_values_returns_columnar_index_list_sql(
     assert DUPLICATE_VALUES not in unexpected_index_list[0]
 
 
+@pytest.mark.timeout(30)  # the subprocess pays full library import cost
 @pytest.mark.unit
 def test_import_does_not_emit_metric_reregistration_warnings() -> None:
     """Importing great_expectations must not warn about metric providers being
