@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 import pandas as pd
 import pytest
@@ -11,6 +11,7 @@ from great_expectations.compatibility.sqlalchemy import sqltypes
 from great_expectations.datasource.fluent.interfaces import Batch
 from great_expectations.expectations.row_conditions import (
     Column,
+    ComparisonCondition,
     PassThroughCondition,
 )
 from tests.integration.conftest import parameterize_batch_for_data_sources
@@ -289,6 +290,77 @@ def test_expect_column_min_to_be_between__sql_row_condition(
         condition_parser="great_expectations",
     )
     result = batch_for_datasource.validate(expectation)
+    assert result.success
+
+
+# Naive datetimes, matching the string-based cases above: the backends here store
+# created_at in a type that carries no offset.
+TEMPORAL_CONDITION_TEST_CASES = [
+    pytest.param(
+        Column("created_at") < datetime(year=2021, month=1, day=31),  # noqa: DTZ001
+        id="condition-datetime-lt",
+    ),
+    pytest.param(
+        Column("created_at") > datetime(year=2021, month=1, day=29),  # noqa: DTZ001
+        id="condition-datetime-gt",
+    ),
+    pytest.param(
+        Column("updated_at") < date(year=2021, month=2, day=1),
+        id="condition-date-lt",
+    ),
+    pytest.param(
+        Column("updated_at") >= date(year=2021, month=1, day=31),
+        id="condition-date-gte",
+    ),
+]
+
+
+@parameterize_batch_for_data_sources(
+    data_source_configs=[
+        BigQueryDatasourceTestConfig(
+            column_types={
+                "created_at": BIGQUERY_TYPES.DATETIME,
+                "updated_at": BIGQUERY_TYPES.DATE,
+            }
+        ),
+        SQLServerDatasourceTestConfig(),
+        MySQLDatasourceTestConfig(
+            column_types={
+                "created_at": sqltypes.TIMESTAMP(timezone=True),
+                "updated_at": sqltypes.DATE,
+            }
+        ),
+        PostgreSQLDatasourceTestConfig(
+            column_types={
+                "created_at": POSTGRESQL_TYPES.TIMESTAMP,
+                "updated_at": POSTGRESQL_TYPES.DATE,
+            }
+        ),
+        SqliteDatasourceTestConfig(),
+    ],
+    data=DATA,
+)
+@pytest.mark.parametrize("row_condition", TEMPORAL_CONDITION_TEST_CASES)
+def test_expect_column_min_to_be_between__sql_temporal_row_condition_survives_round_trip(
+    batch_for_datasource: Batch, row_condition: ComparisonCondition
+) -> None:
+    """A temporal row condition must still work once the expectation has been persisted.
+
+    Storing an expectation renders it as JSON, which turns a datetime parameter into an
+    ISO-8601 string. Reloading it has to restore the temporal type: a backend that does
+    not implicitly coerce character types rejects a comparison between a timestamp column
+    and a character-typed bind parameter.
+    """
+    expectation = gxe.ExpectColumnMinToBeBetween(
+        column="amount",
+        min_value=0.5,
+        max_value=1.5,
+        row_condition=row_condition,
+    )
+    reloaded = type(expectation).parse_raw(expectation.json())
+
+    result = batch_for_datasource.validate(reloaded)
+
     assert result.success
 
 

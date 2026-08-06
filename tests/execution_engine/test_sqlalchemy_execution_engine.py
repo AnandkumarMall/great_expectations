@@ -1,3 +1,5 @@
+import datetime
+import json
 import logging
 import os
 from typing import TYPE_CHECKING, Dict, Tuple, cast
@@ -6,7 +8,7 @@ import pandas as pd
 import pytest
 
 import great_expectations.exceptions as gx_exceptions
-from great_expectations.compatibility.sqlalchemy import ColumnElement, Connection
+from great_expectations.compatibility.sqlalchemy import ColumnElement, Connection, sqltypes
 from great_expectations.compatibility.sqlalchemy_compatibility_wrappers import (
     add_dataframe_to_db,
 )
@@ -39,6 +41,7 @@ from great_expectations.expectations.row_conditions import (
     NullityCondition,
     Operator,
     OrCondition,
+    deserialize_row_condition,
 )
 from great_expectations.self_check.util import build_sa_execution_engine
 from great_expectations.util import get_sqlalchemy_domain_data
@@ -1584,6 +1587,34 @@ class TestConditionToFilterClauseSqlAlchemy:
         assert len(result) == 4
         ids = sorted([row[2] for row in result])
         assert ids == [2, 3, 4, 5]
+
+    @pytest.mark.sqlite
+    @pytest.mark.parametrize(
+        "parameter,expected_type",
+        [
+            pytest.param(
+                datetime.datetime(2021, 1, 31, 12, 30, 45),  # noqa: DTZ001 # naive on purpose
+                sqltypes.DateTime,
+                id="datetime",
+            ),
+            pytest.param(datetime.date(2021, 1, 31), sqltypes.Date, id="date"),
+        ],
+    )
+    def test_temporal_comparison_binds_a_temporal_parameter_after_round_trip(
+        self, sa, parameter, expected_type
+    ) -> None:
+        """A temporal parameter must still bind as a temporal type once a suite is reloaded.
+
+        Backends that do not implicitly coerce character types reject a comparison between
+        a timestamp column and a character-typed bind parameter, so the bound type has to
+        survive serialization rather than degrading to a string.
+        """
+        engine = SqlAlchemyExecutionEngine(connection_string="sqlite://")
+        condition = deserialize_row_condition(json.loads((Column("created_at") < parameter).json()))
+
+        result = engine.condition_to_filter_clause(condition)
+
+        assert isinstance(result.right.type, expected_type)
 
     @pytest.mark.sqlite
     def test_condition_to_filter_clause_returns_column_element(self, sa) -> None:

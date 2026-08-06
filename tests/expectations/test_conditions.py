@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import datetime
+import json
+
 import pytest
 
 from great_expectations.compatibility.pydantic import ValidationError
@@ -391,6 +394,63 @@ class TestConditionSerialization:
                 },
             ],
         }
+
+
+class TestTemporalParameterRoundTrip:
+    """A temporal parameter must survive the JSON round trip a persisted suite performs.
+
+    Serializing a condition renders a datetime/date parameter as an ISO-8601 string. If
+    deserialization leaves it as a string, the execution engine binds it as a character
+    type, and any backend that does not implicitly coerce strings to temporal types
+    rejects the comparison.
+    """
+
+    @pytest.mark.parametrize(
+        "parameter",
+        [
+            pytest.param(
+                datetime.datetime(2021, 1, 31, 12, 30, 45),  # noqa: DTZ001 # naive on purpose
+                id="naive-datetime",
+            ),
+            pytest.param(
+                datetime.datetime(2021, 1, 31, 12, 30, 45, 123456, tzinfo=datetime.timezone.utc),
+                id="aware-datetime-with-microseconds",
+            ),
+            pytest.param(datetime.date(2021, 1, 31), id="date"),
+        ],
+    )
+    def test_temporal_parameter_survives_round_trip(self, parameter):
+        original = Column("created_at") < parameter
+
+        result = deserialize_row_condition(json.loads(original.json()))
+
+        assert result == original
+        assert result.parameter == parameter
+
+    @pytest.mark.parametrize(
+        "parameter",
+        [
+            pytest.param("albert", id="text"),
+            pytest.param("2021-01-31", id="text-shaped-like-a-date"),
+            pytest.param("2021-01-31T12:30:45", id="text-shaped-like-a-datetime"),
+            pytest.param("1234", id="digits"),
+            pytest.param(18, id="int"),
+            pytest.param(1.5, id="float"),
+            pytest.param(True, id="bool"),
+        ],
+    )
+    def test_non_temporal_parameter_type_is_preserved(self, parameter):
+        """Non-temporal parameters must not be coerced into some other type.
+
+        A string parameter targets a character column even when its contents look like a
+        timestamp, so widening the round trip must not reinterpret it.
+        """
+        original = Column("value") == parameter
+
+        result = deserialize_row_condition(json.loads(original.json()))
+
+        assert result.parameter == parameter
+        assert type(result.parameter) is type(parameter)
 
 
 class TestConditionDeserialization:
