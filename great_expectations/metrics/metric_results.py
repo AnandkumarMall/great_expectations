@@ -39,9 +39,7 @@ class ConditionValuesValueError(ValueError):
         )
 
 
-class ConditionValues(
-    MetricResult[Union["pd.Series", "pyspark.sql.Column", "BinaryExpression"]]
-):
+class ConditionValues(MetricResult[Union["pd.Series", "pyspark.sql.Column", "BinaryExpression"]]):
     @classmethod
     def validate_value_type(cls, value):
         try:

@@ -1,4 +1,3 @@
-
 from great_expectations.metrics.batch.batch import BatchMetric
 from great_expectations.metrics.metric_results import MetricResult
 

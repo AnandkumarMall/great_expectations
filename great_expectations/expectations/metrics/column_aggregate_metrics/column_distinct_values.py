@@ -46,9 +46,7 @@ _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 # Type alias for scalar values that can appear in columns or value sets
-ScalarValue = Union[
-    str, int, float, bool, datetime.date, datetime.datetime, "np.datetime64", None
-]
+ScalarValue = Union[str, int, float, bool, datetime.date, datetime.datetime, "np.datetime64", None]
 
 
 def _coerce_scalar_to_datetime64(v: ScalarValue) -> ScalarValue:

@@ -47,9 +47,7 @@ def _recursively_convert_to_json_serializable(  # noqa: C901, PLR0911, PLR0912 #
         # np.isnan is functionally vectorized, but we only want to apply this to single objects.
         try:
             is_nan = (
-                np.isnan(test_obj)
-                if np
-                else (isinstance(test_obj, float) and math.isnan(test_obj))
+                np.isnan(test_obj) if np else (isinstance(test_obj, float) and math.isnan(test_obj))
             )
             if is_nan:
                 return None

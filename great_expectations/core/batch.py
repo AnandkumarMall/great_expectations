@@ -1348,9 +1348,7 @@ if TYPE_CHECKING:
 if pyspark.DataFrame:  # type: ignore[truthy-function] # False if NotImported
     BatchDataUnion: TypeAlias = Union[BatchData, "pd.DataFrame", pyspark.DataFrame]
 
-    BatchDataType: TypeAlias = Union[
-        Type[BatchData], Type["pd.DataFrame"], Type[pyspark.DataFrame]
-    ]
+    BatchDataType: TypeAlias = Union[Type[BatchData], Type["pd.DataFrame"], Type[pyspark.DataFrame]]
 else:
     BatchDataType = Union[Type[BatchData], Type["pd.DataFrame"]]  # type: ignore[misc] # Cannot assign multiple types
     BatchDataUnion = Union[BatchData, "pd.DataFrame"]  # type: ignore[misc] # Cannot assign multiple types
