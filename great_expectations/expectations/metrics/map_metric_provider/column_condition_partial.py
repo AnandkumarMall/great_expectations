@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     from great_expectations.compatibility import sqlalchemy
 
 
-def column_condition_partial(  # noqa: C901, PLR0915 # FIXME CoP
+def column_condition_partial(  # noqa: C901, PLR0912, PLR0915 # FIXME CoP
     engine: Type[ExecutionEngine],
     partial_fn_type: Optional[MetricPartialFunctionTypes] = None,
     **kwargs: Any,
