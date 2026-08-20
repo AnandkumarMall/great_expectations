@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from great_expectations.core.batch import BatchData
 
 if TYPE_CHECKING:
-    from great_expectations.compatibility import duckdb
+    import duckdb
 
 
 class DuckDBBatchData(BatchData):

@@ -1,5 +1,10 @@
+from typing import TYPE_CHECKING
+
 from great_expectations.metrics.batch.batch import BatchMetric
 from great_expectations.metrics.metric_results import MetricResult
+
+if TYPE_CHECKING:
+    from great_expectations.compatibility.pandas import pandas as pd  # noqa: F401
 
 
 class SampleValuesResult(MetricResult["pd.DataFrame"]): ...

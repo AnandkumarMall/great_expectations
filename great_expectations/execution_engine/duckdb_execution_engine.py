@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import datetime
 import logging
+import uuid
 from typing import TYPE_CHECKING, Any, Optional, Tuple, cast
 
 import great_expectations.exceptions as gx_exceptions
 from great_expectations.compatibility.duckdb import duckdb
 from great_expectations.compatibility.pandas import pandas as pd
 from great_expectations.compatibility.typing_extensions import override
+from great_expectations.core.batch import BatchMarkers
 from great_expectations.core.batch_spec import (
-    BatchMarkers,
     BatchSpec,
     PathBatchSpec,
     RuntimeDataBatchSpec,
@@ -126,9 +127,18 @@ class DuckDBExecutionEngine(ExecutionEngine):
             reader_options = dict(batch_spec.reader_options or {})
             reader_method = batch_spec.reader_method
             if reader_method == "read_parquet" or str(path).lower().endswith((".parquet", ".pq")):
-                relation = self.connection.read_parquet(path, **reader_options)
+                scan_relation = self.connection.read_parquet(path, **reader_options)
             else:
-                relation = self.connection.read_csv(path, **reader_options)
+                scan_relation = self.connection.read_csv(path, **reader_options)
+            # Materialize the scan into a real table rather than keeping the lazy
+            # file-scan relation: every bundled metric query and condition lookup
+            # calls .aggregate()/.filter() on this batch independently, and without
+            # materializing, DuckDB re-parses the source file from scratch on each
+            # one. A one-time materialization here means every later query hits an
+            # in-memory columnar table instead.
+            table_name = f"_gx_batch_{uuid.uuid4().hex}"
+            scan_relation.create(table_name)
+            relation = self.connection.table(table_name)
         else:
             raise gx_exceptions.BatchSpecError(  # noqa: TRY003 # FIXME CoP
                 "batch_spec must be of type RuntimeDataBatchSpec or PathBatchSpec for "
@@ -141,21 +151,22 @@ class DuckDBExecutionEngine(ExecutionEngine):
     @override
     def get_domain_records(self, domain_kwargs: dict) -> duckdb.DuckDBPyRelation:
         batch_id: Optional[str] = domain_kwargs.get("batch_id")
+        data_object: DuckDBBatchData
         if batch_id is None:
             if self.batch_manager.active_batch_data:
-                data_object = self.batch_manager.active_batch_data
+                data_object = cast("DuckDBBatchData", self.batch_manager.active_batch_data)
             else:
                 raise gx_exceptions.GreatExpectationsError(  # noqa: TRY003 # FIXME CoP
                     "No batch is specified, but could not identify a loaded batch."
                 )
         elif batch_id in self.batch_manager.batch_data_cache:
-            data_object = self.batch_manager.batch_data_cache[batch_id]
+            data_object = cast("DuckDBBatchData", self.batch_manager.batch_data_cache[batch_id])
         else:
             raise gx_exceptions.GreatExpectationsError(  # noqa: TRY003 # FIXME CoP
                 f"Unable to find batch with batch_id {batch_id}"
             )
 
-        relation: duckdb.DuckDBPyRelation = cast("DuckDBBatchData", data_object).relation
+        relation: duckdb.DuckDBPyRelation = data_object.relation
 
         row_condition = domain_kwargs.get("row_condition")
         if row_condition is not None:

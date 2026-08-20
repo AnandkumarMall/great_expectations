@@ -8,6 +8,7 @@ from great_expectations.datasource.fluent.duckdb_datasource import (
     DuckDBDatasource,
     ParquetAsset,
 )
+from great_expectations.execution_engine.duckdb_batch_data import DuckDBBatchData
 
 pytestmark = pytest.mark.unit
 
@@ -42,6 +43,7 @@ def test_get_batch_reads_csv_directly(duckdb_datasource: DuckDBDatasource, csv_p
     batch_request = asset.build_batch_request()
     batch = duckdb_datasource.get_batch(batch_request)
 
+    assert isinstance(batch.data, DuckDBBatchData)
     assert batch.data.relation.fetchall() == [
         (1, "x"),
         (2, "y"),
@@ -73,6 +75,7 @@ class TestExpectationsAgainstDuckDBCSV:
     ):
         asset = duckdb_datasource.add_csv_asset(name="my_csv", path=csv_path)
         context = duckdb_datasource.data_context
+        assert context is not None
         validator = context.get_validator(batch_request=asset.build_batch_request())
 
         row_count_result = validator.expect_table_row_count_to_equal(5)
@@ -107,6 +110,7 @@ class TestMapExpectationsAgainstDuckDBCSV:
     def _validator(self, duckdb_datasource: DuckDBDatasource, path: str):
         asset = duckdb_datasource.add_csv_asset(name="my_csv", path=path)
         context = duckdb_datasource.data_context
+        assert context is not None
         return context.get_validator(batch_request=asset.build_batch_request())
 
     def test_not_be_null_and_be_null(self, duckdb_datasource: DuckDBDatasource, csv_path: str):
