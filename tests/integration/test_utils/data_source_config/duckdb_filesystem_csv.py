@@ -29,10 +29,15 @@ class DuckDBFilesystemCsvDatasourceTestConfig(DataSourceTestConfig):
     `tiers.py` - and not through the SQL backend registry.
     """
 
-    # Passed through to DuckDB's `read_csv`; see
-    # https://duckdb.org/docs/stable/data/csv/overview.html
+    # Two different libraries touch the file, so the two option bags go to two different APIs.
+    # pandas writes it, because that is the type the shared fixture data arrives as; DuckDB only
+    # ever reads it back.
+    #
+    # Read side -- forwarded to the DuckDB connection's `read_csv`; the options it accepts are
+    # listed at https://duckdb.org/docs/stable/data/csv/overview.html
     read_options: dict[str, Any] = field(default_factory=dict)
-    # see options: https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html
+    # Write side -- forwarded to `pandas.DataFrame.to_csv`; see
+    # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html
     write_options: dict[str, Any] = field(default_factory=dict)
 
     @property
