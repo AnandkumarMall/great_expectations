@@ -46,8 +46,7 @@ class TestGetBatchDataAndMarkers:
     def test_load_dataframe_directly(self, duckdb_engine: DuckDBExecutionEngine):
         batch_data = duckdb_engine.batch_manager.active_batch_data
         assert isinstance(batch_data, DuckDBBatchData)
-        relation = batch_data.relation
-        assert relation.fetchall() == [
+        assert batch_data.relation.fetchall() == [
             (1, "x"),
             (2, "y"),
             (3, None),

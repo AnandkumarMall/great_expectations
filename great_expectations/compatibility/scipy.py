@@ -11,6 +11,6 @@ SCIPY_NOT_IMPORTED = NotImported(
 try:
     from scipy import stats
 except ImportError:
-    stats = SCIPY_NOT_IMPORTED
+    stats = SCIPY_NOT_IMPORTED  # FIXME CoP
 
 IS_SCIPY_INSTALLED: Final[bool] = stats is not SCIPY_NOT_IMPORTED
