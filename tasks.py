@@ -1066,6 +1066,10 @@ MARKER_DEPENDENCY_MAP: Final[Mapping[str, TestDependencies]] = {
         services=("mysql",),
         extra_pytest_args=("--mysql",),
     ),
+    "oracle": TestDependencies(
+        ("reqs/requirements-dev-oracle.txt",),
+        services=("oracle",),
+    ),
     "pyarrow": TestDependencies(("reqs/requirements-dev-arrow.txt",)),
     "postgresql": TestDependencies(
         ("reqs/requirements-dev-postgresql.txt",),

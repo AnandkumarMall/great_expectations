@@ -701,6 +701,7 @@ markers = [
     "sql_server: mark a test as SQL Server-dependent.",
     "mysql: mark a test as mysql-dependent.",
     "openpyxl: mark a test for openpyxl-dependent, which is for Excel files.",
+    "oracle: mark a test as Oracle-dependent.",
     "performance: mark a test as a performance test for BigQuery. These aren't run in our PR or release pipeline",
     "postgresql: mark a test as postgresql-dependent.",
     "project: mark a test that verifies properties of the gx project",
