@@ -8,10 +8,12 @@ from great_expectations.core.metric_function_types import (
     SummarizationMetricNameSuffixes,
 )
 from great_expectations.execution_engine import (
+    DuckDBExecutionEngine,
     PandasExecutionEngine,
     SparkDFExecutionEngine,
     SqlAlchemyExecutionEngine,
 )
+from great_expectations.execution_engine.duckdb_sql_utils import sql_literal
 from great_expectations.expectations.metrics.map_metric_provider import (
     ColumnMapMetricProvider,
     column_condition_partial,
@@ -52,6 +54,10 @@ class ColumnValuesMatchRegex(ColumnMapMetricProvider):
     @column_condition_partial(engine=SparkDFExecutionEngine)
     def _spark(cls, column, regex, **kwargs):
         return column.rlike(regex)
+
+    @column_condition_partial(engine=DuckDBExecutionEngine)
+    def _duckdb(cls, column, regex, **kwargs):
+        return f"regexp_matches({column}, {sql_literal(regex)})"
 
 
 class ColumnValuesMatchRegexCount(MetricProvider):

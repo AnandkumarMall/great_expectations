@@ -9,9 +9,8 @@ from collections.abc import Iterable
 from fractions import Fraction
 from typing import TYPE_CHECKING, Any, Optional
 
-import numpy as np
-
 from great_expectations.compatibility import sqlalchemy, trino
+from great_expectations.compatibility.numpy import np
 from great_expectations.compatibility.sqlalchemy import (
     sqlalchemy as sa,
 )

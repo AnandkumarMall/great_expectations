@@ -4,11 +4,11 @@ import datetime
 import re
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union
 
-import numpy as np
-import pandas as pd
 from dateutil.parser import parse
 
 from great_expectations.compatibility.not_imported import is_version_greater_or_equal
+from great_expectations.compatibility.numpy import np
+from great_expectations.compatibility.pandas import pandas as pd
 from great_expectations.compatibility.pyspark import (
     functions as F,
 )
@@ -46,7 +46,9 @@ _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 # Type alias for scalar values that can appear in columns or value sets
-ScalarValue = Union[str, int, float, bool, datetime.date, datetime.datetime, np.datetime64, None]
+ScalarValue = Union[
+    str, int, float, bool, datetime.date, datetime.datetime, "np.datetime64", None
+]
 
 
 def _coerce_scalar_to_datetime64(v: ScalarValue) -> ScalarValue:

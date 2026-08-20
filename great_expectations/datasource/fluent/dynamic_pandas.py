@@ -29,10 +29,10 @@ from typing import (
     Union,
 )
 
-import pandas as pd
 from packaging.version import Version
 
 from great_expectations.compatibility import pydantic
+from great_expectations.compatibility.pandas import pandas as pd
 from great_expectations.compatibility.pydantic import AnyUrl, Field, FilePath
 
 # from great_expectations.compatibility.pydantic.typing import resolve_annotations
@@ -75,9 +75,11 @@ DtypeBackend = Literal["pyarrow", "numpy_nullable"]
 
 logger = logging.getLogger(__name__)
 
-PANDAS_VERSION: float = float(f"{Version(pd.__version__).major}.{Version(pd.__version__).minor}")
+PANDAS_VERSION: float = (
+    float(f"{Version(pd.__version__).major}.{Version(pd.__version__).minor}") if pd else 0.0
+)
 
-DataFrameFactoryFn: TypeAlias = Callable[..., pd.DataFrame]
+DataFrameFactoryFn: TypeAlias = Callable[..., "pd.DataFrame"]
 
 # sentinel values
 UNSUPPORTED_TYPE: Final = object()

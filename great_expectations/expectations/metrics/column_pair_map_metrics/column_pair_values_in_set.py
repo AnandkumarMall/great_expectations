@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from functools import reduce
 
-import numpy as np
-import pandas as pd
-
+from great_expectations.compatibility.numpy import np
+from great_expectations.compatibility.pandas import pandas as pd
 from great_expectations.compatibility.pyspark import functions as F
 from great_expectations.compatibility.sqlalchemy import sqlalchemy as sa
 from great_expectations.execution_engine import (
