@@ -10,6 +10,7 @@ from .base import DataSourceTestConfig
 from .big_query import BigQueryDatasourceTestConfig
 from .clickhouse import ClickHouseDatasourceTestConfig
 from .databricks import DatabricksDatasourceTestConfig
+from .duckdb_filesystem_csv import DuckDBFilesystemCsvDatasourceTestConfig
 from .generic_sql import GenericSQLDatasourceTestConfig
 from .mysql import MySQLDatasourceTestConfig
 from .pandas_data_frame import PandasDataFrameDatasourceTestConfig
@@ -46,6 +47,7 @@ from .trino import TrinoDatasourceTestConfig
 from .tiers import (
     ALL_DATA_SOURCES,
     CURATED_SQL_DATA_SOURCES,
+    DUCKDB_DATA_SOURCES,
     PANDAS_DATA_SOURCES,
     SPARK_DATA_SOURCES,
     SQL_DATA_SOURCES,
