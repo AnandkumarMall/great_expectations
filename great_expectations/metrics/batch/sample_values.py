@@ -1,6 +1,12 @@
+from typing import TYPE_CHECKING
 
 from great_expectations.metrics.batch.batch import BatchMetric
 from great_expectations.metrics.metric_results import MetricResult
+
+if TYPE_CHECKING:
+    # Referenced only from the "pd.DataFrame" forward ref below, which neither the linter
+    # nor a plain import can see through.
+    import pandas as pd  # noqa: F401
 
 
 class SampleValuesResult(MetricResult["pd.DataFrame"]): ...

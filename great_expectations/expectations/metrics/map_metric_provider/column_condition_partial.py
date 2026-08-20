@@ -234,6 +234,8 @@ def column_condition_partial(  # noqa: C901, PLR0912, PLR0915 # FIXME CoP
             )
 
         def wrapper(metric_fn: _F) -> _F:
+            assert partial_fn_type is not None  # mypy has trouble type narrowing with closures
+
             @metric_partial(
                 engine=engine,
                 partial_fn_type=partial_fn_type,

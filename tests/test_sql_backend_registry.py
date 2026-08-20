@@ -923,8 +923,9 @@ class TestStandardDataSourceListsMatchPreChangeMembership:
     under test — so a mistake in the derivation shows up as a mismatch here rather than agreeing
     with itself. `DUCKDB_DATA_SOURCES` is the one exception: it postdates those conftest modules,
     so its literal is transcribed from the list's own declaration and pins membership going
-    forward rather than reproducing a prior state. `PANDAS_DATA_SOURCES` is deliberately not alphabetical: the filesystem CSV
-    config is listed before the DataFrame config, and that order is preserved on purpose.
+    forward rather than reproducing a prior state. `PANDAS_DATA_SOURCES` is deliberately not
+    alphabetical: the filesystem CSV config is listed before the DataFrame config, and that order
+    is preserved on purpose.
 
     The constants imported above are captured at module-import time, before any test in this
     module runs. That matters because this module's `_snapshot_registry` fixture clears the

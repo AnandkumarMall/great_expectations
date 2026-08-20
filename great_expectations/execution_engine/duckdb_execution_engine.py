@@ -8,8 +8,8 @@ import great_expectations.exceptions as gx_exceptions
 from great_expectations.compatibility.duckdb import duckdb
 from great_expectations.compatibility.pandas import pandas as pd
 from great_expectations.compatibility.typing_extensions import override
+from great_expectations.core.batch import BatchMarkers
 from great_expectations.core.batch_spec import (
-    BatchMarkers,
     BatchSpec,
     PathBatchSpec,
     RuntimeDataBatchSpec,
@@ -141,6 +141,7 @@ class DuckDBExecutionEngine(ExecutionEngine):
     @override
     def get_domain_records(self, domain_kwargs: dict) -> duckdb.DuckDBPyRelation:
         batch_id: Optional[str] = domain_kwargs.get("batch_id")
+        data_object: Any
         if batch_id is None:
             if self.batch_manager.active_batch_data:
                 data_object = self.batch_manager.active_batch_data

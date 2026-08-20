@@ -9,4 +9,4 @@ DUCKDB_NOT_IMPORTED = NotImported(
 try:
     import duckdb
 except ImportError:
-    duckdb = DUCKDB_NOT_IMPORTED
+    duckdb = DUCKDB_NOT_IMPORTED  # type: ignore[assignment] # FIXME CoP

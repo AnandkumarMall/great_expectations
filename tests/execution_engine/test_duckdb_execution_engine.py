@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from great_expectations.execution_engine import DuckDBExecutionEngine
+from great_expectations.execution_engine.duckdb_batch_data import DuckDBBatchData
 from great_expectations.expectations.row_conditions import Column
 from great_expectations.validator.metric_configuration import MetricConfiguration
 from great_expectations.validator.validation_graph import ValidationGraph
@@ -43,7 +44,9 @@ def _resolve(
 
 class TestGetBatchDataAndMarkers:
     def test_load_dataframe_directly(self, duckdb_engine: DuckDBExecutionEngine):
-        relation = duckdb_engine.batch_manager.active_batch_data.relation
+        batch_data = duckdb_engine.batch_manager.active_batch_data
+        assert isinstance(batch_data, DuckDBBatchData)
+        relation = batch_data.relation
         assert relation.fetchall() == [
             (1, "x"),
             (2, "y"),
