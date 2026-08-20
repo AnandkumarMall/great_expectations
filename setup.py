@@ -65,6 +65,7 @@ def get_extras_require():
         "hive",  # https://github.com/dropbox/PyHive/blob/master/setup.py
         "sql-server",  # https://github.com/mkleehammer/pyodbc/blob/master/setup.py
         "mysql",  # https://github.com/PyMySQL/PyMySQL/blob/main/pyproject.toml
+        "oracle",  # https://github.com/oracle/python-oracledb/blob/main/pyproject.toml
         "postgresql",  # https://github.com/psycopg/psycopg2/blob/master/setup.py
         "trino",  # https://github.com/trinodb/trino-python-client/blob/master/setup.py
         "vertica",  # https://github.com/bluelabsio/sqlalchemy-vertica-python/blob/master/setup.py
