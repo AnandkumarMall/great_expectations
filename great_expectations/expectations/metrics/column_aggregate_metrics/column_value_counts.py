@@ -154,7 +154,6 @@ class ColumnValueCounts(ColumnAggregateMetricProvider):
         if collate is not None:
             raise ValueError("collate parameter is not supported for DuckDBExecutionEngine")  # noqa: TRY003 # FIXME CoP
 
-        relation: sqlalchemy.Selectable
         accessor_domain_kwargs: Dict[str, str]
         relation, _, accessor_domain_kwargs = execution_engine.get_compute_domain(
             metric_domain_kwargs, MetricDomainTypes.COLUMN
