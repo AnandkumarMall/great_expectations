@@ -129,15 +129,21 @@ class DuckDBExecutionEngine(ExecutionEngine):
             if reader_method == "read_parquet" or str(path).lower().endswith((".parquet", ".pq")):
                 scan_relation = self.connection.read_parquet(path, **reader_options)
             else:
-                scan_relation = self.connection.read_csv(path, **reader_options)
+                scan_relation = self.connection.read_csv(path, **reader_options)  # noqa: F841 # FIXME CoP
             # Materialize the scan into a real table rather than keeping the lazy
             # file-scan relation: every bundled metric query and condition lookup
             # calls .aggregate()/.filter() on this batch independently, and without
             # materializing, DuckDB re-parses the source file from scratch on each
             # one. A one-time materialization here means every later query hits an
-            # in-memory columnar table instead.
+            # in-memory columnar table instead. Using a TEMP table (rather than
+            # scan_relation.create(), which is permanent) scopes it to this
+            # connection's session -- it's dropped automatically on self.close(),
+            # never touches an on-disk connection_string database, and works even
+            # when that database is opened read-only.
             table_name = f"_gx_batch_{uuid.uuid4().hex}"
-            scan_relation.create(table_name)
+            self.connection.execute(
+                f"CREATE TEMP TABLE {quote_ident(table_name)} AS SELECT * FROM scan_relation"
+            )
             relation = self.connection.table(table_name)
         else:
             raise gx_exceptions.BatchSpecError(  # noqa: TRY003 # FIXME CoP
@@ -149,7 +155,7 @@ class DuckDBExecutionEngine(ExecutionEngine):
         return typed_batch_data, batch_markers
 
     @override
-    def get_domain_records(self, domain_kwargs: dict) -> duckdb.DuckDBPyRelation:
+    def get_domain_records(self, domain_kwargs: dict) -> duckdb.DuckDBPyRelation:  # noqa: C901, PLR0912 # FIXME CoP
         batch_id: Optional[str] = domain_kwargs.get("batch_id")
         data_object: DuckDBBatchData
         if batch_id is None:
@@ -185,6 +191,38 @@ class DuckDBExecutionEngine(ExecutionEngine):
                 )
 
             relation = relation.filter(self.condition_to_filter_clause(row_condition))
+
+        if "column" in domain_kwargs:
+            return relation
+
+        if (
+            "column_A" in domain_kwargs
+            and "column_B" in domain_kwargs
+            and "ignore_row_if" in domain_kwargs
+        ):
+            column_a = quote_ident(domain_kwargs["column_A"])
+            column_b = quote_ident(domain_kwargs["column_B"])
+            ignore_row_if = domain_kwargs["ignore_row_if"]
+            if ignore_row_if == "both_values_are_missing":
+                relation = relation.filter(f"NOT ({column_a} IS NULL AND {column_b} IS NULL)")
+            elif ignore_row_if == "either_value_is_missing":
+                relation = relation.filter(f"NOT ({column_a} IS NULL OR {column_b} IS NULL)")
+            elif ignore_row_if != "neither":
+                raise ValueError(f'Unrecognized value of ignore_row_if ("{ignore_row_if}").')  # noqa: TRY003 # FIXME CoP
+            return relation
+
+        if "column_list" in domain_kwargs and "ignore_row_if" in domain_kwargs:
+            column_list = [quote_ident(name) for name in domain_kwargs["column_list"]]
+            ignore_row_if = domain_kwargs["ignore_row_if"]
+            if ignore_row_if == "all_values_are_missing":
+                all_null = " AND ".join(f"{col} IS NULL" for col in column_list)
+                relation = relation.filter(f"NOT ({all_null})")
+            elif ignore_row_if == "any_value_is_missing":
+                any_null = " OR ".join(f"{col} IS NULL" for col in column_list)
+                relation = relation.filter(f"NOT ({any_null})")
+            elif ignore_row_if != "never":
+                raise ValueError(f'Unrecognized value of ignore_row_if ("{ignore_row_if}").')  # noqa: TRY003 # FIXME CoP
+            return relation
 
         return relation
 

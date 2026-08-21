@@ -251,6 +251,12 @@ _TYPE_REF_LOCALS: Final[Dict[str, Type | Any]] = {
 def _extract_io_methods(
     blacklist: Optional[Sequence[str]] = None,
 ) -> List[Tuple[str, DataFrameFactoryFn]]:
+    if not pd:
+        # pandas is an optional dependency; inspect.getmembers(pd, ...) would call
+        # getattr(pd, "__bases__") on some Python versions, and NotImported.__getattr__
+        # raises ModuleNotFoundError (not AttributeError) for any missing attribute,
+        # which inspect doesn't expect and won't swallow.
+        return []
     # suppress pandas future warnings that may be emitted by collecting
     # pandas io methods
     # Once the context manager exits, the warning filter is removed.

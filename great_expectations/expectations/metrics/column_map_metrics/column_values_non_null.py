@@ -73,6 +73,12 @@ class ColumnValuesNonNullCount(MetricProvider):
             f"column_values.null.{SummarizationMetricNameSuffixes.UNEXPECTED_COUNT.value}"
         ]
 
+    @metric_value(engine=DuckDBExecutionEngine)
+    def _duckdb(*, metrics, **kwargs):
+        return metrics[
+            f"column_values.null.{SummarizationMetricNameSuffixes.UNEXPECTED_COUNT.value}"
+        ]
+
     @classmethod
     @override
     def _get_evaluation_dependencies(

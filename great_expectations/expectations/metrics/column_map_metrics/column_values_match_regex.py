@@ -83,6 +83,12 @@ class ColumnValuesMatchRegexCount(MetricProvider):
             f"column_values.not_match_regex.{SummarizationMetricNameSuffixes.UNEXPECTED_COUNT.value}"
         ]
 
+    @metric_value(engine=DuckDBExecutionEngine)
+    def _duckdb(*, metrics, **kwargs):
+        return metrics[
+            f"column_values.not_match_regex.{SummarizationMetricNameSuffixes.UNEXPECTED_COUNT.value}"
+        ]
+
     @classmethod
     @override
     def _get_evaluation_dependencies(
