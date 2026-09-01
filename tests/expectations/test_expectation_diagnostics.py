@@ -13,6 +13,7 @@ from great_expectations.core.expectation_diagnostics.supporting_types import (
     ExpectationDescriptionDiagnostics,
     ExpectationDiagnosticCheckMessage,
     ExpectationDiagnosticMaturityMessages,
+    ExpectationExecutionEngineDiagnostics,
     ExpectationRendererDiagnostics,
     ExpectationTestDiagnostics,
     RendererTestDiagnostics,
@@ -32,58 +33,49 @@ expectation_test_data_case = ExpectationTestDataCases(
     ),
     tests=[
         ExpectationLegacyTestCaseAdapter(
-            **{
-                "title": "negative_test_insufficient_mostly_and_one_non_matching_value",
-                "exact_match_out": False,
-                "in": {"column": "a", "regex": "^a", "mostly": 0.9},
-                "out": {
-                    "success": False,
-                    "unexpected_index_list": [4],
-                    "unexpected_list": ["bee"],
-                },
-                "suppress_test_for": ["sqlite", "mssql"],
-            }
+            title="negative_test_insufficient_mostly_and_one_non_matching_value",
+            exact_match_out=False,
+            out={
+                "success": False,
+                "unexpected_index_list": [4],
+                "unexpected_list": ["bee"],
+            },
+            suppress_test_for=["sqlite", "mssql"],
+            **{"in": {"column": "a", "regex": "^a", "mostly": 0.9}},
         ),
         ExpectationLegacyTestCaseAdapter(
-            **{
-                "title": "positive_test_exact_mostly_w_one_non_matching_value",
-                "exact_match_out": False,
-                "in": {"column": "a", "regex": "^a", "mostly": 0.8},
-                "out": {
-                    "success": True,
-                    "unexpected_index_list": [4],
-                    "unexpected_list": ["bee"],
-                },
-                "suppress_test_for": ["sqlite", "mssql"],
-            }
+            title="positive_test_exact_mostly_w_one_non_matching_value",
+            exact_match_out=False,
+            out={
+                "success": True,
+                "unexpected_index_list": [4],
+                "unexpected_list": ["bee"],
+            },
+            suppress_test_for=["sqlite", "mssql"],
+            **{"in": {"column": "a", "regex": "^a", "mostly": 0.8}},
         ),
     ],
 )
 
 edr = ExpectationDiagnostics(
     description=ExpectationDescriptionDiagnostics(
-        **{
-            "camel_name": "ExpectColumnValuesToMatchRegex",
-            "snake_name": "expect_column_values_to_match_regex",
-            "short_description": "Expect column entries to be strings that match a given regular expression.",  # noqa: E501 # FIXME CoP
-            "docstring": 'Expect column entries to be strings that match a given regular expression.\n    \n    Valid matches can be found     anywhere in the string, for example "[at]+" will identify the following strings as expected: "cat", "hat",     "aa", "a", and "t", and the following strings as unexpected: "fish", "dog".\n\n    expect_column_values_to_match_regex is a     :func:`column_map_expectation <great_expectations.execution_engine.execution_engine.MetaExecutionEngine\n    .column_map_expectation>`.\n\n    Args:\n        column (str):             The column name.\n        regex (str):             The regular expression the column entries should match.\n\n    Keyword Args:\n        mostly (None or a float between 0 and 1):             Return `"success": True` if at least mostly fraction of values match the expectation.             For more detail, see :ref:`mostly`.\n\n    Other Parameters:\n        result_format (str or None):             Which output mode to use: `BOOLEAN_ONLY`, `BASIC`, `COMPLETE`, or `SUMMARY`.\n            For more detail, see :ref:`result_format <result_format>`.\n        catch_exceptions (boolean or None):             If True, then catch exceptions and include them as part of the result object.             For more detail, see :ref:`catch_exceptions`.\n        meta (dict or None):             A JSON-serializable dictionary (nesting allowed) that will be included in the output without             modification. For more detail, see :ref:`meta`.\n\n    Returns:\n        An ExpectationSuiteValidationResult\n\n        Exact fields vary depending on the values passed to :ref:`result_format <result_format>` and\n        :ref:`catch_exceptions`, and :ref:`meta`.\n\n    See Also:\n        :func:`expect_column_values_to_not_match_regex         <great_expectations.execution_engine.execution_engine.ExecutionEngine\n        .expect_column_values_to_not_match_regex>`\n\n        :func:`expect_column_values_to_match_regex_list         <great_expectations.execution_engine.execution_engine.ExecutionEngine\n        .expect_column_values_to_match_regex_list>`\n\n    ',  # noqa: E501 # FIXME CoP
-        }
+        camel_name="ExpectColumnValuesToMatchRegex",
+        snake_name="expect_column_values_to_match_regex",
+        short_description="Expect column entries to be strings that match a given regular expression.",  # noqa: E501 # FIXME CoP
+        docstring='Expect column entries to be strings that match a given regular expression.\n    \n    Valid matches can be found     anywhere in the string, for example "[at]+" will identify the following strings as expected: "cat", "hat",     "aa", "a", and "t", and the following strings as unexpected: "fish", "dog".\n\n    expect_column_values_to_match_regex is a     :func:`column_map_expectation <great_expectations.execution_engine.execution_engine.MetaExecutionEngine\n    .column_map_expectation>`.\n\n    Args:\n        column (str):             The column name.\n        regex (str):             The regular expression the column entries should match.\n\n    Keyword Args:\n        mostly (None or a float between 0 and 1):             Return `"success": True` if at least mostly fraction of values match the expectation.             For more detail, see :ref:`mostly`.\n\n    Other Parameters:\n        result_format (str or None):             Which output mode to use: `BOOLEAN_ONLY`, `BASIC`, `COMPLETE`, or `SUMMARY`.\n            For more detail, see :ref:`result_format <result_format>`.\n        catch_exceptions (boolean or None):             If True, then catch exceptions and include them as part of the result object.             For more detail, see :ref:`catch_exceptions`.\n        meta (dict or None):             A JSON-serializable dictionary (nesting allowed) that will be included in the output without             modification. For more detail, see :ref:`meta`.\n\n    Returns:\n        An ExpectationSuiteValidationResult\n\n        Exact fields vary depending on the values passed to :ref:`result_format <result_format>` and\n        :ref:`catch_exceptions`, and :ref:`meta`.\n\n    See Also:\n        :func:`expect_column_values_to_not_match_regex         <great_expectations.execution_engine.execution_engine.ExecutionEngine\n        .expect_column_values_to_not_match_regex>`\n\n        :func:`expect_column_values_to_match_regex_list         <great_expectations.execution_engine.execution_engine.ExecutionEngine\n        .expect_column_values_to_match_regex_list>`\n\n    ',  # noqa: E501 # FIXME CoP
     ),
     library_metadata=AugmentedLibraryMetadata(
-        **{
-            "maturity": "PRODUCTION",
-            # "package": "great_expectations",
-            "tags": [
-                "arrows",
-                "design",
-                "flows",
-            ],
-            "contributors": ["@shinnyshinshin", "@abegong"],
-            "requirements": [],
-            "library_metadata_passed_checks": True,
-            "has_full_test_suite": False,
-            "manually_reviewed_code": False,
-        }
+        maturity="PRODUCTION",  # type: ignore[arg-type]
+        tags=[
+            "arrows",
+            "design",
+            "flows",
+        ],
+        contributors=["@shinnyshinshin", "@abegong"],
+        requirements=[],
+        library_metadata_passed_checks=True,
+        has_full_test_suite=False,
+        manually_reviewed_code=False,
     ),
     renderers=[
         ExpectationRendererDiagnostics(
@@ -102,11 +94,11 @@ edr = ExpectationDiagnostics(
     examples=[expectation_test_data_case],
     gallery_examples=[expectation_test_data_case],
     metrics=[],
-    execution_engines={
-        "PandasExecutionEngine": True,
-        "SqlAlchemyExecutionEngine": True,
-        "SparkDFExecutionEngine": True,
-    },
+    execution_engines=ExpectationExecutionEngineDiagnostics(
+        PandasExecutionEngine=True,
+        SqlAlchemyExecutionEngine=True,
+        SparkDFExecutionEngine=True,
+    ),
     tests=[],
     backend_test_result_counts=[],
     errors=[],
@@ -293,10 +285,8 @@ def test__check_example_cases__with_enough_test_cases_but_all_failing():
             ),
         ],
     ) == ExpectationDiagnosticCheckMessage(
-        **{
-            "message": "Has at least one positive and negative example case, and all test cases pass",  # noqa: E501 # FIXME CoP
-            "passed": False,
-        }
+        message="Has at least one positive and negative example case, and all test cases pass",  # noqa: E501 # FIXME CoP
+        passed=False,
     )
 
 
@@ -322,10 +312,8 @@ def test__check_example_cases__with_enough_test_cases_but_some_failing():
             ),
         ],
     ) == ExpectationDiagnosticCheckMessage(
-        **{
-            "message": "Has at least one positive and negative example case, and all test cases pass",  # noqa: E501 # FIXME CoP
-            "passed": False,
-        }
+        message="Has at least one positive and negative example case, and all test cases pass",  # noqa: E501 # FIXME CoP
+        passed=False,
     )
 
 
@@ -351,10 +339,8 @@ def test__check_example_cases__with_enough_test_cases_and_no_failing():
             ),
         ],
     ) == ExpectationDiagnosticCheckMessage(
-        **{
-            "message": "Has at least one positive and negative example case, and all test cases pass",  # noqa: E501 # FIXME CoP
-            "passed": True,
-        }
+        message="Has at least one positive and negative example case, and all test cases pass",  # noqa: E501 # FIXME CoP
+        passed=True,
     )
 
 
@@ -370,17 +356,15 @@ def test__check_example_cases__with_enough_not_enough_test_cases_but_no_failing(
         ),
         tests=[
             ExpectationLegacyTestCaseAdapter(
-                **{
-                    "title": "negative_test_insufficient_mostly_and_one_non_matching_value",
-                    "exact_match_out": False,
-                    "in": {"column": "a", "regex": "^a", "mostly": 0.9},
-                    "out": {
-                        "success": False,
-                        "unexpected_index_list": [4],
-                        "unexpected_list": ["bee"],
-                    },
-                    "suppress_test_for": ["sqlite", "mssql"],
-                }
+                title="negative_test_insufficient_mostly_and_one_non_matching_value",
+                exact_match_out=False,
+                out={
+                    "success": False,
+                    "unexpected_index_list": [4],
+                    "unexpected_list": ["bee"],
+                },
+                suppress_test_for=["sqlite", "mssql"],
+                **{"in": {"column": "a", "regex": "^a", "mostly": 0.9}},
             ),
         ],
     )
@@ -398,8 +382,6 @@ def test__check_example_cases__with_enough_not_enough_test_cases_but_no_failing(
             ),
         ],
     ) == ExpectationDiagnosticCheckMessage(
-        **{
-            "message": "Has at least one positive and negative example case, and all test cases pass",  # noqa: E501 # FIXME CoP
-            "passed": False,
-        }
+        message="Has at least one positive and negative example case, and all test cases pass",  # noqa: E501 # FIXME CoP
+        passed=False,
     )

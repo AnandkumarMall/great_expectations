@@ -33,19 +33,21 @@ def get_prescriptive_rendered_content(
     ) -> RenderedAtomicContent:
         # Overwrite any fields passed in from test and instantiate ExpectationConfiguration
         expectation_configuration_kwargs.update(update_dict)
-        config = ExpectationConfiguration(**expectation_configuration_kwargs)
+        config = ExpectationConfiguration(**expectation_configuration_kwargs)  # type: ignore[str, str | dict[Any, Any]]"; expected "ExpectationContext | None"  [arg-type, str, str | dict[Any, Any]]"; expected "FailureSeverity"  [arg-type, str, str | dict[Any, Any]]"; expected "bool | None"  [arg-type, str, str | dict[Any, Any]]"; expected "dict[Any, Any] | None"  [arg-type, str, str | dict[Any, Any]]"; expected "dict[Any, Any]"  [arg-type, str, str | dict[Any, Any]]"; expected "list[RenderedAtomicContent] | None"  [arg-type, str, str | dict[Any, Any]]"; expected "str | None"  [arg-type, str, str | dict[Any, Any]]"; expected "str | list[str] | None"  [arg-type, str, str | dict[Any, Any]]"; expected "str"  [arg-type, syntax]
         expectation_type = expectation_configuration_kwargs["type"]
 
         # Programatically determine the renderer implementations
-        renderer_impl = get_renderer_impl(
-            object_name=expectation_type,
+        renderer_impl_tuple = get_renderer_impl(
+            object_name=expectation_type,  # type: ignore[Any, Any]"; expected "str"  [arg-type, syntax]
             renderer_type="atomic.prescriptive.summary",
-        )[1]
+        )
+        assert renderer_impl_tuple is not None
+        renderer_impl = renderer_impl_tuple[1]
 
         # Determine RenderedAtomicContent output
         source_obj = {"configuration": config}
         res = renderer_impl(**source_obj)
-        return res
+        return res  # type: ignore[RenderedAtomicContent] | RenderedContent", expected "RenderedAtomicContent")  [return-value, syntax]
 
     return _get_prescriptive_rendered_content
 
@@ -68,20 +70,22 @@ def get_diagnostic_rendered_content(
     ) -> RenderedAtomicContent:
         # Overwrite any fields passed in from test and instantiate ExpectationValidationResult
         evr_kwargs.update(update_dict)
-        evr = ExpectationValidationResult(**evr_kwargs)
+        evr = ExpectationValidationResult(**evr_kwargs)  # type: ignore[str, dict[Any, Any] | ExpectationConfiguration]"; expected "ExpectationConfiguration | None"  [arg-type, str, dict[Any, Any] | ExpectationConfiguration]"; expected "RenderedAtomicContent | list[RenderedAtomicContent] | None"  [arg-type, str, dict[Any, Any] | ExpectationConfiguration]"; expected "bool | None"  [arg-type, str, dict[Any, Any] | ExpectationConfiguration]"; expected "dict[Any, Any] | None"  [arg-type, str, dict[Any, Any] | ExpectationConfiguration]"; expected "dict[Any, Any]"  [arg-type, syntax]
         expectation_config = evr_kwargs["expectation_config"]
         expectation_type = expectation_config["type"]
 
         # Programatically determine the renderer implementations
-        renderer_impl = get_renderer_impl(
+        renderer_impl_tuple = get_renderer_impl(
             object_name=expectation_type,
             renderer_type="atomic.diagnostic.observed_value",
-        )[1]
+        )
+        assert renderer_impl_tuple is not None
+        renderer_impl = renderer_impl_tuple[1]
 
         # Determine RenderedAtomicContent output
         source_obj = {"result": evr}
         res = renderer_impl(**source_obj)
-        return res
+        return res  # type: ignore[RenderedAtomicContent] | RenderedContent", expected "RenderedAtomicContent")  [return-value, syntax]
 
     return _get_diagnostic_rendered_content
 
@@ -2753,14 +2757,14 @@ def _create_result_details_from_expected_result(
 ) -> Optional[Dict[str, Any]]:
     unexpected = []
     missing = []
-    for _, col, state in expected_result:
-        if state == "unexpected":
-            unexpected.append(col)
-        elif state == "missing":
-            missing.append(col)
+    for _, col, state in expected_result:  # type: ignore[misc]
+        if state == "unexpected":  # type: ignore[has-type]
+            unexpected.append(col)  # type: ignore[has-type]
+        elif state == "missing":  # type: ignore[has-type]
+            missing.append(col)  # type: ignore[has-type]
     if not unexpected and not missing:
         return None
-    details = {"mismatched": {}}
+    details = {"mismatched": {}}  # type: ignore[var-annotated]
     if unexpected:
         details["mismatched"]["unexpected"] = unexpected
     if missing:

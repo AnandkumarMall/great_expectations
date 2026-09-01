@@ -454,7 +454,7 @@ def test_column_quoted_name_type_sa(sa):
         column_names=column_name,
         batch_columns_list=quoted_batch_column_list,
     )
-    assert sqlalchemy.quoted_name and isinstance(quoted_column_name, sqlalchemy.quoted_name)
+    assert sqlalchemy.quoted_name and isinstance(quoted_column_name, sqlalchemy.quoted_name)  # type: ignore[truthy-function]
     assert quoted_column_name.quote is True
 
     for column_name in [
@@ -4919,7 +4919,7 @@ def test_distinct_metric_spark(
         metrics=metrics,
     )
     metrics.update(results)
-    assert pyspark.Column and isinstance(
+    assert pyspark.Column and isinstance(  # type: ignore[truthy-function]
         metrics[column_distinct_values_count_metric_partial_fn.id][0],
         pyspark.Column,
     )

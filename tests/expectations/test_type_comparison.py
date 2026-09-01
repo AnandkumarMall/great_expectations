@@ -100,7 +100,7 @@ class _StubEngine:
 class _NonStringType:
     """Stub for a non-string column type."""
 
-    def __str__(self):
+    def __str__(self):  # type: ignore[explicit-override]
         return "INTEGER"
 
 

@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 import great_expectations.exceptions as gx_exceptions
-from great_expectations.compatibility import sqlalchemy
 from great_expectations.compatibility.sqlalchemy import (
     Dialect,
     Engine,
@@ -55,10 +54,13 @@ if TYPE_CHECKING:
 # The following class allows for declarative instantiation of base class for SqlAlchemy. Adopted from  # noqa: E501 # FIXME CoP
 # https://docs.sqlalchemy.org/en/14/faq/sqlexpressions.html#rendering-postcompile-parameters-as-bound-parameters
 
-Base = sqlalchemy.declarative_base()
+Base = sa.orm.declarative_base()
 
 
-class A(Base):
+class A(Base):  # type: ignore[misc, valid-type]
+  # type: ignore[misc, valid-type]
+
+  # type: ignore[misc, valid-type]
     __tablename__ = "a"
     id = sa.Column(sa.Integer, primary_key=True)
     data = sa.Column(sa.String)
@@ -1111,7 +1113,10 @@ def test_column_reflection_fallback_redshift_schema_qualified(
 
     # Call the function
     result = column_reflection_fallback(
-        selectable="my_table",  # type: ignore[arg-type]
+        selectable="my_table",  # type: ignore[Any]"  [arg-type]
+  # type: ignore[Any]
+
+  # type: ignore[arg-type]
         dialect=mock_dialect,
         sqlalchemy_engine=mock_engine,
         schema_name=schema_name,
@@ -1207,7 +1212,10 @@ class _FakeDatabricksDialect:
     """
 
 
-class _OracleSub(sa.dialects.oracle.dialect):
+class _OracleSub(sa.dialects.oracle.dialect):  # type: ignore[misc, valid-type]
+  # type: ignore[misc, valid-type]
+
+  # type: ignore[misc, valid-type]
     """A concrete subclass of SQLAlchemy's bundled Oracle dialect.
 
     The chain detects Oracle with ``issubclass`` against the bundled
@@ -1219,7 +1227,10 @@ class _OracleSub(sa.dialects.oracle.dialect):
     """
 
 
-class _PGSub(sa.dialects.postgresql.dialect):
+class _PGSub(sa.dialects.postgresql.dialect):  # type: ignore[misc, valid-type]
+  # type: ignore[misc, valid-type]
+
+  # type: ignore[misc, valid-type]
     pass
 
 
@@ -1227,7 +1238,10 @@ class _MySQLSub(sqlalchemy.dialects.mysql.base.MySQLDialect):
     pass
 
 
-class _SQLiteSub(sa.dialects.sqlite.dialect):
+class _SQLiteSub(sa.dialects.sqlite.dialect):  # type: ignore[misc, valid-type]
+  # type: ignore[misc, valid-type]
+
+  # type: ignore[misc, valid-type]
     pass
 
 
@@ -1315,16 +1329,25 @@ _REGEX_DIALECT_CASES: Final = {
 
 def _render_regex_expression(case_id: str, positive: bool) -> str | None:
     stub, patches = _REGEX_DIALECT_CASES[case_id]
-    column = sa.column("a")
+    column = sa.column("a")  # type: ignore[var-annotated]
+  # type: ignore[var-annotated]
+
+  # type: ignore[var-annotated]
     with contextlib.ExitStack() as stack:
         for name, value in patches.items():
             stack.enter_context(patch.object(metrics_util, name, value))
         expr = get_dialect_regex_expression(
-            column=column, regex="test", dialect=stub, positive=positive
+            column=column, regex="test", dialect=stub, positive=positive  # type: ignore[Dialect] | Dialect  [arg-type]
+  # type: ignore[Dialect]
+
+  # type: ignore[Dialect]
         )
     if expr is None:
         return None
-    return str(expr.compile(compile_kwargs={"literal_binds": True}))
+    return str(expr.compile(compile_kwargs={"literal_binds": True}))  # type: ignore[Any]" has no attribute "compile"  [attr-defined]
+  # type: ignore[Any]
+
+  # type: ignore[Any]
 
 
 @pytest.mark.unit
@@ -1435,14 +1458,23 @@ def test_get_dialect_regex_expression_renders_oracle_native_predicate(
     wraps it in `sa.not_()` itself.
     """
     stub = _DialectDetectionStub(dialect=_OracleSub)
-    column = sa.column("a")
+    column = sa.column("a")  # type: ignore[var-annotated]
+  # type: ignore[var-annotated]
+
+  # type: ignore[var-annotated]
 
     result = get_dialect_regex_expression(
-        column=column, regex="test", dialect=stub, positive=positive
+        column=column, regex="test", dialect=stub, positive=positive  # type: ignore[Dialect] | Dialect  [arg-type]
+  # type: ignore[Dialect]
+
+  # type: ignore[arg-type]
     )
 
     assert result is not None
-    rendered = str(result.compile(compile_kwargs={"literal_binds": True}))
+    rendered = str(result.compile(compile_kwargs={"literal_binds": True}))  # type: ignore[Any]" has no attribute "compile"  [attr-defined]
+  # type: ignore[Any]
+
+  # type: ignore[Any]
     assert rendered == expected_sql
 
 
@@ -1473,9 +1505,15 @@ def test_get_dialect_regex_expression_resolves_oracle_aggregate_family() -> None
     before a query is ever built).
     """
     stub = _DialectDetectionStub(dialect=_OracleSub)
-    column = sa.column("a")
+    column = sa.column("a")  # type: ignore[var-annotated]
+  # type: ignore[var-annotated]
 
-    regex_expression = get_dialect_regex_expression(column=column, regex="test", dialect=stub)
+  # type: ignore[var-annotated]
+
+    regex_expression = get_dialect_regex_expression(column=column, regex="test", dialect=stub)  # type: ignore[Dialect] | Dialect  [arg-type]
+  # type: ignore[Dialect]
+
+  # type: ignore[arg-type]
     assert regex_expression is not None, (
         "aggregate family: get_dialect_regex_expression returned None for Oracle -- "
         "column_values_match_regex_values.py and column_values_not_match_regex_values.py "
@@ -1504,11 +1542,17 @@ def test_get_dialect_regex_expression_resolves_oracle_regex_list_match_family() 
     forms, proving the branch is reached for every call in the list -- not just the first.
     """
     stub = _DialectDetectionStub(dialect=_OracleSub)
-    column = sa.column("a")
+    column = sa.column("a")  # type: ignore[var-annotated]
+  # type: ignore[var-annotated]
+
+  # type: ignore[var-annotated]
     regex_list = ["foo", "bar"]
 
     conditions = [
-        get_dialect_regex_expression(column=column, regex=regex, dialect=stub)
+        get_dialect_regex_expression(column=column, regex=regex, dialect=stub)  # type: ignore[Dialect] | Dialect  [arg-type]
+  # type: ignore[Dialect]
+
+  # type: ignore[arg-type]
         for regex in regex_list
     ]
     assert all(condition is not None for condition in conditions), (
@@ -1517,12 +1561,18 @@ def test_get_dialect_regex_expression_resolves_oracle_regex_list_match_family() 
         "before combining conditions"
     )
 
-    any_condition = sa.or_(*conditions)
+    any_condition = sa.or_(*conditions)  # type: ignore[SQLColumnExpression[Any] | None]"; expected "ColumnElement[bool] | _HasClauseElement[bool] | SQLCoreOperations[bool] | ExpressionElementRole[bool] | TypedColumnsClauseRole[bool] | Callable[[], ColumnElement[bool]] | LambdaElement"  [arg-type, SQLColumnExpression[Any] | None]"; expected "Literal[False] | ColumnElement[bool] | _HasClauseElement[bool] | SQLCoreOperations[bool] | ExpressionElementRole[bool] | TypedColumnsClauseRole[bool] | Callable[[], ColumnElement[bool]] | LambdaElement"  [arg-type]
+  # type: ignore[SQLColumnExpression[Any]
+
+  # type: ignore[arg-type]
     assert str(any_condition.compile(compile_kwargs={"literal_binds": True})) == (
         "regexp_like(a, 'foo') OR regexp_like(a, 'bar')"
     )
 
-    all_condition = sa.and_(*conditions)
+    all_condition = sa.and_(*conditions)  # type: ignore[SQLColumnExpression[Any] | None]"; expected "ColumnElement[bool] | _HasClauseElement[bool] | SQLCoreOperations[bool] | ExpressionElementRole[bool] | TypedColumnsClauseRole[bool] | Callable[[], ColumnElement[bool]] | LambdaElement"  [arg-type, SQLColumnExpression[Any] | None]"; expected "Literal[True] | ColumnElement[bool] | _HasClauseElement[bool] | SQLCoreOperations[bool] | ExpressionElementRole[bool] | TypedColumnsClauseRole[bool] | Callable[[], ColumnElement[bool]] | LambdaElement"  [arg-type]
+  # type: ignore[SQLColumnExpression[Any]
+
+  # type: ignore[arg-type]
     assert str(all_condition.compile(compile_kwargs={"literal_binds": True})) == (
         "regexp_like(a, 'foo') AND regexp_like(a, 'bar')"
     )
@@ -1539,11 +1589,17 @@ def test_get_dialect_regex_expression_resolves_oracle_regex_list_not_match_famil
     branch is reached for every call in the list.
     """
     stub = _DialectDetectionStub(dialect=_OracleSub)
-    column = sa.column("a")
+    column = sa.column("a")  # type: ignore[var-annotated]
+  # type: ignore[var-annotated]
+
+  # type: ignore[var-annotated]
     regex_list = ["foo", "bar"]
 
     conditions = [
-        get_dialect_regex_expression(column=column, regex=regex, dialect=stub, positive=False)
+        get_dialect_regex_expression(column=column, regex=regex, dialect=stub, positive=False)  # type: ignore[Dialect] | Dialect  [arg-type]
+  # type: ignore[Dialect]
+
+  # type: ignore[arg-type]
         for regex in regex_list
     ]
     assert all(condition is not None for condition in conditions), (
@@ -1552,7 +1608,10 @@ def test_get_dialect_regex_expression_resolves_oracle_regex_list_not_match_famil
         "NotImplementedError before combining conditions"
     )
 
-    compound_condition = sa.and_(*conditions)
+    compound_condition = sa.and_(*conditions)  # type: ignore[SQLColumnExpression[Any] | None]"; expected "ColumnElement[bool] | _HasClauseElement[bool] | SQLCoreOperations[bool] | ExpressionElementRole[bool] | TypedColumnsClauseRole[bool] | Callable[[], ColumnElement[bool]] | LambdaElement"  [arg-type, SQLColumnExpression[Any] | None]"; expected "Literal[True] | ColumnElement[bool] | _HasClauseElement[bool] | SQLCoreOperations[bool] | ExpressionElementRole[bool] | TypedColumnsClauseRole[bool] | Callable[[], ColumnElement[bool]] | LambdaElement"  [arg-type]
+  # type: ignore[SQLColumnExpression[Any]
+
+  # type: ignore[arg-type]
     assert str(compound_condition.compile(compile_kwargs={"literal_binds": True})) == (
         "NOT regexp_like(a, 'foo') AND NOT regexp_like(a, 'bar')"
     )

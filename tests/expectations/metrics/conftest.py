@@ -41,11 +41,11 @@ class MockSqlAlchemyExecutionEngine(SqlAlchemyExecutionEngine):
     def __init__(self, create_temp_table: bool = True, *args, **kwargs):
         self.engine = MockSaEngine(dialect=sa.dialects.sqlite.dialect())  # type: ignore[assignment] # FIXME CoP
         self._create_temp_table = create_temp_table
-        self._connection = MockConnection()
+        self._connection = MockConnection()  # type: ignore[assignment]
 
-        self._batch_manager = None
+        self._batch_manager = None  # type: ignore[assignment]
 
-    def get_compute_domain(
+    def get_compute_domain(  # type: ignore[explicit-override]
         self,
         domain_kwargs: dict,
         domain_type: Union[str, MetricDomainTypes],

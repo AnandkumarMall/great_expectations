@@ -111,7 +111,7 @@ def sqlite_table_for_unexpected_rows_with_index(
                 except Exception:
                     pass
         except ImportError:
-            sa = None
+            sa = None  # type: ignore[assignment]
     else:
         pytest.skip("SqlAlchemy tests disabled; not testing views")
 
@@ -178,7 +178,7 @@ def _expecation_configuration_to_validation_result_pandas(
         batch_spec_passthrough=None,
     )
     batch = Batch(
-        data=dataframe,
+        data=dataframe,  # type: ignore[arg-type]
         batch_definition=batch_definition,
     )
     engine = PandasExecutionEngine()

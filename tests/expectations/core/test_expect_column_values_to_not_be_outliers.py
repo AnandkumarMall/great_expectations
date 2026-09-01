@@ -1,5 +1,6 @@
 from decimal import Decimal
 from string import Template
+from typing import cast
 
 import pandas as pd
 import pytest
@@ -25,7 +26,8 @@ from great_expectations.expectations.registry import get_renderer_impl
 def test_unsupported_method_is_rejected_at_configuration_time(method: str) -> None:
     """An unsupported method must not survive into a stored suite to fail on every run."""
     with pytest.raises(pydantic.ValidationError, match="permitted: 'iqr', 'std'"):
-        gxe.ExpectColumnValuesToNotBeOutliers(column="amount", method=method)
+        gxe.ExpectColumnValuesToNotBeOutliers(column="amount", method=method)  # type: ignore['iqr', 'std'] | dict[Any, Any]"  [arg-type]
+  # type: ignore[arg-type]
 
 
 @pytest.mark.unit
@@ -40,6 +42,7 @@ def test_unsupported_method_from_a_suite_parameter_is_rejected() -> None:
     )
     expectation = gxe.ExpectColumnValuesToNotBeOutliers(
         column="amount", method={"$PARAMETER": "chosen_method"}
+  # type: ignore[arg-type]
     )
 
     with pytest.raises(pydantic.ValidationError, match="permitted: 'iqr', 'std'"):
@@ -72,12 +75,22 @@ def test_prescriptive_renderer_substitutes_defaults() -> None:
         type="expect_column_values_to_not_be_outliers",
         kwargs={"column": "amount"},
     )
-    renderer = get_renderer_impl(
+    renderer_impl_tuple = get_renderer_impl(
         object_name="expect_column_values_to_not_be_outliers",
         renderer_type="atomic.prescriptive.summary",
-    )[1]
+    )
+    assert renderer_impl_tuple is not None
+    renderer = renderer_impl_tuple[1]
 
-    rendered = renderer(configuration=configuration).to_json_dict()["value"]
+
+  # type: ignore[RenderedAtomicContent]
+    rendered_dict = cast(dict, renderer(configuration=configuration).to_json_dict())  # type: ignore[RenderedAtomicContent]" of "list[RenderedAtomicContent] | RenderedContent" has no attribute "to_json_dict"  [union-attr]
+  # type: ignore[RenderedAtomicContent]
+
+  # type: ignore[Any]
+    rendered = rendered_dict["value"]
+
+  # type: ignore[Any]
     substituted = Template(rendered["template"]).safe_substitute(
         {name: param["value"] for name, param in rendered["params"].items()}
     )
@@ -116,12 +129,19 @@ def test_prescriptive_renderer(mostly: float, expected_template: str) -> None:
             "mostly": mostly,
         },
     )
-    renderer = get_renderer_impl(
+    renderer_impl_tuple = get_renderer_impl(
         object_name="expect_column_values_to_not_be_outliers",
         renderer_type="atomic.prescriptive.summary",
-    )[1]
+    )
+    assert renderer_impl_tuple is not None
+    renderer = renderer_impl_tuple[1]
 
-    rendered_content = renderer(configuration=configuration).to_json_dict()
+  # type: ignore[RenderedAtomicContent]
+
+    rendered_content = cast(dict, renderer(configuration=configuration).to_json_dict())  # type: ignore[RenderedAtomicContent]" of "list[RenderedAtomicContent] | RenderedContent" has no attribute "to_json_dict"  [union-attr]
+  # type: ignore[RenderedAtomicContent]
+
+  # type: ignore[Any]
 
     assert rendered_content["value"]["template"] == expected_template
 

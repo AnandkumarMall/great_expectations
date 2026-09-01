@@ -134,7 +134,7 @@ def test_multicolumn_expectation_has_default_mostly(fake_expectation_cls, config
     "fake_expectation_cls, config",
     list(
         itertools.chain(
-            *[
+            *[  # type: ignore[object]"; expected "Iterable[Never]"  [arg-type, object]"; expected "Iterable[object]"  [arg-type, syntax]
                 [
                     (
                         FakeMulticolumnExpectation,
@@ -614,7 +614,7 @@ class TestCustomAnnotatedFields:
     )
     @pytest.mark.unit
     def test_valid_value_set_values(self, value_set: Union[Sequence, set], expected_value: Any):
-        expectation = _SampleExpectation(mostly=1, value_set=value_set)
+        expectation = _SampleExpectation(mostly=1, value_set=value_set)  # type: ignore[Any] | set[Any]"; expected "list[Any] | dict[Any, Any]"  [arg-type, syntax]
         assert expectation.value_set == expected_value
 
     @pytest.mark.parametrize(
