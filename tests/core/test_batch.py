@@ -86,11 +86,32 @@ def test_get_batch_request_from_acceptable_arguments_runtime_parameter_path(
     """Setting any of the parameters should result in a runtime batch request"""
     base_block["batch_identifiers"] = {"a": "1"}
     base_block[param] = value
-    actual = get_batch_request_from_acceptable_arguments(
-        datasource_name=base_block["datasource_name"],
-        data_connector_name=base_block["data_connector_name"],
-        data_asset_name=base_block["data_asset_name"],
-    )
+    if param == "batch_data":
+        actual = get_batch_request_from_acceptable_arguments(
+            datasource_name=base_block["datasource_name"],
+            data_connector_name=base_block["data_connector_name"],
+            data_asset_name=base_block["data_asset_name"],
+            batch_identifiers=base_block["batch_identifiers"],
+            batch_data=value,
+        )
+    elif param == "query":
+        actual = get_batch_request_from_acceptable_arguments(
+            datasource_name=base_block["datasource_name"],
+            data_connector_name=base_block["data_connector_name"],
+            data_asset_name=base_block["data_asset_name"],
+            batch_identifiers=base_block["batch_identifiers"],
+            query=value,
+        )
+    elif param == "path":
+        actual = get_batch_request_from_acceptable_arguments(
+            datasource_name=base_block["datasource_name"],
+            data_connector_name=base_block["data_connector_name"],
+            data_asset_name=base_block["data_asset_name"],
+            batch_identifiers=base_block["batch_identifiers"],
+            path=value,
+        )
+    else:
+        raise ValueError(f"Unknown param: {param}")
     assert isinstance(actual, RuntimeBatchRequest)
     assert actual.runtime_parameters is not None
     assert actual.runtime_parameters[param] == value
@@ -279,10 +300,10 @@ def test_get_batch_request_from_acceptable_arguments_block_partitioner_sampler_b
 
     assert isinstance(actual, BatchRequest)
     assert actual.batch_spec_passthrough is not None
-    assert actual.batch_spec_passthrough["sampling_method"] == "sample"  # type: ignore[index]
-    assert actual.batch_spec_passthrough["sampling_kwargs"] == {"a": "1"}  # type: ignore[index]
-    assert actual.batch_spec_passthrough["partitioner_method"] == "partition"  # type: ignore[index]
-    assert actual.batch_spec_passthrough["partitioner_kwargs"] == {"b": "2"}  # type: ignore[index]
+    assert actual.batch_spec_passthrough["sampling_method"] == "sample"
+    assert actual.batch_spec_passthrough["sampling_kwargs"] == {"a": "1"}
+    assert actual.batch_spec_passthrough["partitioner_method"] == "partition"
+    assert actual.batch_spec_passthrough["partitioner_kwargs"] == {"b": "2"}
 
     # existing batch_spec_passthrough should be preserved, no partitioner or sampling args exist
     base_block["batch_spec_passthrough"] = {"c": "3"}

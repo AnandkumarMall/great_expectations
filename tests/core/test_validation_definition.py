@@ -451,10 +451,10 @@ class TestValidationDefinitionSerialization:
         asset_id = uuid.uuid4()
         csv_asset.id = asset_id
 
-        batch_definition_id = str(uuid.uuid4())
+        batch_definition_id = uuid.uuid4()
         batch_definition.id = batch_definition_id
 
-        suite_id = str(uuid.uuid4())
+        suite_id = uuid.uuid4()
         validation_definition_suite.id = suite_id
 
         validation_definition = context.validation_definitions.add(
@@ -471,20 +471,20 @@ class TestValidationDefinitionSerialization:
             "data": {
                 "datasource": {
                     "name": pandas_ds.name,
-                    "id": ds_id,
+                    "id": str(ds_id),
                 },
                 "asset": {
                     "name": csv_asset.name,
-                    "id": asset_id,
+                    "id": str(asset_id),
                 },
                 "batch_definition": {
                     "name": batch_definition.name,
-                    "id": batch_definition_id,
+                    "id": str(batch_definition_id),
                 },
             },
             "suite": {
                 "name": validation_definition_suite.name,
-                "id": suite_id,
+                "id": str(suite_id),
             },
             "id": mock.ANY,
         }
