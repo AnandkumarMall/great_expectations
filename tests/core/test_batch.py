@@ -247,7 +247,8 @@ def test_get_batch_request_from_acceptable_arguments_block_partitioner_sampler_b
     base_block["batch_spec_passthrough"] = {"c": "3"}
     actual = get_batch_request_from_acceptable_arguments(**base_block)  # type: ignore[arg-type]
 
-    assert isinstance(actual, BatchRequest); assert actual.batch_spec_passthrough is not None
+    assert isinstance(actual, BatchRequest)
+    assert actual.batch_spec_passthrough is not None
     assert actual.batch_spec_passthrough["c"] == "3"
     assert "sampling_method" not in actual.batch_spec_passthrough
     assert "sampling_kwargs" not in actual.batch_spec_passthrough
