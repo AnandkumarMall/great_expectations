@@ -86,32 +86,7 @@ def test_get_batch_request_from_acceptable_arguments_runtime_parameter_path(
     """Setting any of the parameters should result in a runtime batch request"""
     base_block["batch_identifiers"] = {"a": "1"}
     base_block[param] = value
-    if param == "batch_data":
-        actual = get_batch_request_from_acceptable_arguments(
-            datasource_name=base_block["datasource_name"],
-            data_connector_name=base_block["data_connector_name"],
-            data_asset_name=base_block["data_asset_name"],
-            batch_identifiers=base_block["batch_identifiers"],
-            batch_data=value,
-        )
-    elif param == "query":
-        actual = get_batch_request_from_acceptable_arguments(
-            datasource_name=base_block["datasource_name"],
-            data_connector_name=base_block["data_connector_name"],
-            data_asset_name=base_block["data_asset_name"],
-            batch_identifiers=base_block["batch_identifiers"],
-            query=value,
-        )
-    elif param == "path":
-        actual = get_batch_request_from_acceptable_arguments(
-            datasource_name=base_block["datasource_name"],
-            data_connector_name=base_block["data_connector_name"],
-            data_asset_name=base_block["data_asset_name"],
-            batch_identifiers=base_block["batch_identifiers"],
-            path=value,
-        )
-    else:
-        raise ValueError(f"Unknown param: {param}")
+    actual = get_batch_request_from_acceptable_arguments(**base_block)  # type: ignore[arg-type]
     assert isinstance(actual, RuntimeBatchRequest)
     assert actual.runtime_parameters is not None
     assert actual.runtime_parameters[param] == value
@@ -120,11 +95,7 @@ def test_get_batch_request_from_acceptable_arguments_runtime_parameter_path(
     with pytest.raises(ValueError):
         runtime_parameters = {param: value}
         base_block["runtime_parameters"] = runtime_parameters
-        get_batch_request_from_acceptable_arguments(
-            datasource_name=base_block["datasource_name"],
-            data_connector_name=base_block["data_connector_name"],
-            data_asset_name=base_block["data_asset_name"],
-        )
+        get_batch_request_from_acceptable_arguments(**base_block)  # type: ignore[arg-type]
 
 
 @pytest.mark.unit
@@ -154,12 +125,7 @@ def test_get_batch_request_from_acceptable_arguments_runtime_parameters_no_batch
     """Batch identifiers can be provided by batch identifiers or kwargs"""
     # testing no batch identifiers
     with pytest.raises(ValueError):
-        get_batch_request_from_acceptable_arguments(
-            datasource_name=runtime_base_block["datasource_name"],
-            data_connector_name=runtime_base_block["data_connector_name"],
-            data_asset_name=runtime_base_block["data_asset_name"],
-            path=runtime_base_block["path"],
-        )
+        get_batch_request_from_acceptable_arguments(**runtime_base_block)  # type: ignore[arg-type]
 
 
 @pytest.mark.unit
@@ -171,12 +137,7 @@ def test_get_batch_request_from_acceptable_arguments_runtime_batch_identifiers(
 
     # testing batch identifiers as batch_identifiers
     runtime_base_block["batch_identifiers"] = bids
-    actual = get_batch_request_from_acceptable_arguments(
-        datasource_name=runtime_base_block["datasource_name"],
-        data_connector_name=runtime_base_block["data_connector_name"],
-        data_asset_name=runtime_base_block["data_asset_name"],
-        path=runtime_base_block["path"],
-    )
+    actual = get_batch_request_from_acceptable_arguments(**runtime_base_block)  # type: ignore[arg-type]
     assert isinstance(actual, RuntimeBatchRequest)
     assert actual.batch_identifiers == bids
 
@@ -210,21 +171,14 @@ def test_get_batch_request_from_acceptable_arguments_fluent_and_block_args_raise
     base_fluent["data_connector_query"] = "q"
 
     with pytest.raises(ValueError) as ve:
-        get_batch_request_from_acceptable_arguments(
-            datasource_name=base_fluent["datasource_name"],
-            data_asset_name=base_fluent["data_asset_name"],
-        )
+        get_batch_request_from_acceptable_arguments(**base_fluent)  # type: ignore[arg-type]
 
     assert "Fluent Batch Requests" in str(ve.value)
 
 
 @pytest.mark.unit
 def test_get_batch_request_from_acceptable_arguments_block(base_block: Dict[str, Any]):
-    actual = get_batch_request_from_acceptable_arguments(
-        datasource_name=base_block["datasource_name"],
-        data_connector_name=base_block["data_connector_name"],
-        data_asset_name=base_block["data_asset_name"],
-    )
+    actual = get_batch_request_from_acceptable_arguments(**base_block)  # type: ignore[arg-type]
     assert isinstance(actual, BatchRequest)
 
 
@@ -247,11 +201,7 @@ def test_get_batch_request_from_acceptable_arguments_block_batch_filter_paramete
 
     # filter params as an argument yields the same result
     base_block["batch_filter_parameters"] = filter_params
-    actual = get_batch_request_from_acceptable_arguments(
-        datasource_name=base_block["datasource_name"],
-        data_connector_name=base_block["data_connector_name"],
-        data_asset_name=base_block["data_asset_name"],
-    )
+    actual = get_batch_request_from_acceptable_arguments(**base_block)  # type: ignore[arg-type]
     assert isinstance(actual, BatchRequest)
     assert actual.data_connector_query is not None
     assert actual.data_connector_query["batch_filter_parameters"] == filter_params
@@ -259,11 +209,7 @@ def test_get_batch_request_from_acceptable_arguments_block_batch_filter_paramete
     # filter params and batch identifiers raise
     base_block["batch_identifiers"] = filter_params
     with pytest.raises(ValueError):
-        actual = get_batch_request_from_acceptable_arguments(
-            datasource_name=base_block["datasource_name"],
-            data_connector_name=base_block["data_connector_name"],
-            data_asset_name=base_block["data_asset_name"],
-        )
+        actual = get_batch_request_from_acceptable_arguments(**base_block)  # type: ignore[arg-type]
 
 
 @pytest.mark.unit
@@ -274,11 +220,7 @@ def test_get_batch_request_from_acceptable_arguments_block_data_connector_query(
 
     # filter params as kwargs
     base_block["data_connector_query"] = query
-    actual = get_batch_request_from_acceptable_arguments(
-        datasource_name=base_block["datasource_name"],
-        data_connector_name=base_block["data_connector_name"],
-        data_asset_name=base_block["data_asset_name"],
-    )
+    actual = get_batch_request_from_acceptable_arguments(**base_block)  # type: ignore[arg-type]
     assert isinstance(actual, BatchRequest)
     assert actual.data_connector_query == query
 
@@ -292,11 +234,7 @@ def test_get_batch_request_from_acceptable_arguments_block_partitioner_sampler_b
     base_block["sampling_kwargs"] = {"a": "1"}
     base_block["partitioner_method"] = "partition"
     base_block["partitioner_kwargs"] = {"b": "2"}
-    actual = get_batch_request_from_acceptable_arguments(
-        datasource_name=base_block["datasource_name"],
-        data_connector_name=base_block["data_connector_name"],
-        data_asset_name=base_block["data_asset_name"],
-    )
+    actual = get_batch_request_from_acceptable_arguments(**base_block)  # type: ignore[arg-type]
 
     assert isinstance(actual, BatchRequest)
     assert actual.batch_spec_passthrough is not None
@@ -307,11 +245,7 @@ def test_get_batch_request_from_acceptable_arguments_block_partitioner_sampler_b
 
     # existing batch_spec_passthrough should be preserved, no partitioner or sampling args exist
     base_block["batch_spec_passthrough"] = {"c": "3"}
-    actual = get_batch_request_from_acceptable_arguments(
-        datasource_name=base_block["datasource_name"],
-        data_connector_name=base_block["data_connector_name"],
-        data_asset_name=base_block["data_asset_name"],
-    )
+    actual = get_batch_request_from_acceptable_arguments(**base_block)  # type: ignore[arg-type]
 
     assert isinstance(actual, BatchRequest); assert actual.batch_spec_passthrough is not None
     assert actual.batch_spec_passthrough["c"] == "3"

@@ -451,10 +451,10 @@ class TestValidationDefinitionSerialization:
         asset_id = uuid.uuid4()
         csv_asset.id = asset_id
 
-        batch_definition_id = uuid.uuid4()
+        batch_definition_id = str(uuid.uuid4())
         batch_definition.id = batch_definition_id
 
-        suite_id = uuid.uuid4()
+        suite_id = str(uuid.uuid4())
         validation_definition_suite.id = suite_id
 
         validation_definition = context.validation_definitions.add(
@@ -479,12 +479,12 @@ class TestValidationDefinitionSerialization:
                 },
                 "batch_definition": {
                     "name": batch_definition.name,
-                    "id": str(batch_definition_id),
+                    "id": batch_definition_id,
                 },
             },
             "suite": {
                 "name": validation_definition_suite.name,
-                "id": str(suite_id),
+                "id": suite_id,
             },
             "id": mock.ANY,
         }
