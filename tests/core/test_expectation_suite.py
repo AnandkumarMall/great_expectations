@@ -161,7 +161,7 @@ class TestInit:
 
         suite = ExpectationSuite(
             name=fake_expectation_suite_name,
-            expectations=test_expectations_input,  # type: ignore[arg-type] # FIXME CoP
+            expectations=test_expectations_input, # FIXME CoP
         )
         assert suite.name == fake_expectation_suite_name
 
@@ -210,7 +210,7 @@ class TestInit:
         with pytest.raises(InvalidExpectationConfigurationError) as e:
             ExpectationSuite(
                 name=fake_expectation_suite_name,
-                meta=test_meta,  # type: ignore[arg-type] # FIXME CoP
+                meta=test_meta, # FIXME CoP
             )
         assert "is of type NotSerializable which cannot be serialized to json" in str(e.value)
 
